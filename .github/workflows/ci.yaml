@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  cabal:
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc:
+          - "8.10.7"
+          - "9.0.2"
+          - "9.2.8"
+          - "9.4.8"
+          - "9.6.5"
+          - "9.8.2"
+          - "9.10.1"
+          - "9.12.1"
+        os:
+          - "macos-latest"
+          - "ubuntu-latest"
+          - "windows-latest"
+        # Evidently mac has trouble with these on CI now.
+        exclude:
+          - {ghc: "8.10.7", os: "macos-latest"}
+          - {ghc: "9.0.2", os: "macos-latest"}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+
+      - name: Compile
+        run: cabal build
+
+  nix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - "macos-latest"
+        - "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v30
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Compile & Test
+        run: nix build
+
+  lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v30
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
