@@ -74,3 +74,8 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Formatting
+        run: |
+          nix run .#format
+          git diff --exit-code --color=always

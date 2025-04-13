@@ -31,29 +31,28 @@
 --
 -- > % cabal exec runhaskell Example.hs
 -- > Example.hs: [panic master@2ae047ba5e4a6f0f3e705a43615363ac006099c1 (Mon Jan 11 11:50:59 2016 -0800) (14 commits in HEAD) (uncommitted files present)] oh no!
-
 module Development.GitRev
-  ( gitBranch
-  , gitCommitCount
-  , gitCommitDate
-  , gitDescribe
-  , gitDirty
-  , gitDirtyTracked
-  , gitHash
-  ) where
+  ( gitBranch,
+    gitCommitCount,
+    gitCommitDate,
+    gitDescribe,
+    gitDirty,
+    gitDirtyTracked,
+    gitHash,
+  )
+where
 
 import Control.Exception
 import Control.Monad
 import Data.Maybe
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
+import Prelude.Compat
 import System.Directory
 import System.Exit
 import System.FilePath
 import System.Process
-
 import Prelude ()
-import Prelude.Compat
 
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output. If git isn't available or something goes wrong,
@@ -67,10 +66,10 @@ runGit args def useIdx = do
     then do
       -- a lot of bookkeeping to record the right dependencies
       pwd <- runIO getDotGit
-      let hd         = pwd </> "HEAD"
-          index      = pwd </> "index"
+      let hd = pwd </> "HEAD"
+          index = pwd </> "index"
           packedRefs = pwd </> "packed-refs"
-      hdExists  <- runIO $ doesFileExist hd
+      hdExists <- runIO $ doesFileExist hd
       when hdExists $ do
         addDependentFile hd
         -- the HEAD file either contains the hash of a detached head
@@ -94,7 +93,7 @@ runGit args def useIdx = do
       runIO $ do
         (code, out, _err) <- readProcessWithExitCode "git" args "" `catch` oops
         case code of
-          ExitSuccess   -> return (tillNewLine out)
+          ExitSuccess -> return (tillNewLine out)
           ExitFailure _ -> return def
     else return def
 
@@ -110,16 +109,17 @@ getDotGit = do
       oops = return dotGit -- it's gonna fail, that's fine
   isDir <- doesDirectoryExist dotGit
   isFile <- doesFileExist dotGit
-  if | isDir -> return dotGit
-     | not isFile -> oops
-     | isFile ->
-         splitAt 8 `fmap` readFile dotGit >>= \case
-           ("gitdir: ", relDir) -> do
-             isRelDir <- doesDirectoryExist relDir
-             if isRelDir
-               then return relDir
-               else oops
-           _ -> oops
+  if
+    | isDir -> return dotGit
+    | not isFile -> oops
+    | isFile ->
+        splitAt 8 `fmap` readFile dotGit >>= \case
+          ("gitdir: ", relDir) -> do
+            isRelDir <- doesDirectoryExist relDir
+            if isRelDir
+              then return relDir
+              else oops
+          _ -> oops
 
 -- | Get the root directory of the Git repo.
 getGitRoot :: IO FilePath
@@ -128,13 +128,16 @@ getGitRoot = do
   (code, out, _) <-
     readProcessWithExitCode "git" ["rev-parse", "--show-toplevel"] ""
   case code of
-    ExitSuccess   -> return $ tillNewLine out
+    ExitSuccess -> return $ tillNewLine out
     ExitFailure _ -> return pwd -- later steps will fail, that's fine
 
 -- | Type to flag if the git index is used or not in a call to runGit
-data IndexUsed = IdxUsed -- ^ The git index is used
-               | IdxNotUsed -- ^ The git index is /not/ used
-    deriving (Eq)
+data IndexUsed
+  = -- | The git index is used
+    IdxUsed
+  | -- | The git index is /not/ used
+    IdxNotUsed
+  deriving (Eq)
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository
@@ -162,16 +165,16 @@ gitDirty = do
   output <- runGit ["status", "--porcelain"] "" IdxUsed
   case output of
     "" -> conE falseName
-    _  -> conE trueName
+    _ -> conE trueName
 
 -- | Return @True@ if there are non-commited changes to tracked files
 -- present in the repository
 gitDirtyTracked :: ExpQ
 gitDirtyTracked = do
-  output <- runGit ["status", "--porcelain","--untracked-files=no"] "" IdxUsed
+  output <- runGit ["status", "--porcelain", "--untracked-files=no"] "" IdxUsed
   case output of
     "" -> conE falseName
-    _  -> conE trueName
+    _ -> conE trueName
 
 -- | Return the number of commits in the current head
 gitCommitCount :: ExpQ
