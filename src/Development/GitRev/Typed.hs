@@ -30,9 +30,9 @@ module Development.GitRev.Typed
     qToCode,
 
     -- ** Q Modifiers
-    Internal.liftFalse,
     Internal.liftDefString,
     Internal.liftError,
+    Internal.liftFalse,
     Internal.envFallback,
 
     -- * Errors

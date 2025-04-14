@@ -16,9 +16,9 @@ module Development.GitRev.Internal
     gitCommitDateQ,
 
     -- * Modifiers
-    liftFalse,
     liftDefString,
     liftError,
+    liftFalse,
     envFallback,
   )
 where
