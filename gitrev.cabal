@@ -9,7 +9,16 @@ maintainer:    acfoltzer@galois.com
 category:      Development
 build-type:    Simple
 cabal-version: >=1.10
-tested-with:   GHC ==7.6.3 || ==7.8.4 || ==7.10.3 || ==8.0.2
+tested-with:
+  GHC ==8.10.7
+   || ==9.0.2
+   || ==9.2.8
+   || ==9.4.8
+   || ==9.6.6
+   || ==9.8.4
+   || ==9.10.1
+   || ==9.12.1
+
 description:
   Some handy Template Haskell splices for including the current git hash and branch in the code of your project. Useful for including in panic messages, @--version@ output, or diagnostic info for more informative bug reports.
 
@@ -19,12 +28,11 @@ source-repository head
 
 library
   build-depends:
-      base              >=4.6   && <5
-    , base-compat       >=0.6.0
-    , directory
-    , filepath
-    , process
-    , template-haskell
+      base              >=4.14.0.0 && <5
+    , directory         >=1.3.8.0  && <1.4
+    , filepath          >=1.5.2.0  && <1.6
+    , process           >=1.6.13.2 && <1.7
+    , template-haskell  >=2.16.0.0 && <2.24
 
   hs-source-dirs:   src
   ghc-options:      -Wall

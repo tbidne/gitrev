@@ -47,12 +47,10 @@ import Control.Monad
 import Data.Maybe
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
-import Prelude.Compat
 import System.Directory
 import System.Exit
 import System.FilePath
 import System.Process
-import Prelude ()
 
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output. If git isn't available or something goes wrong,
