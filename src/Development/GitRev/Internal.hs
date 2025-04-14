@@ -1,38 +1,23 @@
 {-# LANGUAGE QuasiQuotes #-}
 
--- |
--- Module      :  $Header$
--- Copyright   :  (c) 2015 Adam C. Foltzer
--- License     :  BSD3
--- Maintainer  :  acfoltzer@galois.com
--- Stability   :  provisional
--- Portability :  portable
---
--- Some handy Template Haskell splices for including the current git
--- hash and branch in the code of your project. Useful for including
--- in panic messages, @--version@ output, or diagnostic info for more
--- informative bug reports.
---
--- > {-# LANGUAGE TemplateHaskell #-}
--- > import Development.GitRev
--- >
--- > panic :: String -> a
--- > panic msg = error panicMsg
--- >   where panicMsg =
--- >           concat [ "[panic ", $(gitBranch), "@", $(gitHash)
--- >                  , " (", $(gitCommitDate), ")"
--- >                  , " (", $(gitCommitCount), " commits in HEAD)"
--- >                  , dirty, "] ", msg ]
--- >         dirty | $(gitDirty) = " (uncommitted files present)"
--- >               | otherwise   = ""
--- >
--- > main = panic "oh no!"
---
--- > % cabal exec runhaskell Example.hs
--- > Example.hs: [panic master@2ae047ba5e4a6f0f3e705a43615363ac006099c1 (Mon Jan 11 11:50:59 2016 -0800) (14 commits in HEAD) (uncommitted files present)] oh no!
 module Development.GitRev.Internal
-  ( IndexUsed (..),
+  ( -- * Git
+    gitHashMay,
+    gitBranchMay,
+    gitDescribeMay,
+    gitDirty,
+    gitDirtyTracked,
+    gitCommitCountMay,
+    gitCommitDateMay,
+
+    -- ** Utils
+    IndexUsed (..),
     runGit,
+
+    -- * Modifiers
+    unknownFallback,
+    envFallback,
+    envUnknownFallback,
   )
 where
 
@@ -45,7 +30,7 @@ import Control.Exception
     toException,
   )
 import Control.Monad (when, (<=<))
-import Data.Maybe (isJust)
+import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
@@ -57,6 +42,7 @@ import System.Directory.OsPath
     findExecutable,
     getCurrentDirectory,
   )
+import System.Environment qualified as Env
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import System.File.OsPath qualified as FileIO
 import System.OsPath (OsPath, osp, (</>))
@@ -64,13 +50,59 @@ import System.OsPath qualified as OsPath
 import System.OsString qualified as OsString
 import System.Process (readProcessWithExitCode)
 
+gitHashMay :: Q (Maybe String)
+gitHashMay = runGit ["rev-parse", "HEAD"] IdxNotUsed
+
+gitBranchMay :: Q (Maybe String)
+gitBranchMay = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
+
+gitDescribeMay :: Q (Maybe String)
+gitDescribeMay = runGit ["describe", "--long", "--always"] IdxNotUsed
+
+gitDirty :: Q Bool
+gitDirty = nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
+
+gitDirtyTracked :: Q Bool
+gitDirtyTracked =
+  nonEmpty <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
+
+nonEmpty :: Maybe String -> Bool
+nonEmpty Nothing = False
+nonEmpty (Just "") = False
+nonEmpty (Just _) = True
+
+gitCommitCountMay :: Q (Maybe String)
+gitCommitCountMay = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
+
+gitCommitDateMay :: Q (Maybe String)
+gitCommitDateMay = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
+
+unknownFallback :: Q (Maybe String) -> Q String
+unknownFallback m = fmap (fromMaybe "UNKNOWN") m
+
+envFallback :: String -> Q (Maybe String) -> Q (Maybe String)
+envFallback var m =
+  m >>= \case
+    Just r -> pure $ Just r
+    Nothing -> lookupEnvQ var
+
+envUnknownFallback :: String -> Q (Maybe String) -> Q String
+envUnknownFallback var m =
+  unknownFallback $
+    m >>= \case
+      Just r -> pure $ Just r
+      Nothing -> lookupEnvQ var
+
+lookupEnvQ :: String -> Q (Maybe String)
+lookupEnvQ s = runIO (Env.lookupEnv s)
+
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output. If git isn't available or something goes wrong,
 -- return the second argument.
-runGit :: [String] -> String -> IndexUsed -> Q String
-runGit args def useIdx = do
+runGit :: [String] -> IndexUsed -> Q (Maybe String)
+runGit args useIdx = do
   let oops :: SomeException -> IO (ExitCode, String, String)
-      oops _e = pure (ExitFailure 1, def, "")
+      oops _e = pure (ExitFailure 1, "", "")
   gitFound <- runIO $ isJust <$> findExecutable [osp|git|]
   if gitFound
     then do
@@ -110,9 +142,9 @@ runGit args def useIdx = do
       runIO $ do
         (code, out, _err) <- readProcessWithExitCode "git" args "" `catchSync` oops
         case code of
-          ExitSuccess -> pure (tillNewLineStr out)
-          ExitFailure _ -> pure def
-    else pure def
+          ExitSuccess -> pure $ Just (tillNewLineStr out)
+          ExitFailure _ -> pure Nothing
+    else pure Nothing
 
 tillNewLineStr :: String -> String
 tillNewLineStr = takeWhile (\c -> c /= '\n' && c /= '\r')
