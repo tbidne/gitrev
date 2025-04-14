@@ -33,6 +33,17 @@
                 (hlib.dontCheck compiler.haskell-language-server)
                 pkgs.nixfmt-rfc-style
               ];
+
+              modifier =
+                drv:
+                let
+                  # Git is a build tool.
+                  drv' = pkgs.haskell.lib.addBuildTools drv [ pkgs.git ];
+                in
+                drv'.overrideAttrs (oldAttrs: {
+                  # Set the hash so that example/TH.hs works as expected.
+                  EXAMPLE_HASH = "${self.rev or self.dirtyRev}";
+                });
             };
         in
         {

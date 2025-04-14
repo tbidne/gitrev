@@ -1,30 +1,6 @@
--- |
--- Module      :  $Header$
--- Copyright   :  (c) 2015 Adam C. Foltzer
--- License     :  BSD3
--- Maintainer  :  acfoltzer@galois.com
--- Stability   :  provisional
--- Portability :  portable
+-- | Typed version of "Development.GitRev".
 --
--- Typed version of "Development.GitRev".
---
--- > {-# LANGUAGE TemplateHaskell #-}
--- > import Development.GitRev.Typed
--- >
--- > panic :: String -> a
--- > panic msg = error panicMsg
--- >   where panicMsg =
--- >           concat [ "[panic ", $$(gitBranch), "@", $$(gitHash)
--- >                  , " (", $$(gitCommitDate), ")"
--- >                  , " (", $$(gitCommitCount), " commits in HEAD)"
--- >                  , dirty, "] ", msg ]
--- >         dirty | $$(gitDirty) = " (uncommitted files present)"
--- >               | otherwise   = ""
--- >
--- > main = panic "oh no!"
---
--- > % cabal exec runhaskell Example.hs
--- > Example.hs: [panic master@2ae047ba5e4a6f0f3e705a43615363ac006099c1 (Mon Jan 11 11:50:59 2016 -0800) (14 commits in HEAD) (uncommitted files present)] oh no!
+-- @since 1.40.0
 module Development.GitRev.Typed
   ( -- * Basic functions
     -- $basic
@@ -40,7 +16,7 @@ module Development.GitRev.Typed
     -- * Custom functions
     -- $custom
 
-    -- ** Q Values
+    -- ** Q Primitives
     Internal.gitBranchQ,
     Internal.gitCommitCountQ,
     Internal.gitCommitDateQ,
@@ -53,7 +29,7 @@ module Development.GitRev.Typed
     -- ** Q to Code
     qToCode,
 
-    -- ** Modifiers
+    -- ** Q Modifiers
     Internal.liftFalse,
     Internal.liftDefString,
     Internal.liftError,
@@ -80,9 +56,9 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 
 -- $custom
 --
--- These functions allow us to define custom behavior. For instance, we can
--- define a variant of 'gitHash' that instead fails to compile if there are
--- any problems with git:
+-- These functions allow us to define custom behavior. For instance, using
+-- the primitive 'Internal.getHashQ', we can define a variant of 'gitHash'
+-- that instead fails to compile if there are any problems with git:
 --
 -- @
 --   -- gitHashQ :: Q (Either GitError String)
@@ -112,12 +88,22 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
 --
+-- ==== __Examples__
+--
+-- > λ. $$(gitHash)
+-- > "e67e943dd03744d3f93c21f84e127744e6a04543"
+--
 -- @since 1.40.0
 gitHash :: Code Q String
 gitHash = qToCode $ Internal.liftDefString Internal.gitHashQ
 
 -- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $$(gitHash)
+-- > "e67e943"
 --
 -- @since 1.40.0
 gitShortHash :: Code Q String
@@ -127,12 +113,22 @@ gitShortHash = qToCode $ Internal.liftDefString Internal.gitShortHashQ
 -- if not in a git repository. For detached heads, this will just be
 -- "HEAD".
 --
+-- ==== __Examples__
+--
+-- > λ. $$(gitBranch)
+-- > "main"
+--
 -- @since 1.4.0
 gitBranch :: Code Q String
 gitBranch = qToCode $ Internal.liftDefString Internal.gitBranchQ
 
 -- | Return the long git description for the current git commit, or
 -- @UNKNOWN@ if not in a git repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $$(gitDescribe)
+-- > "e67e943"
 --
 -- @since 1.40.0
 gitDescribe :: Code Q String
@@ -141,6 +137,11 @@ gitDescribe = qToCode $ Internal.liftDefString Internal.gitDescribeQ
 -- | Return @True@ if there are non-committed files present in the
 -- repository.
 --
+-- ==== __Examples__
+--
+-- > λ. $$(gitDirty)
+-- > False
+--
 -- @since 1.40.0
 gitDirty :: Code Q Bool
 gitDirty = qToCode $ Internal.liftFalse Internal.gitDirtyQ
@@ -148,17 +149,32 @@ gitDirty = qToCode $ Internal.liftFalse Internal.gitDirtyQ
 -- | Return @True@ if there are non-commited changes to tracked files
 -- present in the repository.
 --
+-- ==== __Examples__
+--
+-- > λ. $$(gitHash)
+-- > False
+--
 -- @since 1.40.0
 gitDirtyTracked :: Code Q Bool
 gitDirtyTracked = qToCode $ Internal.liftFalse Internal.gitDirtyTrackedQ
 
 -- | Return the number of commits in the current head.
 --
+-- ==== __Examples__
+--
+-- > λ. $$(gitHash)
+-- > "47"
+--
 -- @since 1.40.0
 gitCommitCount :: Code Q String
 gitCommitCount = qToCode $ Internal.liftDefString Internal.gitCommitCountQ
 
 -- | Return the commit date of the current head.
+--
+-- ==== __Examples__
+--
+-- > λ. $$(gitCommitDate)
+-- > "Mon Apr 14 22:14:44 2025 +1200"
 --
 -- @since 1.40.0
 gitCommitDate :: Code Q String

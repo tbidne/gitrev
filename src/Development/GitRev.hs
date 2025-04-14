@@ -10,24 +10,6 @@
 -- hash and branch in the code of your project. Useful for including
 -- in panic messages, @--version@ output, or diagnostic info for more
 -- informative bug reports.
---
--- > {-# LANGUAGE TemplateHaskell #-}
--- > import Development.GitRev
--- >
--- > panic :: String -> a
--- > panic msg = error panicMsg
--- >   where panicMsg =
--- >           concat [ "[panic ", $(gitBranch), "@", $(gitHash)
--- >                  , " (", $(gitCommitDate), ")"
--- >                  , " (", $(gitCommitCount), " commits in HEAD)"
--- >                  , dirty, "] ", msg ]
--- >         dirty | $(gitDirty) = " (uncommitted files present)"
--- >               | otherwise   = ""
--- >
--- > main = panic "oh no!"
---
--- > % cabal exec runhaskell Example.hs
--- > Example.hs: [panic master@2ae047ba5e4a6f0f3e705a43615363ac006099c1 (Mon Jan 11 11:50:59 2016 -0800) (14 commits in HEAD) (uncommitted files present)] oh no!
 module Development.GitRev
   ( gitBranch,
     gitCommitCount,
@@ -45,41 +27,81 @@ import Language.Haskell.TH (ExpQ, Q)
 import Language.Haskell.TH.Syntax (Lift (lift))
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
--- a git repository
+-- a git repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitHash)
+-- > "e67e943dd03744d3f93c21f84e127744e6a04543"
 gitHash :: ExpQ
 gitHash = qToExp $ Internal.liftDefString Internal.gitHashQ
 
 -- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitShortHash)
+-- > "e67e943"
 gitShortHash :: ExpQ
 gitShortHash = qToExp $ Internal.liftDefString Internal.gitShortHashQ
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
 -- if not in a git repository. For detached heads, this will just be
--- "HEAD"
+-- "HEAD".
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitBranch)
+-- > "main"
 gitBranch :: ExpQ
 gitBranch = qToExp $ Internal.liftDefString Internal.gitBranchQ
 
 -- | Return the long git description for the current git commit, or
 -- @UNKNOWN@ if not in a git repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitDescribe)
+-- > "e67e943"
 gitDescribe :: ExpQ
 gitDescribe = qToExp $ Internal.liftDefString Internal.gitDescribeQ
 
 -- | Return @True@ if there are non-committed files present in the
--- repository
+-- repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitDirty)
+-- > False
 gitDirty :: ExpQ
 gitDirty = qToExp $ Internal.liftFalse Internal.gitDirtyQ
 
 -- | Return @True@ if there are non-commited changes to tracked files
--- present in the repository
+-- present in the repository.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitDirtyTracked)
+-- > False
 gitDirtyTracked :: ExpQ
 gitDirtyTracked = qToExp $ Internal.liftFalse Internal.gitDirtyTrackedQ
 
--- | Return the number of commits in the current head
+-- | Return the number of commits in the current head.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitBranch)
+-- > "47"
 gitCommitCount :: ExpQ
 gitCommitCount = qToExp $ Internal.liftDefString Internal.gitCommitCountQ
 
--- | Return the commit date of the current head
+-- | Return the commit date of the current head.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitCommitDate)
+-- > "Mon Apr 14 22:14:44 2025 +1200"
 gitCommitDate :: ExpQ
 gitCommitDate = qToExp $ Internal.liftDefString Internal.gitCommitDateQ
 

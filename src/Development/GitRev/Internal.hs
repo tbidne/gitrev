@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 -- | Internal module.
@@ -88,11 +87,27 @@ gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 
 -- | Maps 'GitError' to string @UNKNOWN@.
 --
+-- ==== __Examples__
+--
+-- @
+--   -- Returns the hash or the string @UNKNOWN@ if there is a git error.
+--   gitHashDefStringQ :: 'Q' 'String'
+--   gitHashDefStringQ = 'liftDefString' 'gitHashQ'
+-- @
+--
 -- @since 1.40.0
 liftDefString :: Q (Either GitError String) -> Q String
 liftDefString m = fmap (either (const "UNKNOWN") id) m
 
 -- | Maps 'GitError' to 'False'.
+--
+-- ==== __Examples__
+--
+-- @
+--   -- Returns the dirty status, defaulting to 'False' if there is a git error.
+--   gitDirtyDefFalseQ :: 'Q' 'Bool'
+--   gitDirtyDefFalseQ = 'liftFalse' 'gitDirtyQ'
+-- @
 --
 -- @since 1.40.0
 liftFalse :: Q (Either GitError Bool) -> Q Bool
@@ -100,12 +115,28 @@ liftFalse m = m >>= either (pure . const False) (pure)
 
 -- | Calls 'error' on 'GitError'.
 --
+-- ==== __Examples__
+--
+-- @
+--   -- Returns the hash, failing at compile time if there is a git error.
+--   gitHashOrDieQ :: 'Q' 'String'
+--   gitHashOrDieQ = 'liftError' 'gitHashQ'
+-- @
+--
 -- @since 1.40.0
 liftError :: Q (Either GitError String) -> Q String
 liftError m = fmap (either (error . displayException) id) m
 
--- | @envFallback var m@ looks up environment variable @var@ when @m@ returns
+-- | @envFallback var m@ looks up environment variable @var@ when @m@
 -- fails. Returns the original error if the lookup also fails.
+--
+-- ==== __Examples__
+--
+-- @
+--   -- Looks up the environment variable @var@, when we fail to get the hash.
+--   gitHashEnvQ :: 'String' -> 'Q' 'String'
+--   gitHashEnvQ var = 'envFallback' var 'gitHashQ'
+-- @
 --
 -- @since 1.40.0
 envFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)

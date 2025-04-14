@@ -23,7 +23,7 @@ description:
 
 source-repository head
   type:     git
-  location: https://github.com/acfoltzer/gitrev.git
+  location: https://github.com/tbidne/gitrev.git
 
 common common-lang
   default-extensions:
@@ -52,6 +52,18 @@ library
     Development.GitRev
     Development.GitRev.Internal
     Development.GitRev.Typed
+
+executable example
+  import:         common-lang
+  main-is:        Main.hs
+  other-modules:  TH
+  build-depends:
+    , base
+    , gitrev
+    , template-haskell
+
+  hs-source-dirs: ./example
+  ghc-options:    -threaded -with-rtsopts=-N
 
 test-suite unit
   import:         common-lang
