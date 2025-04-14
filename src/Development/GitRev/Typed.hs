@@ -64,6 +64,12 @@ module Development.GitRev.Typed
     gitHashEnv,
     gitHashMay,
     gitHashMayEnv,
+
+    -- * Short hash
+    gitShortHash,
+    gitShortHashEnv,
+    gitShortHashMay,
+    gitShortHashMayEnv,
   )
 where
 
@@ -96,6 +102,31 @@ gitHashMay = qToCode Internal.gitHashMay
 -- @since 1.4.0
 gitHashMayEnv :: String -> Code Q (Maybe String)
 gitHashMayEnv var = qToCode $ Internal.envFallback var Internal.gitHashMay
+
+-- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
+-- a git repository.
+gitShortHash :: Code Q String
+gitShortHash = qToCode $ Internal.unknownFallback Internal.gitShortHashMay
+
+-- | 'gitShortHash' that attempts to read the parameter environment variable,
+-- when 'gitShortHash' fails.
+--
+-- @since 1.4.0
+gitShortHashEnv :: String -> Code Q String
+gitShortHashEnv var = qToCode $ Internal.envUnknownFallback var Internal.gitShortHashMay
+
+-- | 'gitShortHash' that returns that returns 'Nothing' instead of @UNKNOWN@.
+--
+-- @since 1.4.0
+gitShortHashMay :: Code Q (Maybe String)
+gitShortHashMay = qToCode Internal.gitShortHashMay
+
+-- | 'gitShortHashMay' that attempts to read the parameter environment variable,
+-- when 'gitShortHashMay' fails.
+--
+-- @since 1.4.0
+gitShortHashMayEnv :: String -> Code Q (Maybe String)
+gitShortHashMayEnv var = qToCode $ Internal.envFallback var Internal.gitShortHashMay
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
 -- if not in a git repository. For detached heads, this will just be

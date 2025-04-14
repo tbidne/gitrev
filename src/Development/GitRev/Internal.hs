@@ -3,16 +3,13 @@
 module Development.GitRev.Internal
   ( -- * Git
     gitHashMay,
+    gitShortHashMay,
     gitBranchMay,
     gitDescribeMay,
     gitDirty,
     gitDirtyTracked,
     gitCommitCountMay,
     gitCommitDateMay,
-
-    -- ** Utils
-    IndexUsed (..),
-    runGit,
 
     -- * Modifiers
     unknownFallback,
@@ -52,6 +49,9 @@ import System.Process (readProcessWithExitCode)
 
 gitHashMay :: Q (Maybe String)
 gitHashMay = runGit ["rev-parse", "HEAD"] IdxNotUsed
+
+gitShortHashMay :: Q (Maybe String)
+gitShortHashMay = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
 
 gitBranchMay :: Q (Maybe String)
 gitBranchMay = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed

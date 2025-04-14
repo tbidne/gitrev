@@ -64,6 +64,12 @@ module Development.GitRev
     gitHashEnv,
     gitHashMay,
     gitHashMayEnv,
+
+    -- * Short hash
+    gitShortHash,
+    gitShortHashEnv,
+    gitShortHashMay,
+    gitShortHashMayEnv,
   )
 where
 
@@ -95,6 +101,31 @@ gitHashMay = qToExp Internal.gitHashMay
 -- @since 1.4.0
 gitHashMayEnv :: String -> ExpQ
 gitHashMayEnv var = qToExp $ Internal.envFallback var Internal.gitHashMay
+
+-- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
+-- a git repository.
+gitShortHash :: ExpQ
+gitShortHash = qToExp $ Internal.unknownFallback Internal.gitShortHashMay
+
+-- | 'gitShortHash' that attempts to read the parameter environment variable,
+-- when 'gitShortHash' fails.
+--
+-- @since 1.4.0
+gitShortHashEnv :: String -> ExpQ
+gitShortHashEnv var = qToExp $ Internal.envUnknownFallback var Internal.gitShortHashMay
+
+-- | 'gitShortHash' that returns that returns 'Nothing' instead of @UNKNOWN@.
+--
+-- @since 1.4.0
+gitShortHashMay :: ExpQ
+gitShortHashMay = qToExp Internal.gitShortHashMay
+
+-- | 'gitShortHashMay' that attempts to read the parameter environment variable,
+-- when 'gitShortHashMay' fails.
+--
+-- @since 1.4.0
+gitShortHashMayEnv :: String -> ExpQ
+gitShortHashMayEnv var = qToExp $ Internal.envFallback var Internal.gitShortHashMay
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
 -- if not in a git repository. For detached heads, this will just be
