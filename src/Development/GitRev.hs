@@ -108,19 +108,21 @@ getDotGit = do
   let dotGit = pwd </> ".git"
       oops = return dotGit -- it's gonna fail, that's fine
   isDir <- doesDirectoryExist dotGit
-  isFile <- doesFileExist dotGit
-  if
-    | isDir -> return dotGit
-    | not isFile -> oops
-    | isFile ->
-        splitAt 8 `fmap` readFile dotGit >>= \case
-          ("gitdir: ", relDir) -> do
-            isRelDir <- doesDirectoryExist relDir
-            if isRelDir
-              then return relDir
-              else oops
-          _ -> oops
-    | otherwise -> oops
+
+  if isDir
+    then pure dotGit
+    else do
+      isFile <- doesFileExist dotGit
+      if isFile
+        then do
+          splitAt 8 `fmap` readFile dotGit >>= \case
+            ("gitdir: ", relDir) -> do
+              isRelDir <- doesDirectoryExist relDir
+              if isRelDir
+                then return relDir
+                else oops
+            _ -> oops
+        else oops
 
 -- | Get the root directory of the Git repo.
 getGitRoot :: IO FilePath
