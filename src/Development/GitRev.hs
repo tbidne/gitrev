@@ -41,7 +41,14 @@ module Development.GitRev
   )
 where
 
-import Control.Exception (SomeException, catch, throwIO)
+import Control.Exception
+  ( Exception (fromException),
+    SomeAsyncException (SomeAsyncException),
+    SomeException,
+    catchJust,
+    throwIO,
+    toException,
+  )
 import Control.Monad (when, (<=<))
 import Data.Maybe (isJust)
 import Data.Text (Text)
@@ -106,7 +113,7 @@ runGit args def useIdx = do
         packedRefsFp <- OsPath.decodeUtf packedRefs
         addDependentFile packedRefsFp
       runIO $ do
-        (code, out, _err) <- readProcessWithExitCode "git" args "" `catch` oops
+        (code, out, _err) <- readProcessWithExitCode "git" args "" `catchSync` oops
         case code of
           ExitSuccess -> pure (tillNewLineStr out)
           ExitFailure _ -> pure def
@@ -217,3 +224,19 @@ gitCommitCount =
 gitCommitDate :: ExpQ
 gitCommitDate =
   stringE =<< runGit ["log", "HEAD", "-1", "--format=%cd"] "UNKNOWN" IdxNotUsed
+
+catchSync :: IO a -> (SomeException -> IO a) -> IO a
+catchSync = catchIf isSyncException
+
+catchIf ::
+  (Exception e) =>
+  (e -> Bool) ->
+  IO a ->
+  (e -> IO a) ->
+  IO a
+catchIf p = catchJust (\e -> if p e then Just e else Nothing)
+
+isSyncException :: (Exception e) => e -> Bool
+isSyncException e = case fromException (toException e) of
+  Just SomeAsyncException {} -> False
+  Nothing -> True
