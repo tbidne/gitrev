@@ -27,6 +27,7 @@ source-repository head
 
 common common-lang
   default-extensions:
+    DeriveLift
     DerivingStrategies
     ImportQualifiedPost
     LambdaCase

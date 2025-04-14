@@ -1,25 +1,31 @@
+{-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE QuasiQuotes #-}
 
+-- | Internal module.
+--
+-- @since 1.40.0
 module Development.GitRev.Internal
   ( -- * Git
-    gitHashMay,
-    gitShortHashMay,
-    gitBranchMay,
-    gitDescribeMay,
-    gitDirty,
-    gitDirtyTracked,
-    gitCommitCountMay,
-    gitCommitDateMay,
+    GitError (..),
+    gitHashQ,
+    gitShortHashQ,
+    gitBranchQ,
+    gitDescribeQ,
+    gitDirtyQ,
+    gitDirtyTrackedQ,
+    gitCommitCountQ,
+    gitCommitDateQ,
 
     -- * Modifiers
-    unknownFallback,
+    liftFalse,
+    liftDefString,
+    liftError,
     envFallback,
-    envUnknownFallback,
   )
 where
 
 import Control.Exception
-  ( Exception (fromException),
+  ( Exception (displayException, fromException),
     SomeAsyncException (SomeAsyncException),
     SomeException,
     catchJust,
@@ -27,12 +33,12 @@ import Control.Exception
     toException,
   )
 import Control.Monad (when, (<=<))
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (isJust)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Language.Haskell.TH (Q, runIO)
-import Language.Haskell.TH.Syntax (addDependentFile)
+import Language.Haskell.TH.Syntax (Lift, addDependentFile)
 import System.Directory.OsPath
   ( doesDirectoryExist,
     doesFileExist,
@@ -47,62 +53,98 @@ import System.OsPath qualified as OsPath
 import System.OsString qualified as OsString
 import System.Process (readProcessWithExitCode)
 
-gitHashMay :: Q (Maybe String)
-gitHashMay = runGit ["rev-parse", "HEAD"] IdxNotUsed
+-- | @since 1.40.0
+gitHashQ :: Q (Either GitError String)
+gitHashQ = runGit ["rev-parse", "HEAD"] IdxNotUsed
 
-gitShortHashMay :: Q (Maybe String)
-gitShortHashMay = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
+-- | @since 1.40.0
+gitShortHashQ :: Q (Either GitError String)
+gitShortHashQ = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
 
-gitBranchMay :: Q (Maybe String)
-gitBranchMay = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
+-- | @since 1.40.0
+gitBranchQ :: Q (Either GitError String)
+gitBranchQ = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
 
-gitDescribeMay :: Q (Maybe String)
-gitDescribeMay = runGit ["describe", "--long", "--always"] IdxNotUsed
+-- | @since 1.40.0
+gitDescribeQ :: Q (Either GitError String)
+gitDescribeQ = runGit ["describe", "--long", "--always"] IdxNotUsed
 
-gitDirty :: Q Bool
-gitDirty = nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
+-- | @since 1.40.0
+gitDirtyQ :: Q (Either GitError Bool)
+gitDirtyQ = fmap nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
 
-gitDirtyTracked :: Q Bool
-gitDirtyTracked =
-  nonEmpty <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
+-- | @since 1.40.0
+gitDirtyTrackedQ :: Q (Either GitError Bool)
+gitDirtyTrackedQ =
+  fmap nonEmpty <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
 
-nonEmpty :: Maybe String -> Bool
-nonEmpty Nothing = False
-nonEmpty (Just "") = False
-nonEmpty (Just _) = True
+-- | @since 1.40.0
+gitCommitCountQ :: Q (Either GitError String)
+gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 
-gitCommitCountMay :: Q (Maybe String)
-gitCommitCountMay = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
+-- | @since 1.40.0
+gitCommitDateQ :: Q (Either GitError String)
+gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 
-gitCommitDateMay :: Q (Maybe String)
-gitCommitDateMay = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
+-- | Maps 'GitError' to string @UNKNOWN@.
+--
+-- @since 1.40.0
+liftDefString :: Q (Either GitError String) -> Q String
+liftDefString m = fmap (either (const "UNKNOWN") id) m
 
-unknownFallback :: Q (Maybe String) -> Q String
-unknownFallback m = fmap (fromMaybe "UNKNOWN") m
+-- | Maps 'GitError' to 'False'.
+--
+-- @since 1.40.0
+liftFalse :: Q (Either GitError Bool) -> Q Bool
+liftFalse m = m >>= either (pure . const False) (pure)
 
-envFallback :: String -> Q (Maybe String) -> Q (Maybe String)
-envFallback var m =
+-- | Calls 'error' on 'GitError'.
+--
+-- @since 1.40.0
+liftError :: Q (Either GitError String) -> Q String
+liftError m = fmap (either (error . displayException) id) m
+
+-- | @envFallback var m@ looks up environment variable @var@ when @m@ returns
+-- fails. Returns the original error if the lookup also fails.
+--
+-- @since 1.40.0
+envFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
+envFallback var m = do
   m >>= \case
-    Just r -> pure $ Just r
-    Nothing -> lookupEnvQ var
+    Right r -> pure $ Right r
+    Left err ->
+      lookupEnvQ var >>= \case
+        Just x -> pure $ Right x
+        Nothing -> pure $ Left err
 
-envUnknownFallback :: String -> Q (Maybe String) -> Q String
-envUnknownFallback var m =
-  unknownFallback $
-    m >>= \case
-      Just r -> pure $ Just r
-      Nothing -> lookupEnvQ var
+nonEmpty :: String -> Bool
+nonEmpty "" = False
+nonEmpty _ = True
 
 lookupEnvQ :: String -> Q (Maybe String)
 lookupEnvQ s = runIO (Env.lookupEnv s)
 
+-- | Errors that can be encountered with git.
+--
+-- @since 1.40.0
+data GitError
+  = -- | @since 1.40.0
+    GitNotFound
+  | -- | @since 1.40.0
+    GitRunError String
+  deriving stock (Eq, Lift, Show)
+
+-- | @since 1.40.0
+instance Exception GitError where
+  displayException GitNotFound = "Git executable not found"
+  displayException (GitRunError s) = "Git error: " ++ s
+
 -- | Run git with the given arguments and no stdin, returning the
--- stdout output. If git isn't available or something goes wrong,
--- return the second argument.
-runGit :: [String] -> IndexUsed -> Q (Maybe String)
+-- stdout output.
+runGit :: [String] -> IndexUsed -> Q (Either GitError String)
 runGit args useIdx = do
   let oops :: SomeException -> IO (ExitCode, String, String)
-      oops _e = pure (ExitFailure 1, "", "")
+      oops ex = pure (ExitFailure 1, "", displayException ex)
   gitFound <- runIO $ isJust <$> findExecutable [osp|git|]
   if gitFound
     then do
@@ -140,11 +182,11 @@ runGit args useIdx = do
         packedRefsFp <- OsPath.decodeUtf packedRefs
         addDependentFile packedRefsFp
       runIO $ do
-        (code, out, _err) <- readProcessWithExitCode "git" args "" `catchSync` oops
+        (code, out, err) <- readProcessWithExitCode "git" args "" `catchSync` oops
         case code of
-          ExitSuccess -> pure $ Just (tillNewLineStr out)
-          ExitFailure _ -> pure Nothing
-    else pure Nothing
+          ExitSuccess -> pure $ Right (tillNewLineStr out)
+          ExitFailure _ -> pure $ Left $ GitRunError err
+    else pure $ Left GitNotFound
 
 tillNewLineStr :: String -> String
 tillNewLineStr = takeWhile (\c -> c /= '\n' && c /= '\r')
