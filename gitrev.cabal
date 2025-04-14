@@ -44,8 +44,11 @@ library
     , filepath          >=1.5.2.0  && <1.6
     , os-string         ^>=2.0.0
     , process           >=1.6.13.2 && <1.7
-    , template-haskell  >=2.16.0.0 && <2.24
+    , template-haskell  >=2.17.0.0 && <2.24
     , text              >=2.0.1    && <2.2
 
   hs-source-dirs:  src
-  exposed-modules: Development.GitRev
+  exposed-modules:
+    Development.GitRev
+    Development.GitRev.Internal
+    Development.GitRev.Typed
