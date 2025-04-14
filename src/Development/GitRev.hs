@@ -1,6 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiWayIf #-}
-
 -- |
 -- Module      :  $Header$
 -- Copyright   :  (c) 2015 Adam C. Foltzer
@@ -42,15 +39,20 @@ module Development.GitRev
   )
 where
 
-import Control.Exception
-import Control.Monad
-import Data.Maybe
-import Language.Haskell.TH
-import Language.Haskell.TH.Syntax
+import Control.Exception (SomeException, catch)
+import Control.Monad (when)
+import Data.Maybe (isJust)
+import Language.Haskell.TH (ExpQ, Q, conE, runIO, stringE)
+import Language.Haskell.TH.Syntax (addDependentFile, falseName, trueName)
 import System.Directory
-import System.Exit
-import System.FilePath
-import System.Process
+  ( doesDirectoryExist,
+    doesFileExist,
+    findExecutable,
+    getCurrentDirectory,
+  )
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
+import System.FilePath ((</>))
+import System.Process (readProcessWithExitCode)
 
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output. If git isn't available or something goes wrong,
@@ -118,6 +120,7 @@ getDotGit = do
               then return relDir
               else oops
           _ -> oops
+    | otherwise -> oops
 
 -- | Get the root directory of the Git repo.
 getGitRoot :: IO FilePath
@@ -135,7 +138,7 @@ data IndexUsed
     IdxUsed
   | -- | The git index is /not/ used
     IdxNotUsed
-  deriving (Eq)
+  deriving stock (Eq)
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository
