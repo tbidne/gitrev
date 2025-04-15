@@ -1,6 +1,8 @@
-packages: .
+packages:
+  ./.
+  ./example
 
-package gitrev
+program-options
   ghc-options:
     -Wall -Wcompat
     -Widentities

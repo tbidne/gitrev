@@ -1,6 +1,8 @@
 module TH
   ( hashLegacy,
-    hashTyped,
+    hashEnvVal,
+    hashEnvDir,
+    hashEnvValDir,
   )
 where
 
@@ -14,9 +16,24 @@ hashLegacy = GR.gitHash
 
 -- | Returns the hash or the result of an environment variable lookup on
 -- @EXAMPLE_HASH@. Falls back to @UNKNOWN@ if both fail.
-hashTyped :: Code Q String
-hashTyped =
+hashEnvVal :: Code Q String
+hashEnvVal =
   GRT.qToCode
     . GRT.liftDefString
-    . GRT.envFallback "EXAMPLE_HASH"
+    . GRT.envValFallback "EXAMPLE_HASH"
+    $ GRT.gitHashQ
+
+hashEnvDir :: Code Q String
+hashEnvDir =
+  GRT.qToCode
+    . GRT.liftDefString
+    . GRT.envSrcFallback "EXAMPLE_HOME"
+    $ GRT.gitHashQ
+
+hashEnvValDir :: Code Q String
+hashEnvValDir =
+  GRT.qToCode
+    . GRT.liftDefString
+    . GRT.envSrcFallback "EXAMPLE_HOME"
+    . GRT.envValFallback "EXAMPLE_HASH"
     $ GRT.gitHashQ

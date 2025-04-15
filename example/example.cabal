@@ -1,0 +1,42 @@
+cabal-version: 2.2
+name:          example
+version:       1.4.0
+synopsis:      Compile git revision info into Haskell projects
+author:        Adam C. Foltzer
+maintainer:    acfoltzer@galois.com
+build-type:    Simple
+category:      Development
+tested-with:
+  GHC ==9.0.2
+   || ==9.2.8
+   || ==9.4.8
+   || ==9.6.6
+   || ==9.8.4
+   || ==9.10.1
+   || ==9.12.1
+
+source-repository head
+  type:     git
+  location: https://github.com/tbidne/gitrev.git
+
+common common-lang
+  default-extensions:
+    DeriveLift
+    DerivingStrategies
+    ImportQualifiedPost
+    LambdaCase
+    OverloadedStrings
+
+  default-language:   Haskell2010
+
+executable example
+  import:         common-lang
+  main-is:        Main.hs
+  other-modules:  TH
+  build-depends:
+    , base              >=4.15.0.0 && <4.22
+    , gitrev            ^>=1.4.0
+    , template-haskell  >=2.17.0.0 && <2.24
+
+  hs-source-dirs: .
+  ghc-options:    -threaded -with-rtsopts=-N

@@ -33,10 +33,14 @@ module Development.GitRev.Typed
     Internal.liftDefString,
     Internal.liftError,
     Internal.liftFalse,
-    Internal.envFallback,
+    Internal.envValFallback,
+    Internal.envSrcFallback,
 
     -- * Errors
     GitError (..),
+
+    -- * "Out-of-tree" builds
+    -- $out-of-tree
   )
 where
 
@@ -68,21 +72,81 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- @
 --
 -- We can also define a function that falls back to an environment variable,
--- in case the git command fails. This can be useful for "out-of-tree" builds
--- where the git directory is unavailable at build time, but we are able to
--- inject the value via an environment variable (e.g. nix).
+-- in case the git command fails.
 --
 -- @
---   -- envFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
+--   -- envValFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
 --   gitHashEnv :: 'String' -> 'Code' 'Q' ('Either' 'GitError' 'String')
---   gitHashEnv var = 'qToCode' $ 'Internal.envFallback' var 'Internal.gitHashQ'
+--   gitHashEnv var = 'qToCode' $ 'Internal.envValFallback' var 'Internal.gitHashQ'
 -- @
 --
--- Finally, these can be combined:
+-- Naturally, these can be combined:
 --
 -- @
 --   gitHashEnvOrDie :: 'String' -> 'Code' 'Q' 'String'
---   gitHashEnvOrDie var = 'qToCode' $ 'Internal.liftError' $ 'Internal.envFallback' var 'Internal.gitHashQ'
+--   gitHashEnvOrDie var = 'qToCode' $ 'Internal.liftError' $ 'Internal.envValFallback' var 'Internal.gitHashQ'
+-- @
+
+-- $out-of-tree
+--
+-- So-called \"out-of-tree\" builds present a problem, as we normally rely on
+-- building in the project directory where the .git directory is easy to
+-- locate. For example, while 'gitHash' will work for @cabal build@, it will
+-- not work for nix or @cabal install@. Fortunately, there are workarounds,
+-- both relying on passing the right data via environment variables.
+--
+-- 1. Cabal install
+--
+--     With cabal, we can pass the current directory during installation e.g.
+--
+--     > $ export EXAMPLE_HOME=$(pwd); cabal install example
+--
+--     Then we can define
+--
+--     @
+--       gitHashSrcDir :: 'Code' 'Q' 'String'
+--       gitHashSrcDir =
+--         'qToCode'
+--           . 'Internal.liftDefString'
+--           . 'Internal.envSrcFallback' \"EXAMPLE_HOME\"
+--           $ 'Internal.gitHashQ'
+--     @
+--
+-- 2. Nix
+--
+--     Nix requires a different approach. Thankfully, nix flakes provide
+--     a variety of revisions via its @self@ interface. For example:
+--
+--     @
+--       # Injecting the git hash via EXAMPLE_HASH where drv is the normal
+--       # derivation.
+--       drv.overrideAttrs (oldAttrs: {
+--         # Also: self.shortRev, self.dirtyShortRev
+--         EXAMPLE_HASH = \"${self.rev or self.dirtyRev}\";
+--       });
+--     @
+--
+--     Then we can define
+--
+--     @
+--       gitHashVal :: 'Code' 'Q' 'String'
+--       gitHashVal =
+--         'qToCode'
+--           . 'Internal.liftDefString'
+--           . 'Internal.envValFallback' \"EXAMPLE_HASH\"
+--           $ 'Internal.gitHashQ'
+--     @
+--
+-- We can compose these together to make a function that works for all three:
+--
+-- @
+--   gitHashValSrc :: 'Code' 'Q' 'String'
+--   gitHashValSrc =
+--     'qToCode'
+--       . 'Internal.liftDefString'
+--       . 'Internal.envSrcFallback' \"EXAMPLE_HOME\"
+--       . 'Internal.envValFallback' \"EXAMPLE_HASH\"
+--       $ 'Internal.gitHashQ'
 -- @
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in

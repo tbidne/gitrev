@@ -19,7 +19,8 @@ module Development.GitRev.Internal
     liftDefString,
     liftError,
     liftFalse,
-    envFallback,
+    envValFallback,
+    envSrcFallback,
   )
 where
 
@@ -44,6 +45,7 @@ import System.Directory.OsPath
     findExecutable,
     getCurrentDirectory,
   )
+import System.Directory.OsPath qualified as Dir
 import System.Environment qualified as Env
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import System.File.OsPath qualified as FileIO
@@ -127,26 +129,58 @@ liftFalse m = m >>= either (pure . const False) (pure)
 liftError :: Q (Either GitError String) -> Q String
 liftError m = fmap (either (error . displayException) id) m
 
--- | @envFallback var m@ looks up environment variable @var@ when @m@
+-- | @envValFallback var m@ looks up environment variable @var@ when @m@
 -- fails. Returns the original error if the lookup also fails.
 --
 -- ==== __Examples__
 --
 -- @
---   -- Looks up the environment variable @var@, when we fail to get the hash.
---   gitHashEnvQ :: 'String' -> 'Q' 'String'
---   gitHashEnvQ var = 'envFallback' var 'gitHashQ'
+--   gitHashEnvValQ :: 'String' -> 'Q' 'String'
+--   gitHashEnvValQ var = 'envValFallback' var 'gitHashQ'
+--
+--   -- usage
+--   $$(gitHashEnvValQ \"EXE_GIT_HASH\")
 -- @
 --
 -- @since 1.40.0
-envFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
-envFallback var m = do
+envValFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
+envValFallback var m = do
   m >>= \case
     Right r -> pure $ Right r
     Left err ->
       lookupEnvQ var >>= \case
         Just x -> pure $ Right x
         Nothing -> pure $ Left err
+
+-- | Like 'envValFallback' except instead of returning the /value/ of the env
+-- var, we use it find the source dir. This is useful for \"out-of-tree\"
+-- builds when we have the ability to inject the source directory via an
+-- environment variable.
+--
+-- ==== __Examples__
+--
+-- @
+--   gitHashEnvSrcQ :: 'Q' 'String'
+--   gitHashEnvSrcQ = 'envSrcFallback' \"EXE_SOURCE\" 'gitHashQ'
+-- @
+--
+-- > $ export EXE_SOURCE=$(pwd); cabal install my-exe
+--
+-- @since 1.40.0
+envSrcFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
+envSrcFallback var m = do
+  m >>= \case
+    Right r -> pure $ Right r
+    Left err -> do
+      lookupEnvQ var >>= \case
+        Nothing -> pure $ Left err
+        Just repoDirFp -> do
+          repoDirOs <- OsPath.encodeUtf repoDirFp
+          currDir <- runIO Dir.getCurrentDirectory
+          runIO $ Dir.setCurrentDirectory repoDirOs
+          r <- m
+          runIO $ Dir.setCurrentDirectory currDir
+          pure r
 
 nonEmpty :: String -> Bool
 nonEmpty "" = False

@@ -47,7 +47,35 @@
             };
         in
         {
-          packages.default = mkPkg false;
+          packages = {
+            # nix expression for gitrev
+            default = mkPkg false;
+
+            # self-contained example of building a haskell package via
+            # nixpkgs.
+            example = compiler.developPackage {
+              name = "example";
+              root = ./example;
+              returnShellEnv = false;
+              modifier =
+                drv:
+                let
+                  drv' = pkgs.haskell.lib.addBuildTools drv [
+                    compiler.cabal-install
+                    compiler.ghc
+                    pkgs.git
+                    pkgs.zlib
+                  ];
+                in
+                drv'.overrideAttrs (oldAttrs: {
+                  # Set the hash so that example/TH.hs works as expected.
+                  EXAMPLE_HASH = "${self.rev or self.dirtyRev}";
+                });
+              source-overrides = {
+                gitrev = ./.;
+              };
+            };
+          };
           devShells = {
             default = mkPkg true;
           };

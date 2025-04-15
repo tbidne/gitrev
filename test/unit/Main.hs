@@ -123,15 +123,15 @@ testEnvFallback = testCase "Use environment var fallback" $ do
   -- Cannot assert success because "out of tree" builds will fail.
   assertGitResult
     $$( GitRev.Typed.qToCode $
-          GitRev.Typed.envFallback "var" GitRev.Typed.gitHashQ
+          GitRev.Typed.envValFallback "var" GitRev.Typed.gitHashQ
       )
 
 testEnvFallbackLiftError :: TestTree
-testEnvFallbackLiftError = testCase "Combines envFallback and liftDefString" $ do
+testEnvFallbackLiftError = testCase "Combines envValFallback and liftDefString" $ do
   assertNonEmpty
     $$( GitRev.Typed.qToCode $
           GitRev.Typed.liftDefString $
-            GitRev.Typed.envFallback "var" GitRev.Typed.gitHashQ
+            GitRev.Typed.envValFallback "var" GitRev.Typed.gitHashQ
       )
 
 assertNonEmpty :: String -> IO ()
