@@ -62,7 +62,8 @@ instance Semigroup (QFirst e a) where
         Left _ -> unQFirst q2
 
 -- | @firstRight q qs@ takes the first @qi@ in @q : qs@ that returns
--- 'Right', without executing any @qj@ for @j > i@.
+-- 'Right', without executing any @qj@ for @j > i@. If there are no
+-- 'Right'\'s, returns the final result.
 --
 -- @since 2.0
 firstRight :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
