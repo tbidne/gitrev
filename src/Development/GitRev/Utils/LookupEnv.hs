@@ -1,6 +1,6 @@
 -- | Provides utilities for querying environment variables.
 --
--- @since 1.40.0
+-- @since 2.0
 module Development.GitRev.Utils.LookupEnv
   ( LookupEnvError (..),
     envValQ,
@@ -20,7 +20,7 @@ import System.OsPath qualified as OsPath
 
 -- | Performs an environment variable lookup in 'Q'.
 --
--- @since 1.4.0
+-- @since 2.0
 envValQ ::
   -- | The environment variable @k@.
   String ->
@@ -31,7 +31,7 @@ envValQ var = withEnvVarQ var pure
 -- | Runs the given 'Q'-action under the directory @d@ pointed to by the
 -- given environment variable.
 --
--- @since 1.4.0
+-- @since 2.0
 runInEnvDirQ ::
   -- | The environment variable @k@ that should point to some directory
   -- @d@.
@@ -51,18 +51,23 @@ runInEnvDirQ var m = withEnvVarQ var $ \repoDirFp -> do
 -- | Environment variable lookup failure. The value is the variable we
 -- attempted to look up.
 --
--- @since 1.4.0
+-- @since 2.0
 newtype LookupEnvError = MkLookupEnvError String
-  deriving stock (Lift, Show)
+  deriving stock
+    ( -- | @since 2.0
+      Lift,
+      -- | @since 2.0
+      Show
+    )
 
--- | @since 1.4.0
+-- | @since 2.0
 instance Exception LookupEnvError where
   displayException (MkLookupEnvError var) =
     "Failed to lookup environment variable: " ++ var
 
 -- | Runs a 'Q'-action on the result of an environment variable, if it exists.
 --
--- @since 1.4.0
+-- @since 2.0
 withEnvVarQ ::
   -- | The environment variable @k@ to lookup.
   String ->

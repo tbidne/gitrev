@@ -2,7 +2,7 @@
 
 -- | Provides utilities for querying git.
 --
--- @since 1.40.0
+-- @since 2.0
 module Development.GitRev.Utils.Git
   ( GitError (..),
     gitHashQ,
@@ -44,36 +44,36 @@ import System.OsPath qualified as OsPath
 import System.OsString qualified as OsString
 import System.Process (readProcessWithExitCode)
 
--- | @since 1.40.0
+-- | @since 2.0
 gitHashQ :: Q (Either GitError String)
 gitHashQ = runGit ["rev-parse", "HEAD"] IdxNotUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitShortHashQ :: Q (Either GitError String)
 gitShortHashQ = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitBranchQ :: Q (Either GitError String)
 gitBranchQ = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitDescribeQ :: Q (Either GitError String)
 gitDescribeQ = runGit ["describe", "--long", "--always"] IdxNotUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitDirtyQ :: Q (Either GitError Bool)
 gitDirtyQ = fmap nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitDirtyTrackedQ :: Q (Either GitError Bool)
 gitDirtyTrackedQ =
   fmap nonEmpty <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitCommitCountQ :: Q (Either GitError String)
 gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 
--- | @since 1.40.0
+-- | @since 2.0
 gitCommitDateQ :: Q (Either GitError String)
 gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 
@@ -83,15 +83,22 @@ nonEmpty _ = True
 
 -- | Errors that can be encountered with git.
 --
--- @since 1.40.0
+-- @since 2.0
 data GitError
-  = -- | @since 1.40.0
+  = -- | @since 2.0
     GitNotFound
-  | -- | @since 1.40.0
+  | -- | @since 2.0
     GitRunError String
-  deriving stock (Eq, Lift, Show)
+  deriving stock
+    ( -- | @since 2.0
+      Eq,
+      -- | @since 2.0
+      Lift,
+      -- | @since 2.0
+      Show
+    )
 
--- | @since 1.40.0
+-- | @since 2.0
 instance Exception GitError where
   displayException GitNotFound = "Git executable not found"
   displayException (GitRunError s) = "Git error: " ++ s

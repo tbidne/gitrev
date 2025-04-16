@@ -1,6 +1,6 @@
 -- | Typed version of "Development.GitRev".
 --
--- @since 1.40.0
+-- @since 2.0
 module Development.GitRev.Typed
   ( -- * Basic functions
     -- $basic
@@ -226,7 +226,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- > λ. $$(gitHash)
 -- > "e67e943dd03744d3f93c21f84e127744e6a04543"
 --
--- @since 1.40.0
+-- @since 2.0
 gitHash :: Code Q String
 gitHash = qToCode $ Utils.liftDefString Git.gitHashQ
 
@@ -238,7 +238,7 @@ gitHash = qToCode $ Utils.liftDefString Git.gitHashQ
 -- > λ. $$(gitHash)
 -- > "e67e943"
 --
--- @since 1.40.0
+-- @since 2.0
 gitShortHash :: Code Q String
 gitShortHash = qToCode $ Utils.liftDefString Git.gitShortHashQ
 
@@ -251,7 +251,7 @@ gitShortHash = qToCode $ Utils.liftDefString Git.gitShortHashQ
 -- > λ. $$(gitBranch)
 -- > "main"
 --
--- @since 1.4.0
+-- @since 2.0
 gitBranch :: Code Q String
 gitBranch = qToCode $ Utils.liftDefString Git.gitBranchQ
 
@@ -263,7 +263,7 @@ gitBranch = qToCode $ Utils.liftDefString Git.gitBranchQ
 -- > λ. $$(gitDescribe)
 -- > "e67e943"
 --
--- @since 1.40.0
+-- @since 2.0
 gitDescribe :: Code Q String
 gitDescribe = qToCode $ Utils.liftDefString Git.gitDescribeQ
 
@@ -275,7 +275,7 @@ gitDescribe = qToCode $ Utils.liftDefString Git.gitDescribeQ
 -- > λ. $$(gitDirty)
 -- > False
 --
--- @since 1.40.0
+-- @since 2.0
 gitDirty :: Code Q Bool
 gitDirty = qToCode $ Utils.liftFalse Git.gitDirtyQ
 
@@ -287,7 +287,7 @@ gitDirty = qToCode $ Utils.liftFalse Git.gitDirtyQ
 -- > λ. $$(gitHash)
 -- > False
 --
--- @since 1.40.0
+-- @since 2.0
 gitDirtyTracked :: Code Q Bool
 gitDirtyTracked = qToCode $ Utils.liftFalse Git.gitDirtyTrackedQ
 
@@ -298,7 +298,7 @@ gitDirtyTracked = qToCode $ Utils.liftFalse Git.gitDirtyTrackedQ
 -- > λ. $$(gitHash)
 -- > "47"
 --
--- @since 1.40.0
+-- @since 2.0
 gitCommitCount :: Code Q String
 gitCommitCount = qToCode $ Utils.liftDefString Git.gitCommitCountQ
 
@@ -309,12 +309,12 @@ gitCommitCount = qToCode $ Utils.liftDefString Git.gitCommitCountQ
 -- > λ. $$(gitCommitDate)
 -- > "Mon Apr 14 22:14:44 2025 +1200"
 --
--- @since 1.40.0
+-- @since 2.0
 gitCommitDate :: Code Q String
 gitCommitDate = qToCode $ Utils.liftDefString Git.gitCommitDateQ
 
 -- | Lifts a 'Q' computation to 'Code', for usage with typed TH.
 --
--- @since 1.40.0
+-- @since 2.0
 qToCode :: (Lift a) => Q a -> Code Q a
 qToCode = TH.liftCode . fmap TExp . (>>= lift)

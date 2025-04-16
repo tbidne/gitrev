@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name:          example
-version:       1.4.0
+version:       0.1
 synopsis:      Compile git revision info into Haskell projects
 author:        Adam C. Foltzer
 maintainer:    acfoltzer@galois.com
@@ -35,7 +35,7 @@ executable example
   other-modules:  TH
   build-depends:
     , base              >=4.15.0.0 && <4.22
-    , gitrev            ^>=1.4.0
+    , gitrev            ^>=2.0
     , template-haskell  >=2.17.0.0 && <2.24
 
   hs-source-dirs: .

@@ -3,7 +3,7 @@
 
 -- | Utils module.
 --
--- @since 1.40.0
+-- @since 2.0
 module Development.GitRev.Utils
   ( -- * Combining Q actions lazily
     QFirst (..),
@@ -53,6 +53,7 @@ import Language.Haskell.TH.Syntax (Lift)
 -- 'Semigroup' instance.
 data QFirst e a = MkQFirst {unQFirst :: Q (Either e a)}
 
+-- | @since 2.0
 instance Semigroup (QFirst e a) where
   MkQFirst q1 <> MkQFirst q2 =
     MkQFirst $
@@ -77,7 +78,7 @@ firstRight q qs = unQFirst $ foldMap1 MkQFirst (q :| qs)
 --   gitHashDefStringQ = 'liftDefString' 'Development.GitRev.Utils.Git.gitHashQ'
 -- @
 --
--- @since 1.40.0
+-- @since 2.0
 liftDefString :: (Functor f) => f (Either e String) -> f String
 liftDefString = fmap (either (const "UNKNOWN") id)
 
@@ -91,7 +92,7 @@ liftDefString = fmap (either (const "UNKNOWN") id)
 --   gitDirtyDefFalseQ = 'liftFalse' 'Development.GitRev.Utils.Git.gitDirtyQ'
 -- @
 --
--- @since 1.40.0
+-- @since 2.0
 liftFalse :: (Functor f) => f (Either e Bool) -> f Bool
 liftFalse = fmap (either (const False) id)
 
@@ -105,21 +106,26 @@ liftFalse = fmap (either (const False) id)
 --   gitHashOrDieQ = 'liftError' 'Development.GitRev.Utils.Git.gitHashQ'
 -- @
 --
--- @since 1.40.0
+-- @since 2.0
 liftError :: (Exception e, Functor f) => f (Either e a) -> f a
 liftError = fmap (either (error . displayException) id)
 
 -- | Git or env lookup error.
 --
--- @since 1.4.0
+-- @since 2.0
 data GitOrLookupEnvError
-  = -- | @since 1.4.0
+  = -- | @since 2.0
     GitOrLookupEnvGit GitError
-  | -- | @since 1.4.0
+  | -- | @since 2.0
     GitOrLookupEnvLookupEnv LookupEnvError
-  deriving stock (Lift, Show)
+  deriving stock
+    ( -- | @since 2.0
+      Lift,
+      -- | @since 2.0
+      Show
+    )
 
--- | @since 1.4.0
+-- | @since 2.0
 instance Exception GitOrLookupEnvError where
   displayException (GitOrLookupEnvGit ge) = displayException ge
   displayException (GitOrLookupEnvLookupEnv x) = displayException x
@@ -128,7 +134,7 @@ instance Exception GitOrLookupEnvError where
 -- 'LookupEnv.envValQ' that lifts 'LookupEnvError' to 'GitOrLookupEnvError'
 -- for convenience.
 --
--- @since 1.4.0
+-- @since 2.0
 envValQ ::
   -- | Environment variable @k@ to lookup.
   String ->
@@ -139,7 +145,7 @@ envValQ = liftLookupEnvError . LookupEnv.envValQ
 -- | @runGitInEnvDirQ var q@ runs @q@ in the directory given by the
 -- environment variable.
 --
--- @since 1.4.0
+-- @since 2.0
 runGitInEnvDirQ ::
   -- | Environment variable pointing to a directory path, in which we run
   -- the git process.
@@ -154,7 +160,7 @@ runGitInEnvDirQ var = joinErrors . LookupEnv.runInEnvDirQ var
 
 -- | Utility function for joining lookup and git errors.
 --
--- @since 1.4.0
+-- @since 2.0
 joinLookupEnvGitErrors ::
   ( Bifunctor p,
     forall e. Monad (p e)
@@ -169,7 +175,7 @@ joinLookupEnvGitErrors =
 
 -- | Utility function for joining git and lookup errors.
 --
--- @since 1.4.0
+-- @since 2.0
 joinGitLookupEnvErrors ::
   ( Bifunctor p,
     forall e. Monad (p e)
@@ -185,7 +191,7 @@ joinGitLookupEnvErrors =
 -- | Utility function for lifting a 'GitError' to the larger
 -- 'GitOrLookupEnvError'.
 --
--- @since 1.4.0
+-- @since 2.0
 liftGitError ::
   ( Bifunctor p,
     Functor f
@@ -198,7 +204,7 @@ liftGitError = fmap (first GitOrLookupEnvGit)
 -- | Utility function for lifting a 'LookupEnvError' to the larger
 -- 'GitOrLookupEnvError'.
 --
--- @since 1.4.0
+-- @since 2.0
 liftLookupEnvError ::
   ( Bifunctor p,
     Functor f
