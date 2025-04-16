@@ -8,6 +8,8 @@ where
 
 import Development.GitRev qualified as GR
 import Development.GitRev.Typed qualified as GRT
+import Development.GitRev.Utils (GitOrLookupEnvError)
+import Development.GitRev.Utils qualified as GRU
 import Language.Haskell.TH (Code, ExpQ, Q)
 
 -- | Returns the hash or @UNKNOWN@.
@@ -20,20 +22,28 @@ hashEnvVal :: Code Q String
 hashEnvVal =
   GRT.qToCode
     . GRT.liftDefString
-    . GRT.envValFallback "EXAMPLE_HASH"
-    $ GRT.gitHashQ
+    $ GRU.firstRight
+      (GRT.liftGitError GRT.gitHashQ)
+      [GRT.envValQ "EXAMPLE_HASH"]
 
 hashEnvDir :: Code Q String
 hashEnvDir =
   GRT.qToCode
     . GRT.liftDefString
-    . GRT.envSrcFallback "EXAMPLE_HOME"
-    $ GRT.gitHashQ
+    $ GRU.firstRight
+      (GRT.liftGitError GRT.gitHashQ)
+      [GRT.runGitInEnvDirQ "EXAMPLE_HOME" GRT.gitHashQ]
 
 hashEnvValDir :: Code Q String
-hashEnvValDir =
-  GRT.qToCode
-    . GRT.liftDefString
-    . GRT.envSrcFallback "EXAMPLE_HOME"
-    . GRT.envValFallback "EXAMPLE_HASH"
-    $ GRT.gitHashQ
+hashEnvValDir = toCode gitHash
+  where
+    toCode :: Q (Either GitOrLookupEnvError String) -> Code Q String
+    toCode = GRT.qToCode . GRT.liftDefString
+
+    gitHash :: Q (Either GitOrLookupEnvError String)
+    gitHash =
+      GRU.firstRight
+        (GRT.liftGitError GRT.gitHashQ)
+        [ GRT.envValQ "EXAMPLE_HASH",
+          GRT.runGitInEnvDirQ "EXAMPLE_HOME" GRT.gitHashQ
+        ]

@@ -13,39 +13,64 @@ module Development.GitRev.Typed
     gitHash,
     gitShortHash,
 
-    -- * Custom functions
+    -- * Custom behavior
     -- $custom
 
-    -- ** Q Primitives
-    Internal.gitBranchQ,
-    Internal.gitCommitCountQ,
-    Internal.gitCommitDateQ,
-    Internal.gitDescribeQ,
-    Internal.gitDirtyQ,
-    Internal.gitDirtyTrackedQ,
-    Internal.gitHashQ,
-    Internal.gitShortHashQ,
+    -- ** Git Primitives
+    Git.gitBranchQ,
+    Git.gitCommitCountQ,
+    Git.gitCommitDateQ,
+    Git.gitDescribeQ,
+    Git.gitDirtyQ,
+    Git.gitDirtyTrackedQ,
+    Git.gitHashQ,
+    Git.gitShortHashQ,
+
+    -- ** Environment lookup
+    Utils.envValQ,
+    Utils.runGitInEnvDirQ,
 
     -- ** Q to Code
     qToCode,
 
-    -- ** Q Modifiers
-    Internal.liftDefString,
-    Internal.liftError,
-    Internal.liftFalse,
-    Internal.envValFallback,
-    Internal.envSrcFallback,
+    -- ** Q Combinators
 
-    -- * Errors
+    -- *** Laziness
+    QFirst (..),
+    Utils.firstRight,
+
+    -- *** Lifting Either
+    Utils.liftDefString,
+    Utils.liftError,
+    Utils.liftFalse,
+
+    -- ** Errors
+    GitOrLookupEnvError (..),
     GitError (..),
+    LookupEnvError (..),
+
+    -- *** Utilities
+    Utils.liftGitError,
+    Utils.liftLookupEnvError,
+    Utils.joinLookupEnvGitErrors,
+    Utils.joinGitLookupEnvErrors,
 
     -- * "Out-of-tree" builds
     -- $out-of-tree
   )
 where
 
-import Development.GitRev.Internal (GitError (GitNotFound, GitRunError))
-import Development.GitRev.Internal qualified as Internal
+import Development.GitRev.Utils
+  ( GitOrLookupEnvError
+      ( GitOrLookupEnvGit,
+        GitOrLookupEnvLookupEnv
+      ),
+    QFirst (MkQFirst),
+  )
+import Development.GitRev.Utils qualified as Utils
+import Development.GitRev.Utils.Git (GitError (GitNotFound, GitRunError))
+import Development.GitRev.Utils.Git qualified as Git
+import Development.GitRev.Utils.LookupEnv (LookupEnvError (MkLookupEnvError))
 import Language.Haskell.TH (Code, Q)
 import Language.Haskell.TH qualified as TH
 import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
@@ -61,30 +86,36 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- $custom
 --
 -- These functions allow us to define custom behavior. For instance, using
--- the primitive 'Internal.getHashQ', we can define a variant of 'gitHash'
+-- the primitive 'Git.getHashQ', we can define a variant of 'gitHash'
 -- that instead fails to compile if there are any problems with git:
 --
 -- @
---   -- gitHashQ :: Q (Either GitError String)
---   -- liftError :: Q (Either GitError String) -> Q String
 --   gitHashOrDie :: 'Code' 'Q' 'String'
---   gitHashOrDie = 'qToCode' $ 'Internal.liftError' 'Internal.gitHashQ'
+--   gitHashOrDie = 'qToCode' $ 'Utils.liftError' 'Git.gitHashQ'
 -- @
 --
 -- We can also define a function that falls back to an environment variable,
 -- in case the git command fails.
 --
 -- @
---   -- envValFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
---   gitHashEnv :: 'String' -> 'Code' 'Q' ('Either' 'GitError' 'String')
---   gitHashEnv var = 'qToCode' $ 'Internal.envValFallback' var 'Internal.gitHashQ'
+--   gitHashEnv :: 'String' -> 'Code' 'Q' ('Either' 'GitOrLookupEnvError' 'String')
+--   gitHashEnv var =
+--     'qToCode' $
+--       'Utils.firstRight'
+--         ('Utils.liftGitError' 'Git.gitHashQ')
+--         ['Utils.envValQ' var]
 -- @
 --
 -- Naturally, these can be combined:
 --
 -- @
 --   gitHashEnvOrDie :: 'String' -> 'Code' 'Q' 'String'
---   gitHashEnvOrDie var = 'qToCode' $ 'Internal.liftError' $ 'Internal.envValFallback' var 'Internal.gitHashQ'
+--   gitHashEnvOrDie var =
+--     'qToCode'
+--       . 'Utils.liftError'
+--       $ 'Utils.firstRight'
+--         ('Utils.liftGitError' 'Git.gitHashQ')
+--         ['Utils.envValQ' var]
 -- @
 
 -- $out-of-tree
@@ -95,24 +126,31 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- not work for nix or @cabal install@. Fortunately, there are workarounds,
 -- both relying on passing the right data via environment variables.
 --
--- 1. Cabal install
+-- 1. Passing the git directory.
 --
---     With cabal, we can pass the current directory during installation e.g.
+--     For situations where we can pass the current directory during
+--     installation e.g.
 --
 --     > $ export EXAMPLE_HOME=$(pwd); cabal install example
 --
---     Then we can define
+--     We can define
 --
 --     @
 --       gitHashSrcDir :: 'Code' 'Q' 'String'
 --       gitHashSrcDir =
 --         'qToCode'
 --           . 'Internal.liftDefString'
---           . 'Internal.envSrcFallback' \"EXAMPLE_HOME\"
---           $ 'Internal.gitHashQ'
+--           $ 'Utils.firstRight'
+--             ('Utils.liftGitError' 'Utils.gitHashQ')
+--             ['Utils.runGitInEnvDirQ' \"EXAMPLE_HOME\" 'Utils.gitHashQ']
 --     @
 --
--- 2. Nix
+--     If the initial call to 'Utils.gitHashQ' fails, then we will try again,
+--     running the command from the directory pointed to by @EXAMPLE_HOME@.
+--     'Utils.firstRight' ensures we do not run the second action unless the
+--     first fails.
+--
+-- 2. Passing the value itself.
 --
 --     Nix requires a different approach. Thankfully, nix flakes provide
 --     a variety of revisions via its @self@ interface. For example:
@@ -133,21 +171,52 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --       gitHashVal =
 --         'qToCode'
 --           . 'Internal.liftDefString'
---           . 'Internal.envValFallback' \"EXAMPLE_HASH\"
---           $ 'Internal.gitHashQ'
+--           $ 'Utils.firstRight'
+--             ('Utils.liftGitError' 'Utils.gitHashQ')
+--             ['Utils.envValQ' \"EXAMPLE_HASH\"]
 --     @
 --
--- We can compose these together to make a function that works for all three:
+--     Once again, if the first attempt fails, we will run the second action,
+--     looking for the value of @EXAMPLE_HASH@.
+--
+-- Finally, we can compose these together to make a function that works for all
+-- three cases:
 --
 -- @
 --   gitHashValSrc :: 'Code' 'Q' 'String'
 --   gitHashValSrc =
 --     'qToCode'
 --       . 'Internal.liftDefString'
---       . 'Internal.envSrcFallback' \"EXAMPLE_HOME\"
---       . 'Internal.envValFallback' \"EXAMPLE_HASH\"
---       $ 'Internal.gitHashQ'
+--       $ 'Utils.firstRight'
+--         ('Utils.liftGitError' 'Utils.gitHashQ')
+--         [ 'Utils.envValQ' \"EXAMPLE_HASH\",
+--           'Utils.runGitInEnvDirQ' \"EXAMPLE_HOME\" 'Utils.gitHashQ'
+--         ]
 -- @
+--
+-- A final note on laziness: As alluded to above, 'Q'\'s default semigroup
+-- instance is not lazy enough:
+--
+-- @
+--   q1, q2 :: 'Q' ('Either' e a)
+--   q1 <> q2 -- executes both, regardless of if @q1@ succeeds.
+-- @
+--
+-- For this reason, we introduce the 'QFirst' newtype:
+--
+-- @
+--   MkQFirst q1 <> MkQFirst q2
+-- @
+--
+-- On the other hand, this will only run @q2@ if @q1@ returns 'Left'. The
+-- function
+--
+-- @
+--   'firstRight' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
+-- @
+--
+-- is a convenience function for utilizing 'QFirst'\'s semigroup to preserve
+-- laziness.
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
@@ -159,7 +228,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --
 -- @since 1.40.0
 gitHash :: Code Q String
-gitHash = qToCode $ Internal.liftDefString Internal.gitHashQ
+gitHash = qToCode $ Utils.liftDefString Git.gitHashQ
 
 -- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
@@ -171,7 +240,7 @@ gitHash = qToCode $ Internal.liftDefString Internal.gitHashQ
 --
 -- @since 1.40.0
 gitShortHash :: Code Q String
-gitShortHash = qToCode $ Internal.liftDefString Internal.gitShortHashQ
+gitShortHash = qToCode $ Utils.liftDefString Git.gitShortHashQ
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
 -- if not in a git repository. For detached heads, this will just be
@@ -184,7 +253,7 @@ gitShortHash = qToCode $ Internal.liftDefString Internal.gitShortHashQ
 --
 -- @since 1.4.0
 gitBranch :: Code Q String
-gitBranch = qToCode $ Internal.liftDefString Internal.gitBranchQ
+gitBranch = qToCode $ Utils.liftDefString Git.gitBranchQ
 
 -- | Return the long git description for the current git commit, or
 -- @UNKNOWN@ if not in a git repository.
@@ -196,7 +265,7 @@ gitBranch = qToCode $ Internal.liftDefString Internal.gitBranchQ
 --
 -- @since 1.40.0
 gitDescribe :: Code Q String
-gitDescribe = qToCode $ Internal.liftDefString Internal.gitDescribeQ
+gitDescribe = qToCode $ Utils.liftDefString Git.gitDescribeQ
 
 -- | Return @True@ if there are non-committed files present in the
 -- repository.
@@ -208,7 +277,7 @@ gitDescribe = qToCode $ Internal.liftDefString Internal.gitDescribeQ
 --
 -- @since 1.40.0
 gitDirty :: Code Q Bool
-gitDirty = qToCode $ Internal.liftFalse Internal.gitDirtyQ
+gitDirty = qToCode $ Utils.liftFalse Git.gitDirtyQ
 
 -- | Return @True@ if there are non-commited changes to tracked files
 -- present in the repository.
@@ -220,7 +289,7 @@ gitDirty = qToCode $ Internal.liftFalse Internal.gitDirtyQ
 --
 -- @since 1.40.0
 gitDirtyTracked :: Code Q Bool
-gitDirtyTracked = qToCode $ Internal.liftFalse Internal.gitDirtyTrackedQ
+gitDirtyTracked = qToCode $ Utils.liftFalse Git.gitDirtyTrackedQ
 
 -- | Return the number of commits in the current head.
 --
@@ -231,7 +300,7 @@ gitDirtyTracked = qToCode $ Internal.liftFalse Internal.gitDirtyTrackedQ
 --
 -- @since 1.40.0
 gitCommitCount :: Code Q String
-gitCommitCount = qToCode $ Internal.liftDefString Internal.gitCommitCountQ
+gitCommitCount = qToCode $ Utils.liftDefString Git.gitCommitCountQ
 
 -- | Return the commit date of the current head.
 --
@@ -242,7 +311,7 @@ gitCommitCount = qToCode $ Internal.liftDefString Internal.gitCommitCountQ
 --
 -- @since 1.40.0
 gitCommitDate :: Code Q String
-gitCommitDate = qToCode $ Internal.liftDefString Internal.gitCommitDateQ
+gitCommitDate = qToCode $ Utils.liftDefString Git.gitCommitDateQ
 
 -- | Lifts a 'Q' computation to 'Code', for usage with typed TH.
 --

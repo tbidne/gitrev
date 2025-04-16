@@ -22,7 +22,8 @@ module Development.GitRev
   )
 where
 
-import Development.GitRev.Internal qualified as Internal
+import Development.GitRev.Utils qualified as Utils
+import Development.GitRev.Utils.Git qualified as Git
 import Language.Haskell.TH (ExpQ, Q)
 import Language.Haskell.TH.Syntax (Lift (lift))
 
@@ -34,7 +35,7 @@ import Language.Haskell.TH.Syntax (Lift (lift))
 -- > λ. $(gitHash)
 -- > "e67e943dd03744d3f93c21f84e127744e6a04543"
 gitHash :: ExpQ
-gitHash = qToExp $ Internal.liftDefString Internal.gitHashQ
+gitHash = qToExp $ Utils.liftDefString Git.gitHashQ
 
 -- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
@@ -44,7 +45,7 @@ gitHash = qToExp $ Internal.liftDefString Internal.gitHashQ
 -- > λ. $(gitShortHash)
 -- > "e67e943"
 gitShortHash :: ExpQ
-gitShortHash = qToExp $ Internal.liftDefString Internal.gitShortHashQ
+gitShortHash = qToExp $ Utils.liftDefString Git.gitShortHashQ
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
 -- if not in a git repository. For detached heads, this will just be
@@ -55,7 +56,7 @@ gitShortHash = qToExp $ Internal.liftDefString Internal.gitShortHashQ
 -- > λ. $(gitBranch)
 -- > "main"
 gitBranch :: ExpQ
-gitBranch = qToExp $ Internal.liftDefString Internal.gitBranchQ
+gitBranch = qToExp $ Utils.liftDefString Git.gitBranchQ
 
 -- | Return the long git description for the current git commit, or
 -- @UNKNOWN@ if not in a git repository.
@@ -65,7 +66,7 @@ gitBranch = qToExp $ Internal.liftDefString Internal.gitBranchQ
 -- > λ. $(gitDescribe)
 -- > "e67e943"
 gitDescribe :: ExpQ
-gitDescribe = qToExp $ Internal.liftDefString Internal.gitDescribeQ
+gitDescribe = qToExp $ Utils.liftDefString Git.gitDescribeQ
 
 -- | Return @True@ if there are non-committed files present in the
 -- repository.
@@ -75,7 +76,7 @@ gitDescribe = qToExp $ Internal.liftDefString Internal.gitDescribeQ
 -- > λ. $(gitDirty)
 -- > False
 gitDirty :: ExpQ
-gitDirty = qToExp $ Internal.liftFalse Internal.gitDirtyQ
+gitDirty = qToExp $ Utils.liftFalse Git.gitDirtyQ
 
 -- | Return @True@ if there are non-commited changes to tracked files
 -- present in the repository.
@@ -85,7 +86,7 @@ gitDirty = qToExp $ Internal.liftFalse Internal.gitDirtyQ
 -- > λ. $(gitDirtyTracked)
 -- > False
 gitDirtyTracked :: ExpQ
-gitDirtyTracked = qToExp $ Internal.liftFalse Internal.gitDirtyTrackedQ
+gitDirtyTracked = qToExp $ Utils.liftFalse Git.gitDirtyTrackedQ
 
 -- | Return the number of commits in the current head.
 --
@@ -94,7 +95,7 @@ gitDirtyTracked = qToExp $ Internal.liftFalse Internal.gitDirtyTrackedQ
 -- > λ. $(gitBranch)
 -- > "47"
 gitCommitCount :: ExpQ
-gitCommitCount = qToExp $ Internal.liftDefString Internal.gitCommitCountQ
+gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
 
 -- | Return the commit date of the current head.
 --
@@ -103,7 +104,7 @@ gitCommitCount = qToExp $ Internal.liftDefString Internal.gitCommitCountQ
 -- > λ. $(gitCommitDate)
 -- > "Mon Apr 14 22:14:44 2025 +1200"
 gitCommitDate :: ExpQ
-gitCommitDate = qToExp $ Internal.liftDefString Internal.gitCommitDateQ
+gitCommitDate = qToExp $ Utils.liftDefString Git.gitCommitDateQ
 
 qToExp :: (Lift a) => Q a -> ExpQ
 qToExp = (>>= lift)

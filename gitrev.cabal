@@ -50,17 +50,21 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Development.GitRev
-    Development.GitRev.Internal
     Development.GitRev.Typed
+    Development.GitRev.Utils
+    Development.GitRev.Utils.Git
+    Development.GitRev.Utils.LookupEnv
 
 test-suite unit
   import:         common-lang
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
+  other-modules:  Utils
   build-depends:
     , base
     , gitrev
-    , tasty        >=1.1.0.3 && <1.6
-    , tasty-hunit  >=0.9     && <0.11
+    , tasty             >=1.1.0.3 && <1.6
+    , tasty-hunit       >=0.9     && <0.11
+    , template-haskell
 
   hs-source-dirs: test/unit

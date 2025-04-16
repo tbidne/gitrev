@@ -1,11 +1,10 @@
 {-# LANGUAGE QuasiQuotes #-}
 
--- | Internal module.
+-- | Provides utilities for querying git.
 --
 -- @since 1.40.0
-module Development.GitRev.Internal
-  ( -- * Git
-    GitError (..),
+module Development.GitRev.Utils.Git
+  ( GitError (..),
     gitHashQ,
     gitShortHashQ,
     gitBranchQ,
@@ -14,13 +13,6 @@ module Development.GitRev.Internal
     gitDirtyTrackedQ,
     gitCommitCountQ,
     gitCommitDateQ,
-
-    -- * Modifiers
-    liftDefString,
-    liftError,
-    liftFalse,
-    envValFallback,
-    envSrcFallback,
   )
 where
 
@@ -45,8 +37,6 @@ import System.Directory.OsPath
     findExecutable,
     getCurrentDirectory,
   )
-import System.Directory.OsPath qualified as Dir
-import System.Environment qualified as Env
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import System.File.OsPath qualified as FileIO
 import System.OsPath (OsPath, osp, (</>))
@@ -87,107 +77,9 @@ gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 gitCommitDateQ :: Q (Either GitError String)
 gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 
--- | Maps 'GitError' to string @UNKNOWN@.
---
--- ==== __Examples__
---
--- @
---   -- Returns the hash or the string @UNKNOWN@ if there is a git error.
---   gitHashDefStringQ :: 'Q' 'String'
---   gitHashDefStringQ = 'liftDefString' 'gitHashQ'
--- @
---
--- @since 1.40.0
-liftDefString :: Q (Either GitError String) -> Q String
-liftDefString m = fmap (either (const "UNKNOWN") id) m
-
--- | Maps 'GitError' to 'False'.
---
--- ==== __Examples__
---
--- @
---   -- Returns the dirty status, defaulting to 'False' if there is a git error.
---   gitDirtyDefFalseQ :: 'Q' 'Bool'
---   gitDirtyDefFalseQ = 'liftFalse' 'gitDirtyQ'
--- @
---
--- @since 1.40.0
-liftFalse :: Q (Either GitError Bool) -> Q Bool
-liftFalse m = m >>= either (pure . const False) (pure)
-
--- | Calls 'error' on 'GitError'.
---
--- ==== __Examples__
---
--- @
---   -- Returns the hash, failing at compile time if there is a git error.
---   gitHashOrDieQ :: 'Q' 'String'
---   gitHashOrDieQ = 'liftError' 'gitHashQ'
--- @
---
--- @since 1.40.0
-liftError :: Q (Either GitError String) -> Q String
-liftError m = fmap (either (error . displayException) id) m
-
--- | @envValFallback var m@ looks up environment variable @var@ when @m@
--- fails. Returns the original error if the lookup also fails.
---
--- ==== __Examples__
---
--- @
---   gitHashEnvValQ :: 'String' -> 'Q' 'String'
---   gitHashEnvValQ var = 'envValFallback' var 'gitHashQ'
---
---   -- usage
---   $$(gitHashEnvValQ \"EXE_GIT_HASH\")
--- @
---
--- @since 1.40.0
-envValFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
-envValFallback var m = do
-  m >>= \case
-    Right r -> pure $ Right r
-    Left err ->
-      lookupEnvQ var >>= \case
-        Just x -> pure $ Right x
-        Nothing -> pure $ Left err
-
--- | Like 'envValFallback' except instead of returning the /value/ of the env
--- var, we use it find the source dir. This is useful for \"out-of-tree\"
--- builds when we have the ability to inject the source directory via an
--- environment variable.
---
--- ==== __Examples__
---
--- @
---   gitHashEnvSrcQ :: 'Q' 'String'
---   gitHashEnvSrcQ = 'envSrcFallback' \"EXE_SOURCE\" 'gitHashQ'
--- @
---
--- > $ export EXE_SOURCE=$(pwd); cabal install my-exe
---
--- @since 1.40.0
-envSrcFallback :: String -> Q (Either GitError String) -> Q (Either GitError String)
-envSrcFallback var m = do
-  m >>= \case
-    Right r -> pure $ Right r
-    Left err -> do
-      lookupEnvQ var >>= \case
-        Nothing -> pure $ Left err
-        Just repoDirFp -> do
-          repoDirOs <- OsPath.encodeUtf repoDirFp
-          currDir <- runIO Dir.getCurrentDirectory
-          runIO $ Dir.setCurrentDirectory repoDirOs
-          r <- m
-          runIO $ Dir.setCurrentDirectory currDir
-          pure r
-
 nonEmpty :: String -> Bool
 nonEmpty "" = False
 nonEmpty _ = True
-
-lookupEnvQ :: String -> Q (Maybe String)
-lookupEnvQ s = runIO (Env.lookupEnv s)
 
 -- | Errors that can be encountered with git.
 --

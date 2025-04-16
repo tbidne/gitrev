@@ -3,11 +3,11 @@
 
 module Main (main) where
 
-import Development.GitRev qualified as GitRev
-import Development.GitRev.Typed (GitError)
-import Development.GitRev.Typed qualified as GitRev.Typed
+import Development.GitRev qualified as GR
+import Development.GitRev.Typed qualified as GRT
 import Test.Tasty (TestTree, defaultMain, testGroup)
-import Test.Tasty.HUnit (assertFailure, testCase)
+import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
+import Utils qualified
 
 main :: IO ()
 main = do
@@ -34,35 +34,35 @@ gitRevTests =
 
 testGitBranch :: TestTree
 testGitBranch = testCase "gitBranch" $ do
-  assertNonEmpty $GitRev.gitBranch
+  assertNonEmpty $GR.gitBranch
 
 testGitCommitCount :: TestTree
 testGitCommitCount = testCase "gitCommitCount" $ do
-  assertNonEmpty $GitRev.gitCommitCount
+  assertNonEmpty $GR.gitCommitCount
 
 testGitCommitDate :: TestTree
 testGitCommitDate = testCase "gitCommitDate" $ do
-  assertNonEmpty $GitRev.gitCommitDate
+  assertNonEmpty $GR.gitCommitDate
 
 testGitDescribe :: TestTree
 testGitDescribe = testCase "gitDescribe" $ do
-  assertNonEmpty $GitRev.gitDescribe
+  assertNonEmpty $GR.gitDescribe
 
 testGitDirty :: TestTree
 testGitDirty = testCase "gitDirty" $ do
-  assertBoolean $GitRev.gitDirty
+  assertBoolean $GR.gitDirty
 
 testGitDirtyTracked :: TestTree
 testGitDirtyTracked = testCase "gitDirtyTracked" $ do
-  assertBoolean $GitRev.gitDirtyTracked
+  assertBoolean $GR.gitDirtyTracked
 
 testGitHash :: TestTree
 testGitHash = testCase "gitHash" $ do
-  assertNonEmpty $GitRev.gitHash
+  assertNonEmpty $GR.gitHash
 
 testGitShortHash :: TestTree
 testGitShortHash = testCase "gitShortHash" $ do
-  assertNonEmpty $GitRev.gitShortHash
+  assertNonEmpty $GR.gitShortHash
 
 gitRevTypedTests :: TestTree
 gitRevTypedTests =
@@ -77,62 +77,94 @@ gitRevTypedTests =
       testGitHashTyped,
       testGitShortHashTyped,
       testLiftError,
-      testEnvFallback,
-      testEnvFallbackLiftError
+      testHashAndEnvVal,
+      testHashAndEnvDir,
+      testSemigroupQNotLazy,
+      testSemigroupQFirstLazy,
+      testSemigroupQFirstRightLazy,
+      testSemigroupQFirstRightLazy2
     ]
 
 testGitBranchTyped :: TestTree
 testGitBranchTyped = testCase "gitBranch" $ do
-  assertNonEmpty $$GitRev.Typed.gitBranch
+  assertNonEmpty $$GRT.gitBranch
 
 testGitCommitCountTyped :: TestTree
 testGitCommitCountTyped = testCase "gitCommitCount" $ do
-  assertNonEmpty $$GitRev.Typed.gitCommitCount
+  assertNonEmpty $$GRT.gitCommitCount
 
 testGitCommitDateTyped :: TestTree
 testGitCommitDateTyped = testCase "gitCommitDate" $ do
-  assertNonEmpty $$GitRev.Typed.gitCommitDate
+  assertNonEmpty $$GRT.gitCommitDate
 
 testGitDescribeTyped :: TestTree
 testGitDescribeTyped = testCase "gitDescribe" $ do
-  assertNonEmpty $$GitRev.Typed.gitDescribe
+  assertNonEmpty $$GRT.gitDescribe
 
 testGitDirtyTyped :: TestTree
 testGitDirtyTyped = testCase "gitDirty" $ do
-  assertBoolean $$GitRev.Typed.gitDirty
+  assertBoolean $$GRT.gitDirty
 
 testGitDirtyTrackedTyped :: TestTree
 testGitDirtyTrackedTyped = testCase "gitDirtyTracked" $ do
-  assertBoolean $$GitRev.Typed.gitDirtyTracked
+  assertBoolean $$GRT.gitDirtyTracked
 
 testGitHashTyped :: TestTree
 testGitHashTyped = testCase "gitHash" $ do
-  assertNonEmpty $$GitRev.Typed.gitHash
+  assertNonEmpty $$GRT.gitHash
 
 testGitShortHashTyped :: TestTree
 testGitShortHashTyped = testCase "gitShortHash" $ do
-  assertNonEmpty $$GitRev.Typed.gitShortHash
+  assertNonEmpty $$GRT.gitShortHash
 
 testLiftError :: TestTree
 testLiftError = testCase "Lifts with default string" $ do
   assertNonEmpty
-    $$(GitRev.Typed.qToCode $ GitRev.Typed.liftDefString GitRev.Typed.gitHashQ)
+    $$(GRT.qToCode $ GRT.liftDefString GRT.gitHashQ)
 
-testEnvFallback :: TestTree
-testEnvFallback = testCase "Use environment var fallback" $ do
-  -- Cannot assert success because "out of tree" builds will fail.
+testHashAndEnvVal :: TestTree
+testHashAndEnvVal = testCase "Composes hash and env val lookup" $ do
   assertGitResult
-    $$( GitRev.Typed.qToCode $
-          GitRev.Typed.envValFallback "var" GitRev.Typed.gitHashQ
+    $$( GRT.qToCode $
+          GRT.liftGitError GRT.gitHashQ
+            <> GRT.envValQ "var"
       )
 
-testEnvFallbackLiftError :: TestTree
-testEnvFallbackLiftError = testCase "Combines envValFallback and liftDefString" $ do
-  assertNonEmpty
-    $$( GitRev.Typed.qToCode $
-          GitRev.Typed.liftDefString $
-            GitRev.Typed.envValFallback "var" GitRev.Typed.gitHashQ
+testHashAndEnvDir :: TestTree
+testHashAndEnvDir = testCase "Composes hash and env dir lookup" $ do
+  assertGitResult
+    $$( GRT.qToCode $
+          GRT.liftGitError GRT.gitHashQ
+            <> GRT.runGitInEnvDirQ "var" GRT.gitHashQ
       )
+
+testSemigroupQNotLazy :: TestTree
+testSemigroupQNotLazy = testCase "Q Semigroup is _not_ lazy in the rhs" $ do
+  let (num1, num2, num3) = $$(GRT.qToCode Utils.qSemigroup)
+  1 @=? num1
+  1 @=? num2
+  1 @=? num3
+
+testSemigroupQFirstLazy :: TestTree
+testSemigroupQFirstLazy = testCase "QFirst Semigroup is lazy in the rhs" $ do
+  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstSemigroup)
+  1 @=? num1
+  0 @=? num2
+  0 @=? num3
+
+testSemigroupQFirstRightLazy :: TestTree
+testSemigroupQFirstRightLazy = testCase "Utils.firstRight is lazy" $ do
+  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstRight)
+  1 @=? num1
+  0 @=? num2
+  0 @=? num3
+
+testSemigroupQFirstRightLazy2 :: TestTree
+testSemigroupQFirstRightLazy2 = testCase "Utils.firstRight is lazy 2" $ do
+  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstRight2)
+  1 @=? num1
+  1 @=? num2
+  0 @=? num3
 
 assertNonEmpty :: String -> IO ()
 assertNonEmpty "" = assertFailure "Received empty"
@@ -146,6 +178,6 @@ assertBoolean :: Bool -> IO ()
 assertBoolean True = pure ()
 assertBoolean False = pure ()
 
-assertGitResult :: Either GitError a -> IO ()
+assertGitResult :: Either e a -> IO ()
 assertGitResult (Right _) = pure ()
 assertGitResult (Left _) = pure ()
