@@ -3,6 +3,7 @@ module Utils
     qFirstSemigroup,
     qFirstRight,
     qFirstRight2,
+    qFirstRightLastLeft,
   )
 where
 
@@ -12,6 +13,8 @@ import Development.GitRev.Utils qualified as GRU
 import Language.Haskell.TH (Q, runIO)
 
 type Counter = (Int, Int, Int)
+
+type QResult = Either String String
 
 qSemigroup :: Q Counter
 qSemigroup = do
@@ -34,28 +37,44 @@ qFirstRight = do
 qFirstRight2 :: Q Counter
 qFirstRight2 = do
   ref <- runIO $ newIORef (0, 0, 0)
-  _ <- GRU.firstRight (qFail ref) [q2 ref, q3 ref]
+  _ <- GRU.firstRight (qFail1 ref) [q2 ref, q3 ref]
   runIO $ readIORef ref
 
-qFail :: IORef Counter -> Q (Either () String)
-qFail ref = do
-  runIO $ modifyIORef' ref inc1
-  pure $ Left ()
+qFirstRightLastLeft :: Q (Counter, Either String String)
+qFirstRightLastLeft = do
+  ref <- runIO $ newIORef (0, 0, 0)
+  result <- GRU.firstRight (qFail1 ref) [qFail2 ref, qFail3 ref]
+  (,result) <$> runIO (readIORef ref)
 
-q1 :: IORef Counter -> Q (Either () String)
+q1 :: IORef Counter -> Q QResult
 q1 ref = do
   runIO $ modifyIORef' ref inc1
   pure $ Right "q1"
 
-q2 :: IORef Counter -> Q (Either () String)
+q2 :: IORef Counter -> Q QResult
 q2 ref = do
   runIO $ modifyIORef' ref inc2
   pure $ Right "q2"
 
-q3 :: IORef Counter -> Q (Either () String)
+q3 :: IORef Counter -> Q QResult
 q3 ref = do
   runIO $ modifyIORef' ref inc3
   pure $ Right "q3"
+
+qFail1 :: IORef Counter -> Q QResult
+qFail1 ref = do
+  runIO $ modifyIORef' ref inc1
+  pure $ Left "qFail1"
+
+qFail2 :: IORef Counter -> Q QResult
+qFail2 ref = do
+  runIO $ modifyIORef' ref inc2
+  pure $ Left "qFail2"
+
+qFail3 :: IORef Counter -> Q QResult
+qFail3 ref = do
+  runIO $ modifyIORef' ref inc3
+  pure $ Left "qFail3"
 
 inc1 :: Counter -> Counter
 inc1 (x, y, z) = (x + 1, y, z)

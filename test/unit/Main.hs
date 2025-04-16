@@ -79,10 +79,7 @@ gitRevTypedTests =
       testLiftError,
       testHashAndEnvVal,
       testHashAndEnvDir,
-      testSemigroupQNotLazy,
-      testSemigroupQFirstLazy,
-      testSemigroupQFirstRightLazy,
-      testSemigroupQFirstRightLazy2
+      semigroupTests
     ]
 
 testGitBranchTyped :: TestTree
@@ -138,6 +135,17 @@ testHashAndEnvDir = testCase "Composes hash and env dir lookup" $ do
             <> GRT.runGitInEnvDirQ "var" GRT.gitHashQ
       )
 
+semigroupTests :: TestTree
+semigroupTests =
+  testGroup
+    "Semigroup"
+    [ testSemigroupQNotLazy,
+      testSemigroupQFirstLazy,
+      testSemigroupQFirstRightLazy,
+      testSemigroupQFirstRightLazy2,
+      testSemigroupQFirstRightLastLeft
+    ]
+
 testSemigroupQNotLazy :: TestTree
 testSemigroupQNotLazy = testCase "Q Semigroup is _not_ lazy in the rhs" $ do
   let (num1, num2, num3) = $$(GRT.qToCode Utils.qSemigroup)
@@ -165,6 +173,17 @@ testSemigroupQFirstRightLazy2 = testCase "Utils.firstRight is lazy 2" $ do
   1 @=? num1
   1 @=? num2
   0 @=? num3
+
+testSemigroupQFirstRightLastLeft :: TestTree
+testSemigroupQFirstRightLastLeft = testCase desc $ do
+  let ((num1, num2, num3), result) = $$(GRT.qToCode Utils.qFirstRightLastLeft)
+  1 @=? num1
+  1 @=? num2
+  1 @=? num3
+
+  Left "qFail3" @=? result
+  where
+    desc = "Utils.firstRight takes the last when all Lefts"
 
 assertNonEmpty :: String -> IO ()
 assertNonEmpty "" = assertFailure "Received empty"
