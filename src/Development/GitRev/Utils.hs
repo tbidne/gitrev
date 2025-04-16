@@ -55,11 +55,11 @@ data QFirst e a = MkQFirst {unQFirst :: Q (Either e a)}
 
 -- | @since 2.0
 instance Semigroup (QFirst e a) where
-  MkQFirst q1 <> MkQFirst q2 =
+  MkQFirst q1 <> q2 =
     MkQFirst $
       q1 >>= \case
         Right x -> pure $ Right x
-        Left _ -> q2
+        Left _ -> unQFirst q2
 
 -- | @firstRight q qs@ takes the first @qi@ in @q : qs@ that returns
 -- 'Right', without executing any @qj@ for @j > i@.
