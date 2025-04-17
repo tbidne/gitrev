@@ -18,7 +18,19 @@ import System.Directory.OsPath qualified as Dir
 import System.Environment qualified as Env
 import System.OsPath qualified as OsPath
 
+-- $setup
+-- >>> :set -XTemplateHaskell
+-- >>> import Development.GitRev.Typed (qToCode)
+-- >>> import Language.Haskell.TH (Q, runIO, runQ)
+-- >>> import System.Environment (setEnv)
+
 -- | Performs an environment variable lookup in 'Q'.
+--
+-- ==== __Examples__
+--
+-- >>> setEnv "SOME_VAR" "val"
+-- >>> $$(qToCode $ envValQ "SOME_VAR")
+-- Right "val"
 --
 -- @since 2.0
 envValQ ::
@@ -30,6 +42,13 @@ envValQ var = withEnvVarQ var pure
 
 -- | Runs the given 'Q'-action under the directory @d@ pointed to by the
 -- given environment variable.
+--
+-- ==== __Examples__
+--
+-- >>> import System.Directory (listDirectory)
+-- >>> setEnv "SOME_DIR" "./src"
+-- >>> $$(qToCode $ runInEnvDirQ "SOME_DIR" $ runIO (listDirectory "./"))
+-- Right ["Development"]
 --
 -- @since 2.0
 runInEnvDirQ ::
@@ -66,6 +85,13 @@ instance Exception LookupEnvError where
     "Failed to lookup environment variable: " ++ var
 
 -- | Runs a 'Q'-action on the result of an environment variable, if it exists.
+--
+-- ==== __Examples__
+--
+-- >>> import System.Directory (listDirectory)
+-- >>> setEnv "SOME_DIR" "./src"
+-- >>> $$(qToCode $ withEnvVarQ "SOME_DIR" (runIO . listDirectory))
+-- Right ["Development"]
 --
 -- @since 2.0
 withEnvVarQ ::

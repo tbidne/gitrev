@@ -34,6 +34,9 @@ import Language.Haskell.TH.Syntax (Lift (lift))
 --
 -- > λ. $(gitHash)
 -- > "e67e943dd03744d3f93c21f84e127744e6a04543"
+--
+-- >>> $(gitHash)
+-- ...
 gitHash :: ExpQ
 gitHash = qToExp $ Utils.liftDefString Git.gitHashQ
 
@@ -44,6 +47,9 @@ gitHash = qToExp $ Utils.liftDefString Git.gitHashQ
 --
 -- > λ. $(gitShortHash)
 -- > "e67e943"
+--
+-- >>> $(gitShortHash)
+-- ...
 gitShortHash :: ExpQ
 gitShortHash = qToExp $ Utils.liftDefString Git.gitShortHashQ
 
@@ -55,6 +61,9 @@ gitShortHash = qToExp $ Utils.liftDefString Git.gitShortHashQ
 --
 -- > λ. $(gitBranch)
 -- > "main"
+--
+-- >>> $(gitBranch)
+-- ...
 gitBranch :: ExpQ
 gitBranch = qToExp $ Utils.liftDefString Git.gitBranchQ
 
@@ -65,6 +74,9 @@ gitBranch = qToExp $ Utils.liftDefString Git.gitBranchQ
 --
 -- > λ. $(gitDescribe)
 -- > "e67e943"
+--
+-- >>> $(gitDescribe)
+-- ...
 gitDescribe :: ExpQ
 gitDescribe = qToExp $ Utils.liftDefString Git.gitDescribeQ
 
@@ -75,6 +87,9 @@ gitDescribe = qToExp $ Utils.liftDefString Git.gitDescribeQ
 --
 -- > λ. $(gitDirty)
 -- > False
+--
+-- >>> $(gitDirty)
+-- ...
 gitDirty :: ExpQ
 gitDirty = qToExp $ Utils.liftFalse Git.gitDirtyQ
 
@@ -85,6 +100,9 @@ gitDirty = qToExp $ Utils.liftFalse Git.gitDirtyQ
 --
 -- > λ. $(gitDirtyTracked)
 -- > False
+--
+-- >>> $(gitDirtyTracked)
+-- ...
 gitDirtyTracked :: ExpQ
 gitDirtyTracked = qToExp $ Utils.liftFalse Git.gitDirtyTrackedQ
 
@@ -92,8 +110,11 @@ gitDirtyTracked = qToExp $ Utils.liftFalse Git.gitDirtyTrackedQ
 --
 -- ==== __Examples__
 --
--- > λ. $(gitBranch)
+-- > λ. $(gitCommitCount)
 -- > "47"
+--
+-- >>> $(gitCommitCount)
+-- ...
 gitCommitCount :: ExpQ
 gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
 
@@ -103,6 +124,9 @@ gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
 --
 -- > λ. $(gitCommitDate)
 -- > "Mon Apr 14 22:14:44 2025 +1200"
+--
+-- >>> $(gitCommitDate)
+-- ...
 gitCommitDate :: ExpQ
 gitCommitDate = qToExp $ Utils.liftDefString Git.gitCommitDateQ
 

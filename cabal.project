@@ -21,3 +21,4 @@ program-options
     -Wunused-type-patterns
     -Wno-unticked-promoted-constructors
 
+test-show-details: direct

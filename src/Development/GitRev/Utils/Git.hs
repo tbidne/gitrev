@@ -44,36 +44,96 @@ import System.OsPath qualified as OsPath
 import System.OsString qualified as OsString
 import System.Process (readProcessWithExitCode)
 
--- | @since 2.0
+-- $setup
+-- >>> :set -XTemplateHaskell
+-- >>> import Development.GitRev.Typed (qToCode)
+
+-- | Returns the latest git hash.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitHashQ)
+-- Right ...
+--
+-- @since 2.0
 gitHashQ :: Q (Either GitError String)
 gitHashQ = runGit ["rev-parse", "HEAD"] IdxNotUsed
 
--- | @since 2.0
+-- | Returns the latest git short hash.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitShortHashQ)
+-- Right ...
+--
+-- @since 2.0
 gitShortHashQ :: Q (Either GitError String)
 gitShortHashQ = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
 
--- | @since 2.0
+-- | Returns the current git branch.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitBranchQ)
+-- Right ...
+--
+-- @since 2.0
 gitBranchQ :: Q (Either GitError String)
 gitBranchQ = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
 
--- | @since 2.0
+-- | Returns the git description.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitDescribeQ)
+-- Right ...
+--
+-- @since 2.0
 gitDescribeQ :: Q (Either GitError String)
 gitDescribeQ = runGit ["describe", "--long", "--always"] IdxNotUsed
 
--- | @since 2.0
+-- | Returns the git dirty status.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitDirtyQ)
+-- Right ...
+--
+-- @since 2.0
 gitDirtyQ :: Q (Either GitError Bool)
 gitDirtyQ = fmap nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
 
--- | @since 2.0
+-- | Returns the git dirty status, ignoring untracked files.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitDirtyTrackedQ)
+-- Right ...
+--
+-- @since 2.0
 gitDirtyTrackedQ :: Q (Either GitError Bool)
 gitDirtyTrackedQ =
   fmap nonEmpty <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
 
--- | @since 2.0
+-- | Returns the git commit count.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitCommitCountQ)
+-- Right ...
+--
+-- @since 2.0
 gitCommitCountQ :: Q (Either GitError String)
 gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 
--- | @since 2.0
+-- | Returns the latest git commit date.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitCommitDateQ)
+-- Right ...
+--
+-- @since 2.0
 gitCommitDateQ :: Q (Either GitError String)
 gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 

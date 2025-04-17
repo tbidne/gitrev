@@ -16,6 +16,9 @@ module Development.GitRev.Typed
     -- * Custom behavior
     -- $custom
 
+    -- ** "Out-of-tree" builds
+    -- $out-of-tree
+
     -- ** Git Primitives
     Git.gitBranchQ,
     Git.gitCommitCountQ,
@@ -35,7 +38,7 @@ module Development.GitRev.Typed
 
     -- ** Q Combinators
 
-    -- *** Laziness
+    -- *** First success
     QFirst (..),
     Utils.firstRight,
 
@@ -54,9 +57,6 @@ module Development.GitRev.Typed
     Utils.liftLookupEnvError,
     Utils.joinLookupEnvGitErrors,
     Utils.joinGitLookupEnvErrors,
-
-    -- * "Out-of-tree" builds
-    -- $out-of-tree
   )
 where
 
@@ -75,6 +75,11 @@ import Language.Haskell.TH (Code, Q)
 import Language.Haskell.TH qualified as TH
 import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 
+-- $setup
+-- >>> :set -XTemplateHaskell
+-- >>> import Data.Functor (($>))
+-- >>> import Language.Haskell.TH (Code, Q, runIO)
+
 -- $basic
 --
 -- These functions are simple, merely a typed version of "Development.GitRev"'s
@@ -89,42 +94,46 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- the primitive 'Git.getHashQ', we can define a variant of 'gitHash'
 -- that instead fails to compile if there are any problems with git:
 --
--- @
---   gitHashOrDie :: 'Code' 'Q' 'String'
---   gitHashOrDie = 'qToCode' $ 'Utils.liftError' 'Git.gitHashQ'
--- @
+-- >>> :{
+--   let gitHashOrDie :: Code Q String
+--       gitHashOrDie = qToCode $ liftError gitHashQ
+-- :}
 --
 -- We can also define a function that falls back to an environment variable,
--- in case the git command fails.
+-- in case the git command fails. 'Utils.firstRight' takes the first action
+-- that returns 'Right'.
 --
--- @
---   gitHashEnv :: 'String' -> 'Code' 'Q' ('Either' 'GitOrLookupEnvError' 'String')
---   gitHashEnv var =
---     'qToCode' $
---       'Utils.firstRight'
---         ('Utils.liftGitError' 'Git.gitHashQ')
---         ['Utils.envValQ' var]
--- @
+-- >>> :{
+--   let gitHashEnv :: String -> Code Q (Either GitOrLookupEnvError String)
+--       gitHashEnv var =
+--         qToCode $
+--           firstRight
+--             (liftGitError gitHashQ)
+--             [envValQ var]
+-- :}
 --
 -- Naturally, these can be combined:
 --
--- @
---   gitHashEnvOrDie :: 'String' -> 'Code' 'Q' 'String'
---   gitHashEnvOrDie var =
---     'qToCode'
---       . 'Utils.liftError'
---       $ 'Utils.firstRight'
---         ('Utils.liftGitError' 'Git.gitHashQ')
---         ['Utils.envValQ' var]
--- @
+-- >>> :{
+--   let gitHashEnvOrDie :: String -> Code Q String
+--       gitHashEnvOrDie var =
+--         qToCode
+--           . liftError
+--           $ firstRight
+--             (liftGitError gitHashQ)
+--             [envValQ var]
+-- :}
 
 -- $out-of-tree
 --
--- So-called \"out-of-tree\" builds present a problem, as we normally rely on
--- building in the project directory where the .git directory is easy to
--- locate. For example, while 'gitHash' will work for @cabal build@, it will
--- not work for nix or @cabal install@. Fortunately, there are workarounds,
--- both relying on passing the right data via environment variables.
+-- An example where custom definitions are paramount is \"out-of-tree\"
+-- builds, where the build takes place outside of the normal git tree.
+--
+-- These builds present a problem, as we normally rely on building in the
+-- project directory where the .git directory is easy to locate. For example,
+-- while 'gitHash' will work for @cabal build@, it will not work for
+-- @nix build@ or @cabal install@. Fortunately, there are workarounds, both
+-- relying on passing the right data via environment variables.
 --
 -- 1. Passing the git directory.
 --
@@ -135,15 +144,18 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --
 --     We can define
 --
---     @
---       gitHashSrcDir :: 'Code' 'Q' 'String'
---       gitHashSrcDir =
---         'qToCode'
---           . 'Internal.liftDefString'
---           $ 'Utils.firstRight'
---             ('Utils.liftGitError' 'Utils.gitHashQ')
---             ['Utils.runGitInEnvDirQ' \"EXAMPLE_HOME\" 'Utils.gitHashQ']
---     @
+--     >>> :{
+--       let gitHashSrcDir :: Code Q String
+--           gitHashSrcDir =
+--             qToCode
+--             . liftDefString
+--             $ firstRight
+--               -- 1. We first try normal gitHashQ.
+--               (liftGitError gitHashQ)
+--               -- 2. If that fails, we try again in the directory pointed
+--               --    to by "EXAMPLE_HOME"
+--               [runGitInEnvDirQ "EXAMPLE_HOME" gitHashQ]
+--     :}
 --
 --     If the initial call to 'Utils.gitHashQ' fails, then we will try again,
 --     running the command from the directory pointed to by @EXAMPLE_HOME@.
@@ -166,15 +178,18 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --
 --     Then we can define
 --
---     @
---       gitHashVal :: 'Code' 'Q' 'String'
---       gitHashVal =
---         'qToCode'
---           . 'Internal.liftDefString'
---           $ 'Utils.firstRight'
---             ('Utils.liftGitError' 'Utils.gitHashQ')
---             ['Utils.envValQ' \"EXAMPLE_HASH\"]
---     @
+--     >>> :{
+--       let gitHashVal :: Code Q String
+--           gitHashVal =
+--             qToCode
+--             . liftDefString
+--             $ firstRight
+--               -- 1. We first try normal gitHashQ.
+--               (liftGitError gitHashQ)
+--               -- 2. If that fails, get the value directly from
+--               --    "EXAMPLE_HASH".
+--               [envValQ "EXAMPLE_HASH"]
+--     :}
 --
 --     Once again, if the first attempt fails, we will run the second action,
 --     looking for the value of @EXAMPLE_HASH@.
@@ -182,41 +197,47 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- Finally, we can compose these together to make a function that works for all
 -- three cases:
 --
--- @
---   gitHashValSrc :: 'Code' 'Q' 'String'
---   gitHashValSrc =
---     'qToCode'
---       . 'Internal.liftDefString'
---       $ 'Utils.firstRight'
---         ('Utils.liftGitError' 'Utils.gitHashQ')
---         [ 'Utils.envValQ' \"EXAMPLE_HASH\",
---           'Utils.runGitInEnvDirQ' \"EXAMPLE_HOME\" 'Utils.gitHashQ'
---         ]
--- @
+-- >>> :{
+--   let gitHashValSrc :: Code Q String
+--       gitHashValSrc =
+--         qToCode
+--           . liftDefString
+--           $ firstRight
+--             (liftGitError gitHashQ)
+--             [ envValQ "EXAMPLE_HASH",
+--               runGitInEnvDirQ "EXAMPLE_HOME" gitHashQ
+--             ]
+-- :}
 --
--- A final note on laziness: As alluded to above, 'Q'\'s default semigroup
+-- A final note on laziness: As alluded to above, Q's default semigroup
 -- instance is not lazy enough:
 --
--- @
---   q1, q2 :: 'Q' ('Either' e a)
---   q1 <> q2 -- executes both, regardless of if @q1@ succeeds.
--- @
+-- >>> :{
+--   $$( qToCode $
+--       (pure (Right "q1") :: Q (Either () String))
+--         <> (runIO (putStrLn "in q2") $> Left ())
+--     )
+-- :}
+-- in q2
+-- Right "q1"
 --
 -- For this reason, we introduce the 'QFirst' newtype:
 --
--- @
---   MkQFirst q1 <> MkQFirst q2
--- @
+-- >>> :{
+--   $$( qToCode $ unQFirst $
+--       (MkQFirst $ pure (Right "q1") :: QFirst () String)
+--         <> (MkQFirst $ runIO (putStrLn "in q2") $> Left ())
+--     )
+-- :}
+-- Right "q1"
 --
--- On the other hand, this will only run @q2@ if @q1@ returns 'Left'. The
--- function
+-- We provide a convenience function
 --
 -- @
 --   'firstRight' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
 -- @
 --
--- is a convenience function for utilizing 'QFirst'\'s semigroup to preserve
--- laziness.
+-- for sequencing a series of Q actions, stopping after the first success.
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
@@ -225,6 +246,9 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --
 -- > λ. $$(gitHash)
 -- > "e67e943dd03744d3f93c21f84e127744e6a04543"
+--
+-- >>> $$(gitHash)
+-- ...
 --
 -- @since 2.0
 gitHash :: Code Q String
@@ -235,8 +259,11 @@ gitHash = qToCode $ Utils.liftDefString Git.gitHashQ
 --
 -- ==== __Examples__
 --
--- > λ. $$(gitHash)
+-- > λ. $$(gitShortHash)
 -- > "e67e943"
+--
+-- >>> $$(gitShortHash)
+-- ...
 --
 -- @since 2.0
 gitShortHash :: Code Q String
@@ -251,6 +278,9 @@ gitShortHash = qToCode $ Utils.liftDefString Git.gitShortHashQ
 -- > λ. $$(gitBranch)
 -- > "main"
 --
+-- >>> $$(gitBranch)
+-- ...
+--
 -- @since 2.0
 gitBranch :: Code Q String
 gitBranch = qToCode $ Utils.liftDefString Git.gitBranchQ
@@ -262,6 +292,9 @@ gitBranch = qToCode $ Utils.liftDefString Git.gitBranchQ
 --
 -- > λ. $$(gitDescribe)
 -- > "e67e943"
+--
+-- >>> $$(gitDescribe)
+-- ...
 --
 -- @since 2.0
 gitDescribe :: Code Q String
@@ -275,6 +308,9 @@ gitDescribe = qToCode $ Utils.liftDefString Git.gitDescribeQ
 -- > λ. $$(gitDirty)
 -- > False
 --
+-- >>> $$(gitDirty)
+-- ...
+--
 -- @since 2.0
 gitDirty :: Code Q Bool
 gitDirty = qToCode $ Utils.liftFalse Git.gitDirtyQ
@@ -284,8 +320,11 @@ gitDirty = qToCode $ Utils.liftFalse Git.gitDirtyQ
 --
 -- ==== __Examples__
 --
--- > λ. $$(gitHash)
+-- > λ. $$(gitDirtyTracked)
 -- > False
+--
+-- >>> $$(gitDirtyTracked)
+-- ...
 --
 -- @since 2.0
 gitDirtyTracked :: Code Q Bool
@@ -295,8 +334,11 @@ gitDirtyTracked = qToCode $ Utils.liftFalse Git.gitDirtyTrackedQ
 --
 -- ==== __Examples__
 --
--- > λ. $$(gitHash)
+-- > λ. $$(gitCommitCount)
 -- > "47"
+--
+-- >>> $$(gitCommitCount)
+-- ...
 --
 -- @since 2.0
 gitCommitCount :: Code Q String
@@ -308,6 +350,9 @@ gitCommitCount = qToCode $ Utils.liftDefString Git.gitCommitCountQ
 --
 -- > λ. $$(gitCommitDate)
 -- > "Mon Apr 14 22:14:44 2025 +1200"
+--
+-- >>> $$(gitCommitDate)
+-- ...
 --
 -- @since 2.0
 gitCommitDate :: Code Q String

@@ -61,6 +61,17 @@ jobs:
         run: |
           .github/scripts/run_example_cabal_install.sh
 
+      - name: Doctests
+        # In general, doctests are flaky enough that I'm not too fussed about
+        # having them run on all GHCs. One is enough to verify that the docs
+        # are in pretty good shape.
+        #
+        # That said, we might as well support multiple versions when we do not
+        # have to do any extra work.
+        if: ${{ matrix.ghc == '9.10.1' || matrix.ghc == '9.12.1' }}
+        run: |
+          ./scripts/doctest.sh
+
   nix:
     strategy:
       fail-fast: false

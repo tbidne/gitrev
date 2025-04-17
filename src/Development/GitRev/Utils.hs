@@ -42,6 +42,14 @@ import Development.GitRev.Utils.LookupEnv qualified as LookupEnv
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
 
+-- $setup
+-- >>> :set -XTemplateHaskell
+-- >>> import Development.GitRev.Typed (qToCode)
+-- >>> import Development.GitRev.Utils.Git (GitError (..), gitDirtyQ, gitHashQ)
+-- >>> import Development.GitRev.Utils.LookupEnv (LookupEnvError (..))
+-- >>> import Language.Haskell.TH (Q, runIO, runQ)
+-- >>> import System.Environment (setEnv)
+
 -- | Wrapper for 'Q' over 'Either' with a lazier 'Semigroup'. With this, we
 -- can run:
 --
@@ -65,6 +73,17 @@ instance Semigroup (QFirst e a) where
 -- 'Right', without executing any @qj@ for @j > i@. If there are no
 -- 'Right'\'s, returns the final result.
 --
+-- ==== __Examples__
+--
+-- >>> :{
+--    $$( qToCode $
+--          firstRight
+--            (pure (Left GitNotFound))
+--            [gitHashQ, error "oh no"]
+--      )
+-- :}
+-- Right ...
+--
 -- @since 2.0
 firstRight :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
 firstRight q qs = unQFirst $ foldMap1 MkQFirst (q :| qs)
@@ -73,11 +92,13 @@ firstRight q qs = unQFirst $ foldMap1 MkQFirst (q :| qs)
 --
 -- ==== __Examples__
 --
--- @
---   -- Returns the hash or the string @UNKNOWN@ if there is a git error.
---   gitHashDefStringQ :: 'Q' 'String'
---   gitHashDefStringQ = 'liftDefString' 'Development.GitRev.Utils.Git.gitHashQ'
--- @
+-- >>> :{
+--   let gitHashDefStringQ :: Q String
+--       gitHashDefStringQ = liftDefString gitHashQ
+--   -- inling gitHashDefStringQ here due to stage restriction
+--   in $$(qToCode $ liftDefString gitHashQ)
+-- :}
+-- ...
 --
 -- @since 2.0
 liftDefString :: (Functor f) => f (Either e String) -> f String
@@ -87,11 +108,12 @@ liftDefString = fmap (either (const "UNKNOWN") id)
 --
 -- ==== __Examples__
 --
--- @
---   -- Returns the dirty status, defaulting to 'False' if there is a git error.
---   gitDirtyDefFalseQ :: 'Q' 'Bool'
---   gitDirtyDefFalseQ = 'liftFalse' 'Development.GitRev.Utils.Git.gitDirtyQ'
--- @
+-- >>> :{
+--   let gitDirtyDefFalseQ :: Q Bool
+--       gitDirtyDefFalseQ = liftFalse gitDirtyQ
+--   in $$(qToCode $ liftFalse gitDirtyQ)
+-- :}
+-- ...
 --
 -- @since 2.0
 liftFalse :: (Functor f) => f (Either e Bool) -> f Bool
@@ -101,11 +123,12 @@ liftFalse = fmap (either (const False) id)
 --
 -- ==== __Examples__
 --
--- @
---   -- Returns the hash, failing at compile time if there is a git error.
---   gitHashOrDieQ :: 'Q' 'String'
---   gitHashOrDieQ = 'liftError' 'Development.GitRev.Utils.Git.gitHashQ'
--- @
+-- >>> :{
+--   let gitHashOrDieQ :: Q String
+--       gitHashOrDieQ = liftError gitHashQ
+--   in $$(qToCode $ liftError gitHashQ)
+-- :}
+-- ...
 --
 -- @since 2.0
 liftError :: (Exception e, Functor f) => f (Either e a) -> f a
@@ -135,6 +158,12 @@ instance Exception GitOrLookupEnvError where
 -- 'LookupEnv.envValQ' that lifts 'LookupEnvError' to 'GitOrLookupEnvError'
 -- for convenience.
 --
+-- ==== __Examples__
+--
+-- >>> setEnv "SOME_VAR" "val"
+-- >>> $$(qToCode $ envValQ "SOME_VAR")
+-- Right "val"
+--
 -- @since 2.0
 envValQ ::
   -- | Environment variable @k@ to lookup.
@@ -145,6 +174,12 @@ envValQ = liftLookupEnvError . LookupEnv.envValQ
 
 -- | @runGitInEnvDirQ var q@ runs @q@ in the directory given by the
 -- environment variable.
+--
+-- ==== __Examples__
+--
+-- >>> setEnv "SOME_DIR" "./"
+-- >>> $$(qToCode $ runGitInEnvDirQ "SOME_DIR" gitHashQ)
+-- Right ...
 --
 -- @since 2.0
 runGitInEnvDirQ ::
@@ -161,6 +196,15 @@ runGitInEnvDirQ var = joinErrors . LookupEnv.runInEnvDirQ var
 
 -- | Utility function for joining lookup and git errors.
 --
+-- ==== __Examples__
+--
+-- >>> :{
+--   let e :: Either LookupEnvError (Either GitError ())
+--       e = Right (Left GitNotFound)
+--   in joinLookupEnvGitErrors e
+-- :}
+-- Left (GitOrLookupEnvGit GitNotFound)
+--
 -- @since 2.0
 joinLookupEnvGitErrors ::
   ( Bifunctor p,
@@ -175,6 +219,15 @@ joinLookupEnvGitErrors =
     . first GitOrLookupEnvLookupEnv
 
 -- | Utility function for joining git and lookup errors.
+--
+-- ==== __Examples__
+--
+-- >>> :{
+--   let e :: Either GitError (Either LookupEnvError ())
+--       e = Right (Left $ MkLookupEnvError "VAR")
+--   in joinGitLookupEnvErrors e
+-- :}
+-- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
 -- @since 2.0
 joinGitLookupEnvErrors ::
@@ -192,6 +245,15 @@ joinGitLookupEnvErrors =
 -- | Utility function for lifting a 'GitError' to the larger
 -- 'GitOrLookupEnvError'.
 --
+-- ==== __Examples__
+--
+-- >>> :{
+--   let q :: Q (Either GitError ())
+--       q = pure (Left GitNotFound)
+--   in runQ $ liftGitError q
+-- :}
+-- Left (GitOrLookupEnvGit GitNotFound)
+--
 -- @since 2.0
 liftGitError ::
   ( Bifunctor p,
@@ -204,6 +266,15 @@ liftGitError = fmap (first GitOrLookupEnvGit)
 
 -- | Utility function for lifting a 'LookupEnvError' to the larger
 -- 'GitOrLookupEnvError'.
+--
+-- ==== __Examples__
+--
+-- >>> :{
+--   let q :: Q (Either LookupEnvError ())
+--       q = pure (Left $ MkLookupEnvError "VAR")
+--   in runQ $ liftLookupEnvError q
+-- :}
+-- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
 -- @since 2.0
 liftLookupEnvError ::
