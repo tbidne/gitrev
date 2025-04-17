@@ -79,7 +79,9 @@ instance Semigroup (QFirst e a) where
 --    $$( qToCode $
 --          firstRight
 --            (pure (Left GitNotFound))
---            [gitHashQ, error "oh no"]
+--            [ gitHashQ,
+--              error "oh no"
+--            ]
 --      )
 -- :}
 -- Right ...

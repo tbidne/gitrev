@@ -151,8 +151,6 @@ data GitError
     GitRunError String
   deriving stock
     ( -- | @since 2.0
-      Eq,
-      -- | @since 2.0
       Lift,
       -- | @since 2.0
       Show

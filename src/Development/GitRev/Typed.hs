@@ -91,8 +91,9 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- $custom
 --
 -- These functions allow us to define custom behavior. For instance, using
--- the primitive 'Git.getHashQ', we can define a variant of 'gitHash'
--- that instead fails to compile if there are any problems with git:
+-- the primitive 'Git.getHashQ' and combinator 'Utils.liftError', we can
+-- define a variant of 'gitHash' that instead fails to compile if there are
+-- any problems with git:
 --
 -- >>> :{
 --   let gitHashOrDie :: Code Q String
@@ -231,13 +232,14 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- :}
 -- Right "q1"
 --
--- We provide a convenience function
+-- The convenience function
 --
 -- @
 --   'firstRight' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
 -- @
 --
--- for sequencing a series of Q actions, stopping after the first success.
+-- utilizes 'QFirst' for sequencing a series of Q actions, stopping after the
+-- first success.
 
 -- | Return the hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
