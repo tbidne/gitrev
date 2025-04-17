@@ -15,6 +15,7 @@ module Development.GitRev
     gitCommitCount,
     gitCommitDate,
     gitDescribe,
+    gitDiff,
     gitDirty,
     gitDirtyTracked,
     gitHash,
@@ -130,6 +131,18 @@ gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
 -- ...
 gitCommitDate :: ExpQ
 gitCommitDate = qToExp $ Utils.liftDefString Git.gitCommitDateQ
+
+-- | Return the diff of the working copy with HEAD.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitDiff)
+-- > diff ...
+--
+-- >>> $(gitDiff)
+-- ...
+gitDiff :: ExpQ
+gitDiff = qToExp $ Utils.liftDefString Git.gitDiffQ
 
 -- | Return the hash of the current tree.
 --

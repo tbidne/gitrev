@@ -8,6 +8,7 @@ module Development.GitRev.Typed
     gitCommitCount,
     gitCommitDate,
     gitDescribe,
+    gitDiff,
     gitDirty,
     gitDirtyTracked,
     gitHash,
@@ -25,6 +26,7 @@ module Development.GitRev.Typed
     Git.gitCommitCountQ,
     Git.gitCommitDateQ,
     Git.gitDescribeQ,
+    Git.gitDiffQ,
     Git.gitDirtyQ,
     Git.gitDirtyTrackedQ,
     Git.gitHashQ,
@@ -361,6 +363,18 @@ gitCommitCount = qToCode $ Utils.liftDefString Git.gitCommitCountQ
 -- @since 2.0
 gitCommitDate :: Code Q String
 gitCommitDate = qToCode $ Utils.liftDefString Git.gitCommitDateQ
+
+-- | Return the diff of the working copy with HEAD.
+--
+-- ==== __Examples__
+--
+-- > λ. $$(gitDiff)
+-- > "Mon Apr 14 22:14:44 2025 +1200"
+--
+-- >>> $$(gitDiff)
+-- ...
+gitDiff :: Code Q String
+gitDiff = qToCode $ Utils.liftDefString Git.gitDiffQ
 
 -- | Return the hash of the current tree.
 --

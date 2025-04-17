@@ -9,6 +9,7 @@ module Development.GitRev.Utils.Git
     gitCommitCountQ,
     gitCommitDateQ,
     gitDescribeQ,
+    gitDiffQ,
     gitDirtyQ,
     gitDirtyTrackedQ,
     gitHashQ,
@@ -138,6 +139,17 @@ gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 gitCommitDateQ :: Q (Either GitError String)
 gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 
+-- | Return the diff of the working copy with HEAD.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitDiffQ)
+-- Right ...
+--
+-- @since 2.0
+gitDiffQ :: Q (Either GitError String)
+gitDiffQ = runGitPostprocess id ["diff", "HEAD"] IdxNotUsed
+
 -- | Returns the hash of the current tree.
 --
 -- ==== __Examples__
@@ -173,10 +185,13 @@ instance Exception GitError where
   displayException GitNotFound = "Git executable not found"
   displayException (GitRunError s) = "Git error: " ++ s
 
+runGit :: [String] -> IndexUsed -> Q (Either GitError String)
+runGit = runGitPostprocess tillNewLineStr
+
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output.
-runGit :: [String] -> IndexUsed -> Q (Either GitError String)
-runGit args useIdx = do
+runGitPostprocess :: (String -> String) -> [String] -> IndexUsed -> Q (Either GitError String)
+runGitPostprocess postProcess args useIdx = do
   let oops :: SomeException -> IO (ExitCode, String, String)
       oops ex = pure (ExitFailure 1, "", displayException ex)
   gitFound <- runIO $ isJust <$> findExecutable [osp|git|]
@@ -218,7 +233,7 @@ runGit args useIdx = do
       runIO $ do
         (code, out, err) <- readProcessWithExitCode "git" args "" `catchSync` oops
         case code of
-          ExitSuccess -> pure $ Right (tillNewLineStr out)
+          ExitSuccess -> pure $ Right (postProcess out)
           ExitFailure _ -> pure $ Left $ GitRunError err
     else pure $ Left GitNotFound
 
