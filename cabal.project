@@ -1,6 +1,6 @@
 packages:
-  ./.
-  ./example
+  ./example/example.cabal
+  ./gitrev.cabal
 
 program-options
   ghc-options:

@@ -1,0 +1,16 @@
+cradle:
+  cabal:
+    - path: "./example/./Main.hs"
+      component: "example:exe:example"
+
+    - path: "./example/./TH.hs"
+      component: "example:exe:example"
+
+    - path: "./src"
+      component: "lib:gitrev"
+
+    - path: "./test/unit"
+      component: "gitrev:test:unit"
+
+    - path: "./test/doctest"
+      component: "gitrev:test:doctest"
