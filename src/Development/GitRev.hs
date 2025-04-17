@@ -19,6 +19,7 @@ module Development.GitRev
     gitDirtyTracked,
     gitHash,
     gitShortHash,
+    gitTree,
   )
 where
 
@@ -129,6 +130,18 @@ gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
 -- ...
 gitCommitDate :: ExpQ
 gitCommitDate = qToExp $ Utils.liftDefString Git.gitCommitDateQ
+
+-- | Return the hash of the current tree.
+--
+-- ==== __Examples__
+--
+-- > λ. $(gitTreeQ)
+-- > "Mon Apr 14 22:14:44 2025 +1200"
+--
+-- >>> $(gitTreeQ)
+-- ...
+gitTree :: ExpQ
+gitTree = qToExp $ Utils.liftDefString Git.gitTreeQ
 
 qToExp :: (Lift a) => Q a -> ExpQ
 qToExp = (>>= lift)

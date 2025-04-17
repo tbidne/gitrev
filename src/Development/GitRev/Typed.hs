@@ -12,6 +12,7 @@ module Development.GitRev.Typed
     gitDirtyTracked,
     gitHash,
     gitShortHash,
+    gitTree,
 
     -- * Custom behavior
     -- $custom
@@ -28,6 +29,7 @@ module Development.GitRev.Typed
     Git.gitDirtyTrackedQ,
     Git.gitHashQ,
     Git.gitShortHashQ,
+    Git.gitTreeQ,
 
     -- ** Environment lookup
     Utils.envValQ,
@@ -359,6 +361,18 @@ gitCommitCount = qToCode $ Utils.liftDefString Git.gitCommitCountQ
 -- @since 2.0
 gitCommitDate :: Code Q String
 gitCommitDate = qToCode $ Utils.liftDefString Git.gitCommitDateQ
+
+-- | Return the hash of the current tree.
+--
+-- ==== __Examples__
+--
+-- > λ. $$(gitTree)
+-- > "Mon Apr 14 22:14:44 2025 +1200"
+--
+-- >>> $$(gitTree)
+-- ...
+gitTree :: Code Q String
+gitTree = qToCode $ Utils.liftDefString Git.gitTreeQ
 
 -- | Lifts a 'Q' computation to 'Code', for usage with typed TH.
 --

@@ -5,14 +5,15 @@
 -- @since 2.0
 module Development.GitRev.Utils.Git
   ( GitError (..),
-    gitHashQ,
-    gitShortHashQ,
     gitBranchQ,
+    gitCommitCountQ,
+    gitCommitDateQ,
     gitDescribeQ,
     gitDirtyQ,
     gitDirtyTrackedQ,
-    gitCommitCountQ,
-    gitCommitDateQ,
+    gitHashQ,
+    gitShortHashQ,
+    gitTreeQ,
   )
 where
 
@@ -136,6 +137,17 @@ gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 -- @since 2.0
 gitCommitDateQ :: Q (Either GitError String)
 gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
+
+-- | Returns the hash of the current tree.
+--
+-- ==== __Examples__
+--
+-- >>> $$(qToCode gitTreeQ)
+-- Right ...
+--
+-- @since 2.0
+gitTreeQ :: Q (Either GitError String)
+gitTreeQ = runGit ["show", "HEAD", "--format=%T", "--no-patch"] IdxNotUsed
 
 nonEmpty :: String -> Bool
 nonEmpty "" = False
