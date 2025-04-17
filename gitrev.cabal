@@ -1,14 +1,14 @@
-cabal-version: 2.2
-name:          gitrev
-version:       2.0
-synopsis:      Compile git revision info into Haskell projects
-homepage:      https://github.com/acfoltzer/gitrev
-license:       BSD-3-Clause
-license-file:  LICENSE
-author:        Adam C. Foltzer
-maintainer:    acfoltzer@galois.com
-category:      Development
-build-type:    Simple
+cabal-version:      2.2
+name:               gitrev
+version:            2.0
+synopsis:           Compile git revision info into Haskell projects
+homepage:           https://github.com/acfoltzer/gitrev
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Adam C. Foltzer
+maintainer:         acfoltzer@galois.com
+category:           Development
+build-type:         Simple
 tested-with:
   GHC ==9.0.2
    || ==9.2.8
@@ -18,6 +18,12 @@ tested-with:
    || ==9.10.1
    || ==9.12.1
 
+extra-source-files:
+  cabal.project
+  LICENSE
+  README.md
+
+extra-doc-files:    CHANGELOG.md
 description:
   Some handy Template Haskell splices for including the current git hash and branch in the code of your project. Useful for including in panic messages, @--version@ output, or diagnostic info for more informative bug reports.
 
