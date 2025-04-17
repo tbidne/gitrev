@@ -19,6 +19,8 @@ and this project adheres to the
 * Added support for short hashes.
 * Added support for obtaining data via environment variables for e.g.
   "out-of-tree" builds.
+* Added git diff.
+* Added git tree.
 
 ### Fixed
 * Possibly fixed locale bug by switching from prelude
