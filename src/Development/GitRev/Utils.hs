@@ -288,8 +288,7 @@ joinGitLookupEnvErrors =
     . embedLookupEnvError
     . first GitOrLookupEnvGit
 
--- | Utility function for lifting a 'GitError' to the larger
--- 'GitOrLookupEnvError'.
+-- | Embeds a 'GitError' in the larger 'GitOrLookupEnvError'.
 --
 -- ==== __Examples__
 --
@@ -311,8 +310,7 @@ embedGitError ::
   f (p GitOrLookupEnvError a)
 embedGitError = fmap (first GitOrLookupEnvGit)
 
--- | Utility function for lifting a 'LookupEnvError' to the larger
--- 'GitOrLookupEnvError'.
+-- | Embeds a 'LookupEnvError' in the larger 'GitOrLookupEnvError'.
 --
 -- ==== __Examples__
 --

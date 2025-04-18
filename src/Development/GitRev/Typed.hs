@@ -162,7 +162,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --               -- 1. We first try normal gitHashQ.
 --               (embedGitError gitHashQ)
 --               -- 2. If that fails, we try again in the directory pointed
---               --    to by "EXAMPLE_HOME"
+--               --    to by "EXAMPLE_HOME".
 --               [runGitInEnvDirQ "EXAMPLE_HOME" gitHashQ]
 --     :}
 --
