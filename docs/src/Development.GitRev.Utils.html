@@ -1,0 +1,1006 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE QuantifiedConstraints #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | Utils module.</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html"><span class="hs-identifier">Development.GitRev.Utils</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Combining Q actions lazily</span></span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#QFirst"><span class="hs-identifier">QFirst</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#mkQFirst"><span class="hs-identifier">mkQFirst</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#firstSuccessQ"><span class="hs-identifier">firstSuccessQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#Exceptions"><span class="hs-identifier">Exceptions</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#mkExceptions"><span class="hs-identifier">mkExceptions</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Either projections</span></span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#projectStringUnknown"><span class="hs-identifier">projectStringUnknown</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#projectString"><span class="hs-identifier">projectString</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#projectFalse"><span class="hs-identifier">projectFalse</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#projectError"><span class="hs-identifier">projectError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#projectErrorMap"><span class="hs-identifier">projectErrorMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Composing errors</span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier">GitOrLookupEnvError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Functions</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#runGitInEnvDirQ"><span class="hs-identifier">runGitInEnvDirQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Mapping utilities</span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#embedGitError"><span class="hs-identifier">embedGitError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#embedLookupEnvError"><span class="hs-identifier">embedLookupEnvError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#joinLookupEnvGitErrors"><span class="hs-identifier">joinLookupEnvGitErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.html#joinGitLookupEnvErrors"><span class="hs-identifier">joinGitLookupEnvErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">displayException</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">join</span></span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Bifunctor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Bifunctor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">bimap</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">first</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fold</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-cpp">
+#if MIN_VERSION_base(4, 18, 0)
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable1</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Foldable1</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">foldMap1</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-cpp">
+#endif
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.NonEmpty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NonEmpty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(:|)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.NonEmpty</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NE</span></span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TL</span></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy.Builder</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TLB</span></span><span>
+</span><span id="line-48"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Environment.html"><span class="hs-identifier">Development.GitRev.Utils.Environment</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.Environment.html#LookupEnvError"><span class="hs-identifier">LookupEnvError</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Environment.html"><span class="hs-identifier">Development.GitRev.Utils.Environment</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Env</span></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html"><span class="hs-identifier">Development.GitRev.Utils.Git</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier">GitError</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Q</span></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH.Syntax</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Lift</span></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XTemplateHaskell</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- &gt;&gt;&gt; import Development.GitRev.Typed (qToCode)</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- &gt;&gt;&gt; import Development.GitRev.Utils.Git (GitError (..), gitDirtyQ, gitHashQ)</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- &gt;&gt;&gt; import Development.GitRev.Utils.Environment (LookupEnvError (..))</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- &gt;&gt;&gt; import Language.Haskell.TH (Q, runIO, runQ)</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- &gt;&gt;&gt; import System.Environment (setEnv)</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- | Collects multiple exceptions.</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-65"></span><span class="hs-keyword">newtype</span><span> </span><span id="Exceptions"><span class="annot"><a href="Development.GitRev.Utils.html#Exceptions"><span class="hs-identifier hs-var">Exceptions</span></a></span></span><span> </span><span id="local-6989586621679068574"><span class="annot"><a href="#local-6989586621679068574"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkExceptions"><span class="annot"><a href="Development.GitRev.Utils.html#MkExceptions"><span class="hs-identifier hs-var">MkExceptions</span></a></span></span><span> </span><span class="hs-special">{</span><span id="unExceptions"><span class="annot"><span class="annottext">forall e. Exceptions e -&gt; NonEmpty e
+</span><a href="Development.GitRev.Utils.html#unExceptions"><span class="hs-identifier hs-var hs-var">unExceptions</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">NonEmpty</span></span><span> </span><span class="annot"><a href="#local-6989586621679068574"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span class="hs-special">}</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-68"></span><span>      </span><span id="local-6989586621679068816"><span id="local-6989586621679068820"><span class="annot"><span class="annottext">Exceptions e -&gt; Exceptions e -&gt; Bool
+(Exceptions e -&gt; Exceptions e -&gt; Bool)
+-&gt; (Exceptions e -&gt; Exceptions e -&gt; Bool) -&gt; Eq (Exceptions e)
+forall e. Eq e =&gt; Exceptions e -&gt; Exceptions e -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: forall e. Eq e =&gt; Exceptions e -&gt; Exceptions e -&gt; Bool
+== :: Exceptions e -&gt; Exceptions e -&gt; Bool
+$c/= :: forall e. Eq e =&gt; Exceptions e -&gt; Exceptions e -&gt; Bool
+/= :: Exceptions e -&gt; Exceptions e -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-70"></span><span>      </span><span id="local-6989586621679068825"><span id="local-6989586621679068829"><span class="annot"><span class="annottext">(forall a b. (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b)
+-&gt; (forall a b. a -&gt; Exceptions b -&gt; Exceptions a)
+-&gt; Functor Exceptions
+forall a b. a -&gt; Exceptions b -&gt; Exceptions a
+forall a b. (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+forall (f :: * -&gt; *).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+$cfmap :: forall a b. (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+fmap :: forall a b. (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+$c&lt;$ :: forall a b. a -&gt; Exceptions b -&gt; Exceptions a
+&lt;$ :: forall a b. a -&gt; Exceptions b -&gt; Exceptions a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-72"></span><span>      </span><span id="local-6989586621679068836"><span id="local-6989586621679068843"><span class="annot"><span class="annottext">(forall (m :: * -&gt; *). Quote m =&gt; Exceptions e -&gt; m Exp)
+-&gt; (forall (m :: * -&gt; *).
+    Quote m =&gt;
+    Exceptions e -&gt; Code m (Exceptions e))
+-&gt; Lift (Exceptions e)
+forall e (m :: * -&gt; *). (Lift e, Quote m) =&gt; Exceptions e -&gt; m Exp
+forall e (m :: * -&gt; *).
+(Lift e, Quote m) =&gt;
+Exceptions e -&gt; Code m (Exceptions e)
+forall t.
+(forall (m :: * -&gt; *). Quote m =&gt; t -&gt; m Exp)
+-&gt; (forall (m :: * -&gt; *). Quote m =&gt; t -&gt; Code m t) -&gt; Lift t
+forall (m :: * -&gt; *). Quote m =&gt; Exceptions e -&gt; m Exp
+forall (m :: * -&gt; *).
+Quote m =&gt;
+Exceptions e -&gt; Code m (Exceptions e)
+$clift :: forall e (m :: * -&gt; *). (Lift e, Quote m) =&gt; Exceptions e -&gt; m Exp
+lift :: forall (m :: * -&gt; *). Quote m =&gt; Exceptions e -&gt; m Exp
+$cliftTyped :: forall e (m :: * -&gt; *).
+(Lift e, Quote m) =&gt;
+Exceptions e -&gt; Code m (Exceptions e)
+liftTyped :: forall (m :: * -&gt; *).
+Quote m =&gt;
+Exceptions e -&gt; Code m (Exceptions e)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Lift</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-74"></span><span>      </span><span id="local-6989586621679068852"><span id="local-6989586621679068858"><span id="local-6989586621679068862"><span class="annot"><span class="annottext">Int -&gt; Exceptions e -&gt; ShowS
+[Exceptions e] -&gt; ShowS
+Exceptions e -&gt; String
+(Int -&gt; Exceptions e -&gt; ShowS)
+-&gt; (Exceptions e -&gt; String)
+-&gt; ([Exceptions e] -&gt; ShowS)
+-&gt; Show (Exceptions e)
+forall e. Show e =&gt; Int -&gt; Exceptions e -&gt; ShowS
+forall e. Show e =&gt; [Exceptions e] -&gt; ShowS
+forall e. Show e =&gt; Exceptions e -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: forall e. Show e =&gt; Int -&gt; Exceptions e -&gt; ShowS
+showsPrec :: Int -&gt; Exceptions e -&gt; ShowS
+$cshow :: forall e. Show e =&gt; Exceptions e -&gt; String
+show :: Exceptions e -&gt; String
+$cshowList :: forall e. Show e =&gt; [Exceptions e] -&gt; ShowS
+showList :: [Exceptions e] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">newtype</span></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-78"></span><span>      </span><span id="local-6989586621679068869"><span id="local-6989586621679068874"><span id="local-6989586621679068878"><span id="local-6989586621679068882"><span id="local-6989586621679068886"><span class="annot"><span class="annottext">Functor Exceptions
+Functor Exceptions =&gt;
+(forall a. a -&gt; Exceptions a)
+-&gt; (forall a b.
+    Exceptions (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b)
+-&gt; (forall a b c.
+    (a -&gt; b -&gt; c) -&gt; Exceptions a -&gt; Exceptions b -&gt; Exceptions c)
+-&gt; (forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b)
+-&gt; (forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions a)
+-&gt; Applicative Exceptions
+forall a. a -&gt; Exceptions a
+forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions a
+forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b
+forall a b. Exceptions (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+forall a b c.
+(a -&gt; b -&gt; c) -&gt; Exceptions a -&gt; Exceptions b -&gt; Exceptions c
+forall (f :: * -&gt; *).
+Functor f =&gt;
+(forall a. a -&gt; f a)
+-&gt; (forall a b. f (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b c. (a -&gt; b -&gt; c) -&gt; f a -&gt; f b -&gt; f c)
+-&gt; (forall a b. f a -&gt; f b -&gt; f b)
+-&gt; (forall a b. f a -&gt; f b -&gt; f a)
+-&gt; Applicative f
+$cpure :: forall a. a -&gt; Exceptions a
+pure :: forall a. a -&gt; Exceptions a
+$c&lt;*&gt; :: forall a b. Exceptions (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+&lt;*&gt; :: forall a b. Exceptions (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+$cliftA2 :: forall a b c.
+(a -&gt; b -&gt; c) -&gt; Exceptions a -&gt; Exceptions b -&gt; Exceptions c
+liftA2 :: forall a b c.
+(a -&gt; b -&gt; c) -&gt; Exceptions a -&gt; Exceptions b -&gt; Exceptions c
+$c*&gt; :: forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b
+*&gt; :: forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b
+$c&lt;* :: forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions a
+&lt;* :: forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-80"></span><span>      </span><span id="local-6989586621679068896"><span id="local-6989586621679068901"><span id="local-6989586621679068905"><span class="annot"><span class="annottext">Applicative Exceptions
+Applicative Exceptions =&gt;
+(forall a b. Exceptions a -&gt; (a -&gt; Exceptions b) -&gt; Exceptions b)
+-&gt; (forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b)
+-&gt; (forall a. a -&gt; Exceptions a)
+-&gt; Monad Exceptions
+forall a. a -&gt; Exceptions a
+forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b
+forall a b. Exceptions a -&gt; (a -&gt; Exceptions b) -&gt; Exceptions b
+forall (m :: * -&gt; *).
+Applicative m =&gt;
+(forall a b. m a -&gt; (a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. m a -&gt; m b -&gt; m b)
+-&gt; (forall a. a -&gt; m a)
+-&gt; Monad m
+$c&gt;&gt;= :: forall a b. Exceptions a -&gt; (a -&gt; Exceptions b) -&gt; Exceptions b
+&gt;&gt;= :: forall a b. Exceptions a -&gt; (a -&gt; Exceptions b) -&gt; Exceptions b
+$c&gt;&gt; :: forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b
+&gt;&gt; :: forall a b. Exceptions a -&gt; Exceptions b -&gt; Exceptions b
+$creturn :: forall a. a -&gt; Exceptions a
+return :: forall a. a -&gt; Exceptions a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-82"></span><span>      </span><span id="local-6989586621679068911"><span id="local-6989586621679068916"><span id="local-6989586621679068922"><span class="annot"><span class="annottext">NonEmpty (Exceptions e) -&gt; Exceptions e
+Exceptions e -&gt; Exceptions e -&gt; Exceptions e
+(Exceptions e -&gt; Exceptions e -&gt; Exceptions e)
+-&gt; (NonEmpty (Exceptions e) -&gt; Exceptions e)
+-&gt; (forall b. Integral b =&gt; b -&gt; Exceptions e -&gt; Exceptions e)
+-&gt; Semigroup (Exceptions e)
+forall b. Integral b =&gt; b -&gt; Exceptions e -&gt; Exceptions e
+forall e. NonEmpty (Exceptions e) -&gt; Exceptions e
+forall e. Exceptions e -&gt; Exceptions e -&gt; Exceptions e
+forall a.
+(a -&gt; a -&gt; a)
+-&gt; (NonEmpty a -&gt; a)
+-&gt; (forall b. Integral b =&gt; b -&gt; a -&gt; a)
+-&gt; Semigroup a
+forall e b. Integral b =&gt; b -&gt; Exceptions e -&gt; Exceptions e
+$c&lt;&gt; :: forall e. Exceptions e -&gt; Exceptions e -&gt; Exceptions e
+&lt;&gt; :: Exceptions e -&gt; Exceptions e -&gt; Exceptions e
+$csconcat :: forall e. NonEmpty (Exceptions e) -&gt; Exceptions e
+sconcat :: NonEmpty (Exceptions e) -&gt; Exceptions e
+$cstimes :: forall e b. Integral b =&gt; b -&gt; Exceptions e -&gt; Exceptions e
+stimes :: forall b. Integral b =&gt; b -&gt; Exceptions e -&gt; Exceptions e
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Semigroup</span></span></span></span></span><span>
+</span><span id="line-83"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-86"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679068646"><span id="local-6989586621679068940"><span id="local-6989586621679068944"><span id="local-6989586621679068948"><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679068646"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#Exceptions"><span class="hs-identifier hs-type">Exceptions</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068646"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-87"></span><span>  </span><span id="local-6989586621679068958"><span class="annot"><span class="annottext">displayException :: Exceptions e -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#MkExceptions"><span class="hs-identifier hs-type">MkExceptions</span></a></span><span> </span><span id="local-6989586621679068959"><span class="annot"><span class="annottext">NonEmpty e
+</span><a href="#local-6989586621679068959"><span class="hs-identifier hs-var">errs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-88"></span><span>    </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-89"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Exception(s):&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-90"></span><span>        </span><span class="annot"><span class="annottext">NonEmpty e -&gt; String
+</span><a href="#local-6989586621679068960"><span class="hs-identifier hs-var">renderErrs</span></a></span><span> </span><span class="annot"><span class="annottext">NonEmpty e
+</span><a href="#local-6989586621679068959"><span class="hs-identifier hs-var">errs</span></a></span><span>
+</span><span id="line-91"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-93"></span><span>      </span><span id="local-6989586621679068960"><span class="annot"><span class="annottext">renderErrs :: NonEmpty e -&gt; String
+</span><a href="#local-6989586621679068960"><span class="hs-identifier hs-var hs-var">renderErrs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-94"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span>
+</span><span id="line-95"></span><span>          </span><span class="annot"><span class="annottext">(Text -&gt; String) -&gt; (NonEmpty e -&gt; Text) -&gt; NonEmpty e -&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">LazyText -&gt; Text
+</span><span class="hs-identifier hs-var">TL.toStrict</span></span><span>
+</span><span id="line-96"></span><span>          </span><span class="annot"><span class="annottext">(LazyText -&gt; Text)
+-&gt; (NonEmpty e -&gt; LazyText) -&gt; NonEmpty e -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; LazyText
+</span><span class="hs-identifier hs-var">TLB.toLazyText</span></span><span>
+</span><span id="line-97"></span><span>          </span><span class="annot"><span class="annottext">(Builder -&gt; LazyText)
+-&gt; (NonEmpty e -&gt; Builder) -&gt; NonEmpty e -&gt; LazyText
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty Builder -&gt; Builder
+forall m. Monoid m =&gt; NonEmpty m -&gt; m
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span>
+</span><span id="line-98"></span><span>          </span><span class="annot"><span class="annottext">(NonEmpty Builder -&gt; Builder)
+-&gt; (NonEmpty e -&gt; NonEmpty Builder) -&gt; NonEmpty e -&gt; Builder
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">((Int, e) -&gt; Builder) -&gt; NonEmpty (Int, e) -&gt; NonEmpty Builder
+forall a b. (a -&gt; b) -&gt; NonEmpty a -&gt; NonEmpty b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">(Int, e) -&gt; Builder
+forall {b} {a}. (Exception b, Show a) =&gt; (a, b) -&gt; Builder
+</span><a href="#local-6989586621679068980"><span class="hs-identifier hs-var">renderErr</span></a></span><span>
+</span><span id="line-99"></span><span>          </span><span class="annot"><span class="annottext">(NonEmpty (Int, e) -&gt; NonEmpty Builder)
+-&gt; (NonEmpty e -&gt; NonEmpty (Int, e))
+-&gt; NonEmpty e
+-&gt; NonEmpty Builder
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">forall a b. NonEmpty a -&gt; NonEmpty b -&gt; NonEmpty (a, b)
+</span><span class="hs-identifier hs-var">NE.zip</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [Int] -&gt; NonEmpty Int
+forall a. a -&gt; [a] -&gt; NonEmpty a
+</span><span class="hs-operator hs-var">:|</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="hs-glyph">..</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span>      </span><span id="local-6989586621679068980"><span class="annot"><span class="annottext">renderErr :: (a, b) -&gt; Builder
+</span><a href="#local-6989586621679068980"><span class="hs-identifier hs-var hs-var">renderErr</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679068997"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679068997"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679068998"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679068998"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-102"></span><span>        </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679068999"><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679068999"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Builder
+</span><span class="hs-string">&quot;\n&quot;</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Builder
+</span><span class="hs-identifier hs-var">TLB.fromString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679068997"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><span class="hs-string">&quot;. &quot;</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679068999"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>          </span><span class="annot"><span class="annottext">(Builder -&gt; Builder) -&gt; (b -&gt; Builder) -&gt; b -&gt; Builder
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Builder
+</span><span class="hs-identifier hs-var">TLB.fromString</span></span><span>
+</span><span id="line-104"></span><span>          </span><span class="annot"><span class="annottext">(String -&gt; Builder) -&gt; (b -&gt; String) -&gt; b -&gt; Builder
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">b -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span>
+</span><span id="line-105"></span><span>          </span><span class="annot"><span class="annottext">(b -&gt; Builder) -&gt; b -&gt; Builder
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679068998"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-106"></span><span>
+</span><span id="line-107"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-108"></span><span class="annot"><a href="Development.GitRev.Utils.html#mkExceptions"><span class="hs-identifier hs-type">mkExceptions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679069002"><span class="annot"><a href="#local-6989586621679069002"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="#local-6989586621679069002"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#Exceptions"><span class="hs-identifier hs-type">Exceptions</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679069002"><span class="hs-identifier hs-type">e</span></a></span><span>
+</span><span id="line-109"></span><span id="mkExceptions"><span class="annot"><span class="annottext">mkExceptions :: forall a. a -&gt; Exceptions a
+</span><a href="Development.GitRev.Utils.html#mkExceptions"><span class="hs-identifier hs-var hs-var">mkExceptions</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonEmpty e -&gt; Exceptions e
+forall e. NonEmpty e -&gt; Exceptions e
+</span><a href="Development.GitRev.Utils.html#MkExceptions"><span class="hs-identifier hs-var">MkExceptions</span></a></span><span> </span><span class="annot"><span class="annottext">(NonEmpty e -&gt; Exceptions e)
+-&gt; (e -&gt; NonEmpty e) -&gt; e -&gt; Exceptions e
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; NonEmpty e
+forall a. a -&gt; NonEmpty a
+</span><span class="hs-identifier hs-var">NE.singleton</span></span><span>
+</span><span id="line-110"></span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- | Wrapper for 'Q' over 'Either' with a lazier 'Semigroup'. With this, we</span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- can run:</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--   MkQFirst q1 &lt;&gt; MkQFirst q2</span><span>
+</span><span id="line-116"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-117"></span><span class="hs-comment">--</span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- This will only execute @q2@ if @q1@ returns 'Left', unlike 'Q'\'s normal</span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- 'Semigroup' instance.</span><span>
+</span><span id="line-120"></span><span class="hs-comment">--</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- 'QFirst' also collects all errors in 'Exceptions'.</span><span>
+</span><span id="line-122"></span><span class="hs-comment">--</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-124"></span><span class="hs-keyword">newtype</span><span> </span><span id="QFirst"><span class="annot"><a href="Development.GitRev.Utils.html#QFirst"><span class="hs-identifier hs-var">QFirst</span></a></span></span><span> </span><span id="local-6989586621679068672"><span class="annot"><a href="#local-6989586621679068672"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679068673"><span class="annot"><a href="#local-6989586621679068673"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkQFirst"><span class="annot"><a href="Development.GitRev.Utils.html#MkQFirst"><span class="hs-identifier hs-var">MkQFirst</span></a></span></span><span> </span><span class="hs-special">{</span><span id="unQFirst"><span class="annot"><span class="annottext">forall e a. QFirst e a -&gt; Q (Either (Exceptions e) a)
+</span><a href="Development.GitRev.Utils.html#unQFirst"><span class="hs-identifier hs-var hs-var">unQFirst</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#Exceptions"><span class="hs-identifier hs-type">Exceptions</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068672"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679068673"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">}</span><span>
+</span><span id="line-125"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-126"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-127"></span><span>      </span><span id="local-6989586621679069007"><span id="local-6989586621679069013"><span class="annot"><span class="annottext">(forall a b. (a -&gt; b) -&gt; QFirst e a -&gt; QFirst e b)
+-&gt; (forall a b. a -&gt; QFirst e b -&gt; QFirst e a)
+-&gt; Functor (QFirst e)
+forall a b. a -&gt; QFirst e b -&gt; QFirst e a
+forall a b. (a -&gt; b) -&gt; QFirst e a -&gt; QFirst e b
+forall e a b. a -&gt; QFirst e b -&gt; QFirst e a
+forall e a b. (a -&gt; b) -&gt; QFirst e a -&gt; QFirst e b
+forall (f :: * -&gt; *).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+$cfmap :: forall e a b. (a -&gt; b) -&gt; QFirst e a -&gt; QFirst e b
+fmap :: forall a b. (a -&gt; b) -&gt; QFirst e a -&gt; QFirst e b
+$c&lt;$ :: forall e a b. a -&gt; QFirst e b -&gt; QFirst e a
+&lt;$ :: forall a b. a -&gt; QFirst e b -&gt; QFirst e a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span>
+</span><span id="line-128"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-129"></span><span>
+</span><span id="line-130"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-131"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679069021"><span id="local-6989586621679069025"><span class="annot"><span class="hs-identifier hs-type">Bifunctor</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#QFirst"><span class="hs-identifier hs-type">QFirst</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-132"></span><span>  </span><span id="local-6989586621679069032"><span class="annot"><span class="annottext">bimap :: forall a b c d. (a -&gt; b) -&gt; (c -&gt; d) -&gt; QFirst a c -&gt; QFirst b d
+</span><span class="hs-identifier hs-var hs-var hs-var">bimap</span></span></span><span> </span><span id="local-6989586621679069033"><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679069033"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679069034"><span class="annot"><span class="annottext">c -&gt; d
+</span><a href="#local-6989586621679069034"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#MkQFirst"><span class="hs-identifier hs-type">MkQFirst</span></a></span><span> </span><span id="local-6989586621679069035"><span class="annot"><span class="annottext">Q (Either (Exceptions a) c)
+</span><a href="#local-6989586621679069035"><span class="hs-identifier hs-var">q</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q (Either (Exceptions b) d) -&gt; QFirst b d
+forall e a. Q (Either (Exceptions e) a) -&gt; QFirst e a
+</span><a href="Development.GitRev.Utils.html#MkQFirst"><span class="hs-identifier hs-var">MkQFirst</span></a></span><span> </span><span class="annot"><span class="annottext">(Q (Either (Exceptions b) d) -&gt; QFirst b d)
+-&gt; Q (Either (Exceptions b) d) -&gt; QFirst b d
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Either (Exceptions a) c -&gt; Either (Exceptions b) d)
+-&gt; Q (Either (Exceptions a) c) -&gt; Q (Either (Exceptions b) d)
+forall a b. (a -&gt; b) -&gt; Q a -&gt; Q b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Exceptions a -&gt; Exceptions b)
+-&gt; (c -&gt; d) -&gt; Either (Exceptions a) c -&gt; Either (Exceptions b) d
+forall a b c d. (a -&gt; b) -&gt; (c -&gt; d) -&gt; Either a c -&gt; Either b d
+forall (p :: * -&gt; * -&gt; *) a b c d.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; (c -&gt; d) -&gt; p a c -&gt; p b d
+</span><span class="hs-identifier hs-var">bimap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+forall a b. (a -&gt; b) -&gt; Exceptions a -&gt; Exceptions b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679069033"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">c -&gt; d
+</span><a href="#local-6989586621679069034"><span class="hs-identifier hs-var">g</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Q (Either (Exceptions a) c)
+</span><a href="#local-6989586621679069035"><span class="hs-identifier hs-var">q</span></a></span><span>
+</span><span id="line-133"></span><span>
+</span><span id="line-134"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-135"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679068700"><span id="local-6989586621679068701"><span id="local-6989586621679069038"><span id="local-6989586621679069042"><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#QFirst"><span class="hs-identifier hs-type">QFirst</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068700"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068701"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-136"></span><span>  </span><span class="annot"><a href="Development.GitRev.Utils.html#MkQFirst"><span class="hs-identifier hs-type">MkQFirst</span></a></span><span> </span><span id="local-6989586621679069053"><span class="annot"><span class="annottext">Q (Either (Exceptions e) a)
+</span><a href="#local-6989586621679069053"><span class="hs-identifier hs-var">q1</span></a></span></span><span> </span><span id="local-6989586621679069054"><span class="annot"><span class="annottext">&lt;&gt; :: QFirst e a -&gt; QFirst e a -&gt; QFirst e a
+</span><span class="hs-operator hs-var hs-var hs-var">&lt;&gt;</span></span></span><span> </span><span id="local-6989586621679069055"><span class="annot"><span class="annottext">QFirst e a
+</span><a href="#local-6989586621679069055"><span class="hs-identifier hs-var">q2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-137"></span><span>    </span><span class="annot"><span class="annottext">Q (Either (Exceptions e) a) -&gt; QFirst e a
+forall e a. Q (Either (Exceptions e) a) -&gt; QFirst e a
+</span><a href="Development.GitRev.Utils.html#MkQFirst"><span class="hs-identifier hs-var">MkQFirst</span></a></span><span> </span><span class="annot"><span class="annottext">(Q (Either (Exceptions e) a) -&gt; QFirst e a)
+-&gt; Q (Either (Exceptions e) a) -&gt; QFirst e a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-138"></span><span>      </span><span class="annot"><span class="annottext">Q (Either (Exceptions e) a)
+</span><a href="#local-6989586621679069053"><span class="hs-identifier hs-var">q1</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either (Exceptions e) a)
+-&gt; (Either (Exceptions e) a -&gt; Q (Either (Exceptions e) a))
+-&gt; Q (Either (Exceptions e) a)
+forall a b. Q a -&gt; (a -&gt; Q b) -&gt; Q b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-139"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679069056"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679069056"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either (Exceptions e) a -&gt; Q (Either (Exceptions e) a)
+forall a. a -&gt; Q a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either (Exceptions e) a -&gt; Q (Either (Exceptions e) a))
+-&gt; Either (Exceptions e) a -&gt; Q (Either (Exceptions e) a)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; Either (Exceptions e) a
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679069056"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-140"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679069057"><span class="annot"><span class="annottext">Exceptions e
+</span><a href="#local-6989586621679069057"><span class="hs-identifier hs-var">errs</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Exceptions e -&gt; Exceptions e)
+-&gt; Either (Exceptions e) a -&gt; Either (Exceptions e) a
+forall a b c. (a -&gt; b) -&gt; Either a c -&gt; Either b c
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exceptions e
+</span><a href="#local-6989586621679069057"><span class="hs-identifier hs-var">errs</span></a></span><span> </span><span class="annot"><span class="annottext">Exceptions e -&gt; Exceptions e -&gt; Exceptions e
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Either (Exceptions e) a -&gt; Either (Exceptions e) a)
+-&gt; Q (Either (Exceptions e) a) -&gt; Q (Either (Exceptions e) a)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">QFirst e a -&gt; Q (Either (Exceptions e) a)
+forall e a. QFirst e a -&gt; Q (Either (Exceptions e) a)
+</span><a href="Development.GitRev.Utils.html#unQFirst"><span class="hs-identifier hs-var">unQFirst</span></a></span><span> </span><span class="annot"><span class="annottext">QFirst e a
+</span><a href="#local-6989586621679069055"><span class="hs-identifier hs-var">q2</span></a></span><span>
+</span><span id="line-141"></span><span>
+</span><span id="line-142"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-143"></span><span class="annot"><a href="Development.GitRev.Utils.html#mkQFirst"><span class="hs-identifier hs-type">mkQFirst</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068707"><span class="annot"><a href="#local-6989586621679068707"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679068708"><span class="annot"><a href="#local-6989586621679068708"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068707"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068708"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#QFirst"><span class="hs-identifier hs-type">QFirst</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068707"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068708"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-144"></span><span id="mkQFirst"><span class="annot"><span class="annottext">mkQFirst :: forall e a. Q (Either e a) -&gt; QFirst e a
+</span><a href="Development.GitRev.Utils.html#mkQFirst"><span class="hs-identifier hs-var hs-var">mkQFirst</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q (Either (Exceptions e) a) -&gt; QFirst e a
+forall e a. Q (Either (Exceptions e) a) -&gt; QFirst e a
+</span><a href="Development.GitRev.Utils.html#MkQFirst"><span class="hs-identifier hs-var">MkQFirst</span></a></span><span> </span><span class="annot"><span class="annottext">(Q (Either (Exceptions e) a) -&gt; QFirst e a)
+-&gt; (Q (Either e a) -&gt; Q (Either (Exceptions e) a))
+-&gt; Q (Either e a)
+-&gt; QFirst e a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Either e a -&gt; Either (Exceptions e) a)
+-&gt; Q (Either e a) -&gt; Q (Either (Exceptions e) a)
+forall a b. (a -&gt; b) -&gt; Q a -&gt; Q b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(e -&gt; Exceptions e) -&gt; Either e a -&gt; Either (Exceptions e) a
+forall a b c. (a -&gt; b) -&gt; Either a c -&gt; Either b c
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; Exceptions e
+forall a. a -&gt; Exceptions a
+</span><a href="Development.GitRev.Utils.html#mkExceptions"><span class="hs-identifier hs-var">mkExceptions</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-145"></span><span>
+</span><span id="line-146"></span><span class="hs-comment">-- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- 'Right', without executing any @qj@ for @j &gt; i@. If there are no</span><span>
+</span><span id="line-148"></span><span class="hs-comment">-- 'Right'\'s, returns the final result.</span><span>
+</span><span id="line-149"></span><span class="hs-comment">--</span><span>
+</span><span id="line-150"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-151"></span><span class="hs-comment">--</span><span>
+</span><span id="line-152"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-153"></span><span class="hs-comment">--    $$( qToCode $</span><span>
+</span><span id="line-154"></span><span class="hs-comment">--          firstSuccessQ</span><span>
+</span><span id="line-155"></span><span class="hs-comment">--            (pure (Left GitNotFound))</span><span>
+</span><span id="line-156"></span><span class="hs-comment">--            [ gitHashQ,</span><span>
+</span><span id="line-157"></span><span class="hs-comment">--              error &quot;oh no&quot;</span><span>
+</span><span id="line-158"></span><span class="hs-comment">--            ]</span><span>
+</span><span id="line-159"></span><span class="hs-comment">--      )</span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-161"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-162"></span><span class="hs-comment">--</span><span>
+</span><span id="line-163"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-164"></span><span class="annot"><a href="Development.GitRev.Utils.html#firstSuccessQ"><span class="hs-identifier hs-type">firstSuccessQ</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-165"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068711"><span class="annot"><a href="#local-6989586621679068711"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679068712"><span class="annot"><a href="#local-6989586621679068712"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-166"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068711"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068712"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-167"></span><span>  </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068711"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068712"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-168"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#Exceptions"><span class="hs-identifier hs-type">Exceptions</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068711"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679068712"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-169"></span><span id="firstSuccessQ"><span class="annot"><span class="annottext">firstSuccessQ :: forall e a.
+Q (Either e a) -&gt; [Q (Either e a)] -&gt; Q (Either (Exceptions e) a)
+</span><a href="Development.GitRev.Utils.html#firstSuccessQ"><span class="hs-identifier hs-var hs-var">firstSuccessQ</span></a></span></span><span> </span><span id="local-6989586621679069064"><span class="annot"><span class="annottext">Q (Either e a)
+</span><a href="#local-6989586621679069064"><span class="hs-identifier hs-var">q</span></a></span></span><span> </span><span id="local-6989586621679069065"><span class="annot"><span class="annottext">[Q (Either e a)]
+</span><a href="#local-6989586621679069065"><span class="hs-identifier hs-var">qs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">QFirst e a -&gt; Q (Either (Exceptions e) a)
+forall e a. QFirst e a -&gt; Q (Either (Exceptions e) a)
+</span><a href="Development.GitRev.Utils.html#unQFirst"><span class="hs-identifier hs-var">unQFirst</span></a></span><span> </span><span class="annot"><span class="annottext">(QFirst e a -&gt; Q (Either (Exceptions e) a))
+-&gt; QFirst e a -&gt; Q (Either (Exceptions e) a)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Q (Either e a) -&gt; QFirst e a)
+-&gt; NonEmpty (Q (Either e a)) -&gt; QFirst e a
+forall m a. Semigroup m =&gt; (a -&gt; m) -&gt; NonEmpty a -&gt; m
+forall (t :: * -&gt; *) m a.
+(Foldable1 t, Semigroup m) =&gt;
+(a -&gt; m) -&gt; t a -&gt; m
+</span><span class="hs-identifier hs-var">foldMap1</span></span><span> </span><span class="annot"><span class="annottext">Q (Either e a) -&gt; QFirst e a
+forall e a. Q (Either e a) -&gt; QFirst e a
+</span><a href="Development.GitRev.Utils.html#mkQFirst"><span class="hs-identifier hs-var">mkQFirst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Q (Either e a)
+</span><a href="#local-6989586621679069064"><span class="hs-identifier hs-var">q</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either e a) -&gt; [Q (Either e a)] -&gt; NonEmpty (Q (Either e a))
+forall a. a -&gt; [a] -&gt; NonEmpty a
+</span><span class="hs-operator hs-var">:|</span></span><span> </span><span class="annot"><span class="annottext">[Q (Either e a)]
+</span><a href="#local-6989586621679069065"><span class="hs-identifier hs-var">qs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span class="hs-comment">-- | Projects 'Left' to the string @UNKNOWN@.</span><span>
+</span><span id="line-172"></span><span class="hs-comment">--</span><span>
+</span><span id="line-173"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-174"></span><span class="hs-comment">--</span><span>
+</span><span id="line-175"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-176"></span><span class="hs-comment">--   let gitHashUnknownQ :: Q String</span><span>
+</span><span id="line-177"></span><span class="hs-comment">--       gitHashUnknownQ = projectStringUnknown gitHashQ</span><span>
+</span><span id="line-178"></span><span class="hs-comment">--   -- inling gitHashUnknownQ here due to stage restriction</span><span>
+</span><span id="line-179"></span><span class="hs-comment">--   in $$(qToCode $ projectStringUnknown gitHashQ)</span><span>
+</span><span id="line-180"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-181"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-182"></span><span class="hs-comment">--</span><span>
+</span><span id="line-183"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode $ projectStringUnknown (pure $ Left ()))</span><span>
+</span><span id="line-184"></span><span class="hs-comment">-- &quot;UNKNOWN&quot;</span><span>
+</span><span id="line-185"></span><span class="hs-comment">--</span><span>
+</span><span id="line-186"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-187"></span><span class="annot"><a href="Development.GitRev.Utils.html#projectStringUnknown"><span class="hs-identifier hs-type">projectStringUnknown</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-188"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068719"><span class="annot"><a href="#local-6989586621679068719"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068720"><span class="annot"><a href="#local-6989586621679068720"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-189"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068719"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-190"></span><span>  </span><span class="annot"><a href="#local-6989586621679068719"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068720"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-191"></span><span>  </span><span class="annot"><a href="#local-6989586621679068719"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-192"></span><span id="projectStringUnknown"><span class="annot"><span class="annottext">projectStringUnknown :: forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="Development.GitRev.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var hs-var">projectStringUnknown</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; f (Either e String) -&gt; f String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+String -&gt; f (Either e String) -&gt; f String
+</span><a href="Development.GitRev.Utils.html#projectString"><span class="hs-identifier hs-var">projectString</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;UNKNOWN&quot;</span></span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span class="hs-comment">-- | Projects 'Left' to the given string.</span><span>
+</span><span id="line-195"></span><span class="hs-comment">--</span><span>
+</span><span id="line-196"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-197"></span><span class="hs-comment">--</span><span>
+</span><span id="line-198"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-199"></span><span class="hs-comment">--   let gitHashDefStringQ :: Q String</span><span>
+</span><span id="line-200"></span><span class="hs-comment">--       gitHashDefStringQ = projectString &quot;FAILURE&quot; gitHashQ</span><span>
+</span><span id="line-201"></span><span class="hs-comment">--   in $$(qToCode $ projectString &quot;FAILURE&quot; gitHashQ)</span><span>
+</span><span id="line-202"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-203"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-204"></span><span class="hs-comment">--</span><span>
+</span><span id="line-205"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode $ projectString &quot;FAILURE&quot; (pure $ Left ()))</span><span>
+</span><span id="line-206"></span><span class="hs-comment">-- &quot;FAILURE&quot;</span><span>
+</span><span id="line-207"></span><span class="hs-comment">--</span><span>
+</span><span id="line-208"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-209"></span><span class="annot"><a href="Development.GitRev.Utils.html#projectString"><span class="hs-identifier hs-type">projectString</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-210"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068723"><span class="annot"><a href="#local-6989586621679068723"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068724"><span class="annot"><a href="#local-6989586621679068724"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-211"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068723"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-212"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-213"></span><span>  </span><span class="annot"><a href="#local-6989586621679068723"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068724"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-214"></span><span>  </span><span class="annot"><a href="#local-6989586621679068723"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-215"></span><span id="projectString"><span class="annot"><span class="annottext">projectString :: forall (f :: * -&gt; *) e.
+Functor f =&gt;
+String -&gt; f (Either e String) -&gt; f String
+</span><a href="Development.GitRev.Utils.html#projectString"><span class="hs-identifier hs-var hs-var">projectString</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(e -&gt; String) -&gt; f (Either e String) -&gt; f String
+forall (f :: * -&gt; *) e a.
+Functor f =&gt;
+(e -&gt; a) -&gt; f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectLeft"><span class="hs-identifier hs-var">projectLeft</span></a></span><span> </span><span class="annot"><span class="annottext">((e -&gt; String) -&gt; f (Either e String) -&gt; f String)
+-&gt; (String -&gt; e -&gt; String)
+-&gt; String
+-&gt; f (Either e String)
+-&gt; f String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; e -&gt; String
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span>
+</span><span id="line-216"></span><span>
+</span><span id="line-217"></span><span class="hs-comment">-- | Projects 'Left' to 'False'.</span><span>
+</span><span id="line-218"></span><span class="hs-comment">--</span><span>
+</span><span id="line-219"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-220"></span><span class="hs-comment">--</span><span>
+</span><span id="line-221"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-222"></span><span class="hs-comment">--   let gitDirtyDefFalseQ :: Q Bool</span><span>
+</span><span id="line-223"></span><span class="hs-comment">--       gitDirtyDefFalseQ = projectFalse gitDirtyQ</span><span>
+</span><span id="line-224"></span><span class="hs-comment">--   in $$(qToCode $ projectFalse gitDirtyQ)</span><span>
+</span><span id="line-225"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-226"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-227"></span><span class="hs-comment">--</span><span>
+</span><span id="line-228"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode $ projectFalse (pure $ Left ()))</span><span>
+</span><span id="line-229"></span><span class="hs-comment">-- False</span><span>
+</span><span id="line-230"></span><span class="hs-comment">--</span><span>
+</span><span id="line-231"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-232"></span><span class="annot"><a href="Development.GitRev.Utils.html#projectFalse"><span class="hs-identifier hs-type">projectFalse</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068732"><span class="annot"><a href="#local-6989586621679068732"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068733"><span class="annot"><a href="#local-6989586621679068733"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068732"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068732"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068733"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068732"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-233"></span><span id="projectFalse"><span class="annot"><span class="annottext">projectFalse :: forall (f :: * -&gt; *) e. Functor f =&gt; f (Either e Bool) -&gt; f Bool
+</span><a href="Development.GitRev.Utils.html#projectFalse"><span class="hs-identifier hs-var hs-var">projectFalse</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(e -&gt; Bool) -&gt; f (Either e Bool) -&gt; f Bool
+forall (f :: * -&gt; *) e a.
+Functor f =&gt;
+(e -&gt; a) -&gt; f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectLeft"><span class="hs-identifier hs-var">projectLeft</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; e -&gt; Bool
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">)</span><span>
+</span><span id="line-234"></span><span>
+</span><span id="line-235"></span><span class="hs-comment">-- | Projects 'Left' via 'error', rendering via 'displayException'. Hence</span><span>
+</span><span id="line-236"></span><span class="hs-comment">-- an error will cause a compilation failure.</span><span>
+</span><span id="line-237"></span><span class="hs-comment">--</span><span>
+</span><span id="line-238"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-239"></span><span class="hs-comment">--</span><span>
+</span><span id="line-240"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-241"></span><span class="hs-comment">--   let gitHashOrDieQ :: Q String</span><span>
+</span><span id="line-242"></span><span class="hs-comment">--       gitHashOrDieQ = projectError gitHashQ</span><span>
+</span><span id="line-243"></span><span class="hs-comment">--   in $$(qToCode $ projectError gitHashQ)</span><span>
+</span><span id="line-244"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-245"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-246"></span><span class="hs-comment">--</span><span>
+</span><span id="line-247"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-248"></span><span class="annot"><a href="Development.GitRev.Utils.html#projectError"><span class="hs-identifier hs-type">projectError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068737"><span class="annot"><a href="#local-6989586621679068737"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068736"><span class="annot"><a href="#local-6989586621679068736"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679068738"><span class="annot"><a href="#local-6989586621679068738"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679068736"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068737"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068737"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068736"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068738"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068737"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068738"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-249"></span><span id="projectError"><span class="annot"><span class="annottext">projectError :: forall (f :: * -&gt; *) e a.
+(Exception e, Functor f) =&gt;
+f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectError"><span class="hs-identifier hs-var hs-var">projectError</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(e -&gt; String) -&gt; f (Either e a) -&gt; f a
+forall (f :: * -&gt; *) e a.
+Functor f =&gt;
+(e -&gt; String) -&gt; f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectErrorMap"><span class="hs-identifier hs-var">projectErrorMap</span></a></span><span> </span><span class="annot"><span class="annottext">e -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span>
+</span><span id="line-250"></span><span>
+</span><span id="line-251"></span><span class="hs-comment">-- | Projects 'Left' via 'error', rendering via the given function. Hence</span><span>
+</span><span id="line-252"></span><span class="hs-comment">-- an error will cause a compilation failure.</span><span>
+</span><span id="line-253"></span><span class="hs-comment">--</span><span>
+</span><span id="line-254"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-255"></span><span class="hs-comment">--</span><span>
+</span><span id="line-256"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-257"></span><span class="hs-comment">--   let gitHashOrDieQ :: Q String</span><span>
+</span><span id="line-258"></span><span class="hs-comment">--       gitHashOrDieQ = (projectErrorMap show) gitHashQ</span><span>
+</span><span id="line-259"></span><span class="hs-comment">--   in $$(qToCode $ (projectErrorMap show) gitHashQ)</span><span>
+</span><span id="line-260"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-261"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-262"></span><span class="hs-comment">--</span><span>
+</span><span id="line-263"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-264"></span><span class="annot"><a href="Development.GitRev.Utils.html#projectErrorMap"><span class="hs-identifier hs-type">projectErrorMap</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-265"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068742"><span class="annot"><a href="#local-6989586621679068742"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068743"><span class="annot"><a href="#local-6989586621679068743"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679068744"><span class="annot"><a href="#local-6989586621679068744"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-266"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068742"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-267"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068743"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-268"></span><span>  </span><span class="annot"><a href="#local-6989586621679068742"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068743"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068744"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-269"></span><span>  </span><span class="annot"><a href="#local-6989586621679068742"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068744"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-270"></span><span id="projectErrorMap"><span class="annot"><span class="annottext">projectErrorMap :: forall (f :: * -&gt; *) e a.
+Functor f =&gt;
+(e -&gt; String) -&gt; f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectErrorMap"><span class="hs-identifier hs-var hs-var">projectErrorMap</span></a></span></span><span> </span><span id="local-6989586621679069083"><span class="annot"><span class="annottext">e -&gt; String
+</span><a href="#local-6989586621679069083"><span class="hs-identifier hs-var">onErr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(e -&gt; a) -&gt; f (Either e a) -&gt; f a
+forall (f :: * -&gt; *) e a.
+Functor f =&gt;
+(e -&gt; a) -&gt; f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectLeft"><span class="hs-identifier hs-var">projectLeft</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; a
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; a) -&gt; (e -&gt; String) -&gt; e -&gt; a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; String
+</span><a href="#local-6989586621679069083"><span class="hs-identifier hs-var">onErr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-271"></span><span>
+</span><span id="line-272"></span><span class="annot"><a href="Development.GitRev.Utils.html#projectLeft"><span class="hs-identifier hs-type">projectLeft</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068727"><span class="annot"><a href="#local-6989586621679068727"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068728"><span class="annot"><a href="#local-6989586621679068728"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679068729"><span class="annot"><a href="#local-6989586621679068729"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068727"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068728"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068729"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068727"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679068728"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068729"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068727"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068729"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-273"></span><span id="projectLeft"><span class="annot"><span class="annottext">projectLeft :: forall (f :: * -&gt; *) e a.
+Functor f =&gt;
+(e -&gt; a) -&gt; f (Either e a) -&gt; f a
+</span><a href="Development.GitRev.Utils.html#projectLeft"><span class="hs-identifier hs-var hs-var">projectLeft</span></a></span></span><span> </span><span id="local-6989586621679069086"><span class="annot"><span class="annottext">e -&gt; a
+</span><a href="#local-6989586621679069086"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Either e a -&gt; a) -&gt; f (Either e a) -&gt; f a
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(e -&gt; a) -&gt; (a -&gt; a) -&gt; Either e a -&gt; a
+forall a c b. (a -&gt; c) -&gt; (b -&gt; c) -&gt; Either a b -&gt; c
+</span><span class="hs-identifier hs-var">either</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; a
+</span><a href="#local-6989586621679069086"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span class="hs-special">)</span><span>
+</span><span id="line-274"></span><span>
+</span><span id="line-275"></span><span class="hs-comment">-- | Git or env lookup error.</span><span>
+</span><span id="line-276"></span><span class="hs-comment">--</span><span>
+</span><span id="line-277"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-278"></span><span class="hs-keyword">data</span><span> </span><span id="GitOrLookupEnvError"><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-var">GitOrLookupEnvError</span></a></span></span><span>
+</span><span id="line-279"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-280"></span><span>    </span><span id="GitOrLookupEnvGit"><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvGit"><span class="hs-identifier hs-var">GitOrLookupEnvGit</span></a></span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span>
+</span><span id="line-281"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-282"></span><span>    </span><span id="GitOrLookupEnvLookupEnv"><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvLookupEnv"><span class="hs-identifier hs-var">GitOrLookupEnvLookupEnv</span></a></span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Environment.html#LookupEnvError"><span class="hs-identifier hs-type">LookupEnvError</span></a></span><span>
+</span><span id="line-283"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-284"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-285"></span><span>      </span><span id="local-6989586621679069092"><span id="local-6989586621679069101"><span class="annot"><span class="annottext">GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool
+(GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool)
+-&gt; (GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool)
+-&gt; Eq GitOrLookupEnvError
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool
+== :: GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool
+$c/= :: GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool
+/= :: GitOrLookupEnvError -&gt; GitOrLookupEnvError -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-286"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-287"></span><span>      </span><span id="local-6989586621679069105"><span id="local-6989586621679069116"><span class="annot"><span class="annottext">(forall (m :: * -&gt; *). Quote m =&gt; GitOrLookupEnvError -&gt; m Exp)
+-&gt; (forall (m :: * -&gt; *).
+    Quote m =&gt;
+    GitOrLookupEnvError -&gt; Code m GitOrLookupEnvError)
+-&gt; Lift GitOrLookupEnvError
+forall t.
+(forall (m :: * -&gt; *). Quote m =&gt; t -&gt; m Exp)
+-&gt; (forall (m :: * -&gt; *). Quote m =&gt; t -&gt; Code m t) -&gt; Lift t
+forall (m :: * -&gt; *). Quote m =&gt; GitOrLookupEnvError -&gt; m Exp
+forall (m :: * -&gt; *).
+Quote m =&gt;
+GitOrLookupEnvError -&gt; Code m GitOrLookupEnvError
+$clift :: forall (m :: * -&gt; *). Quote m =&gt; GitOrLookupEnvError -&gt; m Exp
+lift :: forall (m :: * -&gt; *). Quote m =&gt; GitOrLookupEnvError -&gt; m Exp
+$cliftTyped :: forall (m :: * -&gt; *).
+Quote m =&gt;
+GitOrLookupEnvError -&gt; Code m GitOrLookupEnvError
+liftTyped :: forall (m :: * -&gt; *).
+Quote m =&gt;
+GitOrLookupEnvError -&gt; Code m GitOrLookupEnvError
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Lift</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-288"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-289"></span><span>      </span><span id="local-6989586621679069126"><span id="local-6989586621679069134"><span id="local-6989586621679069138"><span class="annot"><span class="annottext">Int -&gt; GitOrLookupEnvError -&gt; ShowS
+[GitOrLookupEnvError] -&gt; ShowS
+GitOrLookupEnvError -&gt; String
+(Int -&gt; GitOrLookupEnvError -&gt; ShowS)
+-&gt; (GitOrLookupEnvError -&gt; String)
+-&gt; ([GitOrLookupEnvError] -&gt; ShowS)
+-&gt; Show GitOrLookupEnvError
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; GitOrLookupEnvError -&gt; ShowS
+showsPrec :: Int -&gt; GitOrLookupEnvError -&gt; ShowS
+$cshow :: GitOrLookupEnvError -&gt; String
+show :: GitOrLookupEnvError -&gt; String
+$cshowList :: [GitOrLookupEnvError] -&gt; ShowS
+showList :: [GitOrLookupEnvError] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-290"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-291"></span><span>
+</span><span id="line-292"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-293"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679069145"><span id="local-6989586621679069149"><span id="local-6989586621679069153"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-type">GitOrLookupEnvError</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-294"></span><span>  </span><span id="local-6989586621679069159"><span class="annot"><span class="annottext">displayException :: GitOrLookupEnvError -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvGit"><span class="hs-identifier hs-type">GitOrLookupEnvGit</span></a></span><span> </span><span id="local-6989586621679069160"><span class="annot"><span class="annottext">GitError
+</span><a href="#local-6989586621679069160"><span class="hs-identifier hs-var">ge</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GitError -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">GitError
+</span><a href="#local-6989586621679069160"><span class="hs-identifier hs-var">ge</span></a></span><span>
+</span><span id="line-295"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvLookupEnv"><span class="hs-identifier hs-type">GitOrLookupEnvLookupEnv</span></a></span><span> </span><span id="local-6989586621679069161"><span class="annot"><span class="annottext">LookupEnvError
+</span><a href="#local-6989586621679069161"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LookupEnvError -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">LookupEnvError
+</span><a href="#local-6989586621679069161"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-296"></span><span>
+</span><span id="line-297"></span><span class="hs-comment">-- | @runGitInEnvDirQ var q@ runs @q@ in the directory given by the</span><span>
+</span><span id="line-298"></span><span class="hs-comment">-- environment variable.</span><span>
+</span><span id="line-299"></span><span class="hs-comment">--</span><span>
+</span><span id="line-300"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-301"></span><span class="hs-comment">--</span><span>
+</span><span id="line-302"></span><span class="hs-comment">-- &gt;&gt;&gt; setEnv &quot;SOME_DIR&quot; &quot;./&quot;</span><span>
+</span><span id="line-303"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode $ runGitInEnvDirQ &quot;SOME_DIR&quot; gitHashQ)</span><span>
+</span><span id="line-304"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-305"></span><span class="hs-comment">--</span><span>
+</span><span id="line-306"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-307"></span><span class="annot"><a href="Development.GitRev.Utils.html#runGitInEnvDirQ"><span class="hs-identifier hs-type">runGitInEnvDirQ</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-308"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068765"><span class="annot"><a href="#local-6989586621679068765"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-309"></span><span>  </span><span class="hs-comment">-- | Environment variable pointing to a directory path, in which we run</span><span>
+</span><span id="line-310"></span><span>  </span><span class="hs-comment">-- the git process.</span><span>
+</span><span id="line-311"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-312"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Git process to run.</span></span><span>
+</span><span id="line-313"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068765"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-314"></span><span>  </span><span class="annot"><span class="hs-comment">-- | The result.</span></span><span>
+</span><span id="line-315"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-type">GitOrLookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068765"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-316"></span><span id="runGitInEnvDirQ"><span class="annot"><span class="annottext">runGitInEnvDirQ :: forall a.
+String -&gt; Q (Either GitError a) -&gt; Q (Either GitOrLookupEnvError a)
+</span><a href="Development.GitRev.Utils.html#runGitInEnvDirQ"><span class="hs-identifier hs-var hs-var">runGitInEnvDirQ</span></a></span></span><span> </span><span id="local-6989586621679069162"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679069162"><span class="hs-identifier hs-var">var</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q (Either LookupEnvError (Either GitError a))
+-&gt; Q (Either GitOrLookupEnvError a)
+forall {a}.
+Q (Either LookupEnvError (Either GitError a))
+-&gt; Q (Either GitOrLookupEnvError a)
+</span><a href="#local-6989586621679069163"><span class="hs-identifier hs-var">joinErrors</span></a></span><span> </span><span class="annot"><span class="annottext">(Q (Either LookupEnvError (Either GitError a))
+ -&gt; Q (Either GitOrLookupEnvError a))
+-&gt; (Q (Either GitError a)
+    -&gt; Q (Either LookupEnvError (Either GitError a)))
+-&gt; Q (Either GitError a)
+-&gt; Q (Either GitOrLookupEnvError a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String
+-&gt; Q (Either GitError a)
+-&gt; Q (Either LookupEnvError (Either GitError a))
+forall a. String -&gt; Q a -&gt; Q (Either LookupEnvError a)
+</span><a href="Development.GitRev.Utils.Environment.html#runInEnvDirQ"><span class="hs-identifier hs-var">Env.runInEnvDirQ</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679069162"><span class="hs-identifier hs-var">var</span></a></span><span>
+</span><span id="line-317"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-318"></span><span>    </span><span id="local-6989586621679069163"><span class="annot"><span class="annottext">joinErrors :: Q (Either LookupEnvError (Either GitError a))
+-&gt; Q (Either GitOrLookupEnvError a)
+</span><a href="#local-6989586621679069163"><span class="hs-identifier hs-var hs-var">joinErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Either LookupEnvError (Either GitError a)
+ -&gt; Either GitOrLookupEnvError a)
+-&gt; Q (Either LookupEnvError (Either GitError a))
+-&gt; Q (Either GitOrLookupEnvError a)
+forall a b. (a -&gt; b) -&gt; Q a -&gt; Q b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Either LookupEnvError (Either GitError a)
+-&gt; Either GitOrLookupEnvError a
+forall (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, forall e. Monad (p e)) =&gt;
+p LookupEnvError (p GitError a) -&gt; p GitOrLookupEnvError a
+</span><a href="Development.GitRev.Utils.html#joinLookupEnvGitErrors"><span class="hs-identifier hs-var">joinLookupEnvGitErrors</span></a></span><span>
+</span><span id="line-319"></span><span>
+</span><span id="line-320"></span><span class="hs-comment">-- | Utility function for joining lookup and git errors.</span><span>
+</span><span id="line-321"></span><span class="hs-comment">--</span><span>
+</span><span id="line-322"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-323"></span><span class="hs-comment">--</span><span>
+</span><span id="line-324"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-325"></span><span class="hs-comment">--   let e :: Either LookupEnvError (Either GitError ())</span><span>
+</span><span id="line-326"></span><span class="hs-comment">--       e = Right (Left GitNotFound)</span><span>
+</span><span id="line-327"></span><span class="hs-comment">--   in joinLookupEnvGitErrors e</span><span>
+</span><span id="line-328"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-329"></span><span class="hs-comment">-- Left (GitOrLookupEnvGit GitNotFound)</span><span>
+</span><span id="line-330"></span><span class="hs-comment">--</span><span>
+</span><span id="line-331"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-332"></span><span class="annot"><a href="Development.GitRev.Utils.html#joinLookupEnvGitErrors"><span class="hs-identifier hs-type">joinLookupEnvGitErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-333"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068770"><span class="annot"><a href="#local-6989586621679068770"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span id="local-6989586621679068771"><span class="annot"><a href="#local-6989586621679068771"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-334"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bifunctor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068770"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-335"></span><span>    </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068769"><span class="annot"><a href="#local-6989586621679068769"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068770"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068769"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-336"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-337"></span><span>  </span><span class="annot"><span class="hs-comment">-- | .</span></span><span>
+</span><span id="line-338"></span><span>  </span><span class="annot"><a href="#local-6989586621679068770"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Environment.html#LookupEnvError"><span class="hs-identifier hs-type">LookupEnvError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068770"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068771"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-339"></span><span>  </span><span class="annot"><a href="#local-6989586621679068770"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-type">GitOrLookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068771"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-340"></span><span id="joinLookupEnvGitErrors"><span class="annot"><span class="annottext">joinLookupEnvGitErrors :: forall (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, forall e. Monad (p e)) =&gt;
+p LookupEnvError (p GitError a) -&gt; p GitOrLookupEnvError a
+</span><a href="Development.GitRev.Utils.html#joinLookupEnvGitErrors"><span class="hs-identifier hs-var hs-var">joinLookupEnvGitErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-341"></span><span>  </span><span class="annot"><span class="annottext">p GitOrLookupEnvError (p GitOrLookupEnvError a)
+-&gt; p GitOrLookupEnvError a
+forall (m :: * -&gt; *) a. Monad m =&gt; m (m a) -&gt; m a
+</span><span class="hs-identifier hs-var">join</span></span><span>
+</span><span id="line-342"></span><span>    </span><span class="annot"><span class="annottext">(p GitOrLookupEnvError (p GitOrLookupEnvError a)
+ -&gt; p GitOrLookupEnvError a)
+-&gt; (p LookupEnvError (p GitError a)
+    -&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a))
+-&gt; p LookupEnvError (p GitError a)
+-&gt; p GitOrLookupEnvError a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">p GitOrLookupEnvError (p GitError a)
+-&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a)
+forall (f :: * -&gt; *) (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, Functor f) =&gt;
+f (p GitError a) -&gt; f (p GitOrLookupEnvError a)
+</span><a href="Development.GitRev.Utils.html#embedGitError"><span class="hs-identifier hs-var">embedGitError</span></a></span><span>
+</span><span id="line-343"></span><span>    </span><span class="annot"><span class="annottext">(p GitOrLookupEnvError (p GitError a)
+ -&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a))
+-&gt; (p LookupEnvError (p GitError a)
+    -&gt; p GitOrLookupEnvError (p GitError a))
+-&gt; p LookupEnvError (p GitError a)
+-&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(LookupEnvError -&gt; GitOrLookupEnvError)
+-&gt; p LookupEnvError (p GitError a)
+-&gt; p GitOrLookupEnvError (p GitError a)
+forall a b c. (a -&gt; b) -&gt; p a c -&gt; p b c
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">LookupEnvError -&gt; GitOrLookupEnvError
+</span><a href="Development.GitRev.Utils.html#GitOrLookupEnvLookupEnv"><span class="hs-identifier hs-var">GitOrLookupEnvLookupEnv</span></a></span><span>
+</span><span id="line-344"></span><span>
+</span><span id="line-345"></span><span class="hs-comment">-- | Utility function for joining git and lookup errors.</span><span>
+</span><span id="line-346"></span><span class="hs-comment">--</span><span>
+</span><span id="line-347"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-348"></span><span class="hs-comment">--</span><span>
+</span><span id="line-349"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-350"></span><span class="hs-comment">--   let e :: Either GitError (Either LookupEnvError ())</span><span>
+</span><span id="line-351"></span><span class="hs-comment">--       e = Right (Left $ MkLookupEnvError &quot;VAR&quot;)</span><span>
+</span><span id="line-352"></span><span class="hs-comment">--   in joinGitLookupEnvErrors e</span><span>
+</span><span id="line-353"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-354"></span><span class="hs-comment">-- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError &quot;VAR&quot;))</span><span>
+</span><span id="line-355"></span><span class="hs-comment">--</span><span>
+</span><span id="line-356"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-357"></span><span class="annot"><a href="Development.GitRev.Utils.html#joinGitLookupEnvErrors"><span class="hs-identifier hs-type">joinGitLookupEnvErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-358"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068779"><span class="annot"><a href="#local-6989586621679068779"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span id="local-6989586621679068781"><span class="annot"><a href="#local-6989586621679068781"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-359"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bifunctor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068779"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-360"></span><span>    </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068780"><span class="annot"><a href="#local-6989586621679068780"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068779"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068780"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-361"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-362"></span><span>  </span><span class="annot"><span class="hs-comment">-- | .</span></span><span>
+</span><span id="line-363"></span><span>  </span><span class="annot"><a href="#local-6989586621679068779"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068779"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Environment.html#LookupEnvError"><span class="hs-identifier hs-type">LookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068781"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-364"></span><span>  </span><span class="annot"><a href="#local-6989586621679068779"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-type">GitOrLookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068781"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-365"></span><span id="joinGitLookupEnvErrors"><span class="annot"><span class="annottext">joinGitLookupEnvErrors :: forall (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, forall e. Monad (p e)) =&gt;
+p GitError (p LookupEnvError a) -&gt; p GitOrLookupEnvError a
+</span><a href="Development.GitRev.Utils.html#joinGitLookupEnvErrors"><span class="hs-identifier hs-var hs-var">joinGitLookupEnvErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-366"></span><span>  </span><span class="annot"><span class="annottext">p GitOrLookupEnvError (p GitOrLookupEnvError a)
+-&gt; p GitOrLookupEnvError a
+forall (m :: * -&gt; *) a. Monad m =&gt; m (m a) -&gt; m a
+</span><span class="hs-identifier hs-var">join</span></span><span>
+</span><span id="line-367"></span><span>    </span><span class="annot"><span class="annottext">(p GitOrLookupEnvError (p GitOrLookupEnvError a)
+ -&gt; p GitOrLookupEnvError a)
+-&gt; (p GitError (p LookupEnvError a)
+    -&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a))
+-&gt; p GitError (p LookupEnvError a)
+-&gt; p GitOrLookupEnvError a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">p GitOrLookupEnvError (p LookupEnvError a)
+-&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a)
+forall (f :: * -&gt; *) (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, Functor f) =&gt;
+f (p LookupEnvError a) -&gt; f (p GitOrLookupEnvError a)
+</span><a href="Development.GitRev.Utils.html#embedLookupEnvError"><span class="hs-identifier hs-var">embedLookupEnvError</span></a></span><span>
+</span><span id="line-368"></span><span>    </span><span class="annot"><span class="annottext">(p GitOrLookupEnvError (p LookupEnvError a)
+ -&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a))
+-&gt; (p GitError (p LookupEnvError a)
+    -&gt; p GitOrLookupEnvError (p LookupEnvError a))
+-&gt; p GitError (p LookupEnvError a)
+-&gt; p GitOrLookupEnvError (p GitOrLookupEnvError a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(GitError -&gt; GitOrLookupEnvError)
+-&gt; p GitError (p LookupEnvError a)
+-&gt; p GitOrLookupEnvError (p LookupEnvError a)
+forall a b c. (a -&gt; b) -&gt; p a c -&gt; p b c
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">GitError -&gt; GitOrLookupEnvError
+</span><a href="Development.GitRev.Utils.html#GitOrLookupEnvGit"><span class="hs-identifier hs-var">GitOrLookupEnvGit</span></a></span><span>
+</span><span id="line-369"></span><span>
+</span><span id="line-370"></span><span class="hs-comment">-- | Embeds a 'GitError' in the larger 'GitOrLookupEnvError'.</span><span>
+</span><span id="line-371"></span><span class="hs-comment">--</span><span>
+</span><span id="line-372"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-373"></span><span class="hs-comment">--</span><span>
+</span><span id="line-374"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-375"></span><span class="hs-comment">--   let q :: Q (Either GitError ())</span><span>
+</span><span id="line-376"></span><span class="hs-comment">--       q = pure (Left GitNotFound)</span><span>
+</span><span id="line-377"></span><span class="hs-comment">--   in runQ $ embedGitError q</span><span>
+</span><span id="line-378"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-379"></span><span class="hs-comment">-- Left (GitOrLookupEnvGit GitNotFound)</span><span>
+</span><span id="line-380"></span><span class="hs-comment">--</span><span>
+</span><span id="line-381"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-382"></span><span class="annot"><a href="Development.GitRev.Utils.html#embedGitError"><span class="hs-identifier hs-type">embedGitError</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-383"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068777"><span class="annot"><a href="#local-6989586621679068777"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068776"><span class="annot"><a href="#local-6989586621679068776"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span id="local-6989586621679068778"><span class="annot"><a href="#local-6989586621679068778"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-384"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bifunctor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068776"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-385"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068777"><span class="hs-identifier hs-type">f</span></a></span><span>
+</span><span id="line-386"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-387"></span><span>  </span><span class="annot"><span class="hs-comment">-- | .</span></span><span>
+</span><span id="line-388"></span><span>  </span><span class="annot"><a href="#local-6989586621679068777"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068776"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068778"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-389"></span><span>  </span><span class="annot"><a href="#local-6989586621679068777"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068776"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-type">GitOrLookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068778"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-390"></span><span id="embedGitError"><span class="annot"><span class="annottext">embedGitError :: forall (f :: * -&gt; *) (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, Functor f) =&gt;
+f (p GitError a) -&gt; f (p GitOrLookupEnvError a)
+</span><a href="Development.GitRev.Utils.html#embedGitError"><span class="hs-identifier hs-var hs-var">embedGitError</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(p GitError a -&gt; p GitOrLookupEnvError a)
+-&gt; f (p GitError a) -&gt; f (p GitOrLookupEnvError a)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GitError -&gt; GitOrLookupEnvError)
+-&gt; p GitError a -&gt; p GitOrLookupEnvError a
+forall a b c. (a -&gt; b) -&gt; p a c -&gt; p b c
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">GitError -&gt; GitOrLookupEnvError
+</span><a href="Development.GitRev.Utils.html#GitOrLookupEnvGit"><span class="hs-identifier hs-var">GitOrLookupEnvGit</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-391"></span><span>
+</span><span id="line-392"></span><span class="hs-comment">-- | Embeds a 'LookupEnvError' in the larger 'GitOrLookupEnvError'.</span><span>
+</span><span id="line-393"></span><span class="hs-comment">--</span><span>
+</span><span id="line-394"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-395"></span><span class="hs-comment">--</span><span>
+</span><span id="line-396"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-397"></span><span class="hs-comment">--   let q :: Q (Either LookupEnvError ())</span><span>
+</span><span id="line-398"></span><span class="hs-comment">--       q = pure (Left $ MkLookupEnvError &quot;VAR&quot;)</span><span>
+</span><span id="line-399"></span><span class="hs-comment">--   in runQ $ embedLookupEnvError q</span><span>
+</span><span id="line-400"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-401"></span><span class="hs-comment">-- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError &quot;VAR&quot;))</span><span>
+</span><span id="line-402"></span><span class="hs-comment">--</span><span>
+</span><span id="line-403"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-404"></span><span class="annot"><a href="Development.GitRev.Utils.html#embedLookupEnvError"><span class="hs-identifier hs-type">embedLookupEnvError</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-405"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679068785"><span class="annot"><a href="#local-6989586621679068785"><span class="hs-identifier hs-type">f</span></a></span></span><span> </span><span id="local-6989586621679068784"><span class="annot"><a href="#local-6989586621679068784"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span id="local-6989586621679068786"><span class="annot"><a href="#local-6989586621679068786"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-406"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bifunctor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068784"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-407"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679068785"><span class="hs-identifier hs-type">f</span></a></span><span>
+</span><span id="line-408"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-409"></span><span>  </span><span class="annot"><span class="hs-comment">-- | .</span></span><span>
+</span><span id="line-410"></span><span>  </span><span class="annot"><a href="#local-6989586621679068785"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068784"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Environment.html#LookupEnvError"><span class="hs-identifier hs-type">LookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068786"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-411"></span><span>  </span><span class="annot"><a href="#local-6989586621679068785"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068784"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.html#GitOrLookupEnvError"><span class="hs-identifier hs-type">GitOrLookupEnvError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068786"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-412"></span><span id="embedLookupEnvError"><span class="annot"><span class="annottext">embedLookupEnvError :: forall (f :: * -&gt; *) (p :: * -&gt; * -&gt; *) a.
+(Bifunctor p, Functor f) =&gt;
+f (p LookupEnvError a) -&gt; f (p GitOrLookupEnvError a)
+</span><a href="Development.GitRev.Utils.html#embedLookupEnvError"><span class="hs-identifier hs-var hs-var">embedLookupEnvError</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(p LookupEnvError a -&gt; p GitOrLookupEnvError a)
+-&gt; f (p LookupEnvError a) -&gt; f (p GitOrLookupEnvError a)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(LookupEnvError -&gt; GitOrLookupEnvError)
+-&gt; p LookupEnvError a -&gt; p GitOrLookupEnvError a
+forall a b c. (a -&gt; b) -&gt; p a c -&gt; p b c
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">LookupEnvError -&gt; GitOrLookupEnvError
+</span><a href="Development.GitRev.Utils.html#GitOrLookupEnvLookupEnv"><span class="hs-identifier hs-var">GitOrLookupEnvLookupEnv</span></a></span><span class="hs-special">)</span><span class="hs-cpp">
+
+#if !MIN_VERSION_base(4, 18, 0)
+</span><span class="hs-comment">-- Copied from base. Technically not the same as the import above since</span><span>
+</span><span id="line-416"></span><span class="hs-comment">-- that one works for all Foldable1, not just NonEmpty, but we only use it</span><span>
+</span><span id="line-417"></span><span class="hs-comment">-- here for NonEmpty, so whatever.</span><span>
+</span><span id="line-418"></span><span class="hs-identifier">foldMap1</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">Semigroup</span><span> </span><span class="hs-identifier">m</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">a</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">m</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">NonEmpty</span><span> </span><span class="hs-identifier">a</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">m</span><span>
+</span><span id="line-419"></span><span class="hs-identifier">foldMap1</span><span> </span><span class="hs-identifier">f</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">x</span><span> </span><span class="hs-operator">:|</span><span> </span><span class="hs-identifier">xs</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">go</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">f</span><span> </span><span class="hs-identifier">x</span><span class="hs-special">)</span><span> </span><span class="hs-identifier">xs</span><span>
+</span><span id="line-420"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-421"></span><span>    </span><span class="hs-identifier">go</span><span> </span><span class="hs-identifier">y</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">y</span><span>
+</span><span id="line-422"></span><span>    </span><span class="hs-identifier">go</span><span> </span><span class="hs-identifier">y</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">z</span><span> </span><span class="hs-glyph">:</span><span> </span><span class="hs-identifier">zs</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">y</span><span> </span><span class="hs-operator">&lt;&gt;</span><span> </span><span class="hs-identifier">go</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">f</span><span> </span><span class="hs-identifier">z</span><span class="hs-special">)</span><span> </span><span class="hs-identifier">zs</span><span class="hs-cpp">
+#endif
+</span></pre></body></html>

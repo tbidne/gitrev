@@ -1,0 +1,652 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE QuasiQuotes #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Provides utilities for querying git.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html"><span class="hs-identifier">Development.GitRev.Utils.Git</span></a></span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier">GitError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitBranchQ"><span class="hs-identifier">gitBranchQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitCommitCountQ"><span class="hs-identifier">gitCommitCountQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitCommitDateQ"><span class="hs-identifier">gitCommitDateQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDescribeQ"><span class="hs-identifier">gitDescribeQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDiffQ"><span class="hs-identifier">gitDiffQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDirtyQ"><span class="hs-identifier">gitDirtyQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDirtyTrackedQ"><span class="hs-identifier">gitDirtyTrackedQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitHashQ"><span class="hs-identifier">gitHashQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitShortHashQ"><span class="hs-identifier">gitShortHashQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitTreeQ"><span class="hs-identifier">gitTreeQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">displayException</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">fromException</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><span class="hs-identifier">SomeAsyncException</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">SomeAsyncException</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="hs-identifier">SomeException</span></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="hs-identifier">catchJust</span></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><span class="hs-identifier">throwIO</span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><span class="hs-identifier">toException</span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(&lt;=&lt;)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">isJust</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Encoding</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TEnc</span></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Q</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">runIO</span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH.Syntax</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Lift</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">addDependentFile</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Directory.OsPath</span></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">doesDirectoryExist</span></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><span class="hs-identifier">doesFileExist</span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><span class="hs-identifier">findExecutable</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="hs-identifier">getCurrentDirectory</span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Exit</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ExitCode</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ExitFailure</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ExitSuccess</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/7hi4k0i5s6mlq2qnl89s6g0v8pydkrnx-file-io-0.1.4-doc/share/doc/file-io-0.1.4/html/src/System.File.OsPath.html/System.File.OsPath.html"><span class="hs-identifier">System.File.OsPath</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FileIO</span></span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.OsPath</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsPath</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">osp</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(&lt;/&gt;)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.OsPath</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OsPath</span></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.OsString</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OsString</span></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Process</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">readProcessWithExitCode</span></span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XTemplateHaskell</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- &gt;&gt;&gt; import Development.GitRev.Typed (qToCode)</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- | Returns the latest git hash.</span><span>
+</span><span id="line-54"></span><span class="hs-comment">--</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitHashQ)</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitHashQ"><span class="hs-identifier hs-type">gitHashQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span id="gitHashQ"><span class="annot"><span class="annottext">gitHashQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitHashQ"><span class="hs-identifier hs-var hs-var">gitHashQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;rev-parse&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- | Returns the latest git short hash.</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitShortHashQ)</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--</span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-72"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitShortHashQ"><span class="hs-identifier hs-type">gitShortHashQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span id="gitShortHashQ"><span class="annot"><span class="annottext">gitShortHashQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitShortHashQ"><span class="hs-identifier hs-var hs-var">gitShortHashQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;rev-parse&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--short&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- | Returns the current git branch.</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--</span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-78"></span><span class="hs-comment">--</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitBranchQ)</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-81"></span><span class="hs-comment">--</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-83"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitBranchQ"><span class="hs-identifier hs-type">gitBranchQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span id="gitBranchQ"><span class="annot"><span class="annottext">gitBranchQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitBranchQ"><span class="hs-identifier hs-var hs-var">gitBranchQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;rev-parse&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--abbrev-ref&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- | Returns the git description.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--</span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitDescribeQ)</span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-92"></span><span class="hs-comment">--</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-94"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDescribeQ"><span class="hs-identifier hs-type">gitDescribeQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span id="gitDescribeQ"><span class="annot"><span class="annottext">gitDescribeQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitDescribeQ"><span class="hs-identifier hs-var hs-var">gitDescribeQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;describe&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--long&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--always&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- | Returns the git dirty status.</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-100"></span><span class="hs-comment">--</span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitDirtyQ)</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-103"></span><span class="hs-comment">--</span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-105"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDirtyQ"><span class="hs-identifier hs-type">gitDirtyQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span id="gitDirtyQ"><span class="annot"><span class="annottext">gitDirtyQ :: Q (Either GitError Bool)
+</span><a href="Development.GitRev.Utils.Git.html#gitDirtyQ"><span class="hs-identifier hs-var hs-var">gitDirtyQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(String -&gt; Bool) -&gt; Either GitError String -&gt; Either GitError Bool
+forall a b. (a -&gt; b) -&gt; Either GitError a -&gt; Either GitError b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Bool
+</span><a href="Development.GitRev.Utils.Git.html#nonEmpty"><span class="hs-identifier hs-var">nonEmpty</span></a></span><span> </span><span class="annot"><span class="annottext">(Either GitError String -&gt; Either GitError Bool)
+-&gt; Q (Either GitError String) -&gt; Q (Either GitError Bool)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;status&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--porcelain&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxUsed"><span class="hs-identifier hs-var">IdxUsed</span></a></span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- | Returns the git dirty status, ignoring untracked files.</span><span>
+</span><span id="line-109"></span><span class="hs-comment">--</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-111"></span><span class="hs-comment">--</span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitDirtyTrackedQ)</span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-114"></span><span class="hs-comment">--</span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-116"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDirtyTrackedQ"><span class="hs-identifier hs-type">gitDirtyTrackedQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-117"></span><span id="gitDirtyTrackedQ"><span class="annot"><span class="annottext">gitDirtyTrackedQ :: Q (Either GitError Bool)
+</span><a href="Development.GitRev.Utils.Git.html#gitDirtyTrackedQ"><span class="hs-identifier hs-var hs-var">gitDirtyTrackedQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-118"></span><span>  </span><span class="annot"><span class="annottext">(String -&gt; Bool) -&gt; Either GitError String -&gt; Either GitError Bool
+forall a b. (a -&gt; b) -&gt; Either GitError a -&gt; Either GitError b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Bool
+</span><a href="Development.GitRev.Utils.Git.html#nonEmpty"><span class="hs-identifier hs-var">nonEmpty</span></a></span><span>
+</span><span id="line-119"></span><span>    </span><span class="annot"><span class="annottext">(Either GitError String -&gt; Either GitError Bool)
+-&gt; Q (Either GitError String) -&gt; Q (Either GitError Bool)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;status&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--porcelain&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--untracked-files=no&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxUsed"><span class="hs-identifier hs-var">IdxUsed</span></a></span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- | Returns the git commit count.</span><span>
+</span><span id="line-122"></span><span class="hs-comment">--</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-124"></span><span class="hs-comment">--</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitCommitCountQ)</span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-129"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitCommitCountQ"><span class="hs-identifier hs-type">gitCommitCountQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span id="gitCommitCountQ"><span class="annot"><span class="annottext">gitCommitCountQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitCommitCountQ"><span class="hs-identifier hs-var hs-var">gitCommitCountQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;rev-list&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--count&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="hs-comment">-- | Returns the latest git commit date.</span><span>
+</span><span id="line-133"></span><span class="hs-comment">--</span><span>
+</span><span id="line-134"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-135"></span><span class="hs-comment">--</span><span>
+</span><span id="line-136"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitCommitDateQ)</span><span>
+</span><span id="line-137"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-138"></span><span class="hs-comment">--</span><span>
+</span><span id="line-139"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-140"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitCommitDateQ"><span class="hs-identifier hs-type">gitCommitDateQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-141"></span><span id="gitCommitDateQ"><span class="annot"><span class="annottext">gitCommitDateQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitCommitDateQ"><span class="hs-identifier hs-var hs-var">gitCommitDateQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;log&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;-1&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--format=%cd&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-142"></span><span>
+</span><span id="line-143"></span><span class="hs-comment">-- | Return the diff of the working copy with HEAD.</span><span>
+</span><span id="line-144"></span><span class="hs-comment">--</span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-146"></span><span class="hs-comment">--</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitDiffQ)</span><span>
+</span><span id="line-148"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-149"></span><span class="hs-comment">--</span><span>
+</span><span id="line-150"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-151"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitDiffQ"><span class="hs-identifier hs-type">gitDiffQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-152"></span><span id="gitDiffQ"><span class="annot"><span class="annottext">gitDiffQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitDiffQ"><span class="hs-identifier hs-var hs-var">gitDiffQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(String -&gt; String)
+-&gt; [String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGitPostprocess"><span class="hs-identifier hs-var">runGitPostprocess</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;diff&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span class="hs-comment">-- | Returns the hash of the current tree.</span><span>
+</span><span id="line-155"></span><span class="hs-comment">--</span><span>
+</span><span id="line-156"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-157"></span><span class="hs-comment">--</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(qToCode gitTreeQ)</span><span>
+</span><span id="line-159"></span><span class="hs-comment">-- Right ...</span><span>
+</span><span id="line-160"></span><span class="hs-comment">--</span><span>
+</span><span id="line-161"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-162"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#gitTreeQ"><span class="hs-identifier hs-type">gitTreeQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-163"></span><span id="gitTreeQ"><span class="annot"><span class="annottext">gitTreeQ :: Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#gitTreeQ"><span class="hs-identifier hs-var hs-var">gitTreeQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var">runGit</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;show&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;HEAD&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--format=%T&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--no-patch&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#nonEmpty"><span class="hs-identifier hs-type">nonEmpty</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-166"></span><span id="nonEmpty"><span class="annot"><span class="annottext">nonEmpty :: String -&gt; Bool
+</span><a href="Development.GitRev.Utils.Git.html#nonEmpty"><span class="hs-identifier hs-var hs-var">nonEmpty</span></a></span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-167"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#nonEmpty"><span class="hs-identifier hs-var">nonEmpty</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span class="hs-comment">-- | Errors that can be encountered with git.</span><span>
+</span><span id="line-170"></span><span class="hs-comment">--</span><span>
+</span><span id="line-171"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-172"></span><span class="hs-keyword">data</span><span> </span><span id="GitError"><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-var">GitError</span></a></span></span><span>
+</span><span id="line-173"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-174"></span><span>    </span><span id="GitNotFound"><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitNotFound"><span class="hs-identifier hs-var">GitNotFound</span></a></span></span><span>
+</span><span id="line-175"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-176"></span><span>    </span><span id="GitRunError"><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitRunError"><span class="hs-identifier hs-var">GitRunError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-177"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-178"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-179"></span><span>      </span><span id="local-6989586621679068397"><span id="local-6989586621679068403"><span class="annot"><span class="annottext">GitError -&gt; GitError -&gt; Bool
+(GitError -&gt; GitError -&gt; Bool)
+-&gt; (GitError -&gt; GitError -&gt; Bool) -&gt; Eq GitError
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GitError -&gt; GitError -&gt; Bool
+== :: GitError -&gt; GitError -&gt; Bool
+$c/= :: GitError -&gt; GitError -&gt; Bool
+/= :: GitError -&gt; GitError -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-180"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-181"></span><span>      </span><span id="local-6989586621679068408"><span id="local-6989586621679068417"><span class="annot"><span class="annottext">(forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; m Exp)
+-&gt; (forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; Code m GitError)
+-&gt; Lift GitError
+forall t.
+(forall (m :: * -&gt; *). Quote m =&gt; t -&gt; m Exp)
+-&gt; (forall (m :: * -&gt; *). Quote m =&gt; t -&gt; Code m t) -&gt; Lift t
+forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; m Exp
+forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; Code m GitError
+$clift :: forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; m Exp
+lift :: forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; m Exp
+$cliftTyped :: forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; Code m GitError
+liftTyped :: forall (m :: * -&gt; *). Quote m =&gt; GitError -&gt; Code m GitError
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Lift</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-182"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-183"></span><span>      </span><span id="local-6989586621679068428"><span id="local-6989586621679068435"><span id="local-6989586621679068439"><span class="annot"><span class="annottext">Int -&gt; GitError -&gt; String -&gt; String
+[GitError] -&gt; String -&gt; String
+GitError -&gt; String
+(Int -&gt; GitError -&gt; String -&gt; String)
+-&gt; (GitError -&gt; String)
+-&gt; ([GitError] -&gt; String -&gt; String)
+-&gt; Show GitError
+forall a.
+(Int -&gt; a -&gt; String -&gt; String)
+-&gt; (a -&gt; String) -&gt; ([a] -&gt; String -&gt; String) -&gt; Show a
+$cshowsPrec :: Int -&gt; GitError -&gt; String -&gt; String
+showsPrec :: Int -&gt; GitError -&gt; String -&gt; String
+$cshow :: GitError -&gt; String
+show :: GitError -&gt; String
+$cshowList :: [GitError] -&gt; String -&gt; String
+showList :: [GitError] -&gt; String -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-184"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-185"></span><span>
+</span><span id="line-186"></span><span class="annot"><span class="hs-comment">-- | @since 2.0</span></span><span>
+</span><span id="line-187"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679068449"><span id="local-6989586621679068453"><span id="local-6989586621679068457"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-188"></span><span>  </span><span id="local-6989586621679068461"><span class="annot"><span class="annottext">displayException :: GitError -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="annot"><span class="annottext">GitError
+</span><a href="Development.GitRev.Utils.Git.html#GitNotFound"><span class="hs-identifier hs-var">GitNotFound</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Git executable not found&quot;</span></span><span>
+</span><span id="line-189"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitRunError"><span class="hs-identifier hs-type">GitRunError</span></a></span><span> </span><span id="local-6989586621679068462"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679068462"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Git error: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679068462"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-190"></span><span>
+</span><span id="line-191"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-type">runGit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#IndexUsed"><span class="hs-identifier hs-type">IndexUsed</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-192"></span><span id="runGit"><span class="annot"><span class="annottext">runGit :: [String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGit"><span class="hs-identifier hs-var hs-var">runGit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(String -&gt; String)
+-&gt; [String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGitPostprocess"><span class="hs-identifier hs-var">runGitPostprocess</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String
+</span><a href="Development.GitRev.Utils.Git.html#tillNewLineStr"><span class="hs-identifier hs-var">tillNewLineStr</span></a></span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span class="hs-comment">-- | Run git with the given arguments and no stdin, returning the</span><span>
+</span><span id="line-195"></span><span class="hs-comment">-- stdout output.</span><span>
+</span><span id="line-196"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#runGitPostprocess"><span class="hs-identifier hs-type">runGitPostprocess</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-197"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Post-processing on the result.</span></span><span>
+</span><span id="line-198"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-199"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Args to run with git.</span></span><span>
+</span><span id="line-200"></span><span>  </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-201"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Whether the index is used.</span></span><span>
+</span><span id="line-202"></span><span>  </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#IndexUsed"><span class="hs-identifier hs-type">IndexUsed</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-203"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-204"></span><span id="runGitPostprocess"><span class="annot"><span class="annottext">runGitPostprocess :: (String -&gt; String)
+-&gt; [String] -&gt; IndexUsed -&gt; Q (Either GitError String)
+</span><a href="Development.GitRev.Utils.Git.html#runGitPostprocess"><span class="hs-identifier hs-var hs-var">runGitPostprocess</span></a></span></span><span> </span><span id="local-6989586621679068464"><span class="annot"><span class="annottext">String -&gt; String
+</span><a href="#local-6989586621679068464"><span class="hs-identifier hs-var">postProcess</span></a></span></span><span> </span><span id="local-6989586621679068465"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679068465"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span id="local-6989586621679068466"><span class="annot"><span class="annottext">IndexUsed
+</span><a href="#local-6989586621679068466"><span class="hs-identifier hs-var">useIdx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-205"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span class="annot"><a href="#local-6989586621679068467"><span class="hs-identifier hs-type">oops</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">SomeException</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExitCode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-206"></span><span>      </span><span id="local-6989586621679068467"><span class="annot"><span class="annottext">oops :: SomeException -&gt; IO (ExitCode, String, String)
+</span><a href="#local-6989586621679068467"><span class="hs-identifier hs-var hs-var hs-var">oops</span></a></span></span><span> </span><span id="local-6989586621679068468"><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679068468"><span class="hs-identifier hs-var">ex</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(ExitCode, String, String) -&gt; IO (ExitCode, String, String)
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; ExitCode
+</span><span class="hs-identifier hs-var">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679068468"><span class="hs-identifier hs-var">ex</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-207"></span><span>  </span><span id="local-6989586621679068469"><span class="annot"><a href="#local-6989586621679068469"><span class="hs-identifier hs-var">gitFound</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO Bool -&gt; Q Bool
+forall a. IO a -&gt; Q a
+</span><span class="hs-identifier hs-var">runIO</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; Q Bool) -&gt; IO Bool -&gt; Q Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Maybe OsPath -&gt; Bool
+forall a. Maybe a -&gt; Bool
+</span><span class="hs-identifier hs-var">isJust</span></span><span> </span><span class="annot"><span class="annottext">(Maybe OsPath -&gt; Bool) -&gt; IO (Maybe OsPath) -&gt; IO Bool
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; IO (Maybe OsPath)
+</span><span class="hs-identifier hs-var">findExecutable</span></span><span> </span><span class="annot"><span class="">[osp|git|]</span></span><span>
+</span><span id="line-208"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679068469"><span class="hs-identifier hs-type">gitFound</span></a></span><span>
+</span><span id="line-209"></span><span>    </span><span class="hs-keyword">then</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-210"></span><span>      </span><span class="hs-comment">-- a lot of bookkeeping to record the right dependencies</span><span>
+</span><span id="line-211"></span><span>      </span><span id="local-6989586621679068474"><span class="annot"><a href="#local-6989586621679068474"><span class="hs-identifier hs-var">pwd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#getDotGit"><span class="hs-identifier hs-type">getDotGit</span></a></span><span>
+</span><span id="line-212"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679068480"><span class="annot"><a href="#local-6989586621679068480"><span class="hs-identifier hs-var hs-var">hd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068474"><span class="hs-identifier hs-var">pwd</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath -&gt; OsPath
+</span><span class="hs-operator hs-var">&lt;/&gt;</span></span><span> </span><span class="annot"><span class="">[osp|HEAD|]</span></span><span>
+</span><span id="line-213"></span><span>          </span><span id="local-6989586621679068486"><span class="annot"><a href="#local-6989586621679068486"><span class="hs-identifier hs-var hs-var">index</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068474"><span class="hs-identifier hs-var">pwd</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath -&gt; OsPath
+</span><span class="hs-operator hs-var">&lt;/&gt;</span></span><span> </span><span class="annot"><span class="">[osp|index|]</span></span><span>
+</span><span id="line-214"></span><span>          </span><span id="local-6989586621679068498"><span class="annot"><a href="#local-6989586621679068498"><span class="hs-identifier hs-var hs-var">packedRefs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068474"><span class="hs-identifier hs-var">pwd</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath -&gt; OsPath
+</span><span class="hs-operator hs-var">&lt;/&gt;</span></span><span> </span><span class="annot"><span class="">[osp|packed-refs|]</span></span><span>
+</span><span id="line-215"></span><span>      </span><span id="local-6989586621679068499"><span class="annot"><a href="#local-6989586621679068499"><span class="hs-identifier hs-var">hdFp</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath.decodeUtf</span></span><span> </span><span class="annot"><a href="#local-6989586621679068480"><span class="hs-identifier hs-type">hd</span></a></span><span>
+</span><span id="line-216"></span><span>      </span><span id="local-6989586621679068501"><span class="annot"><a href="#local-6989586621679068501"><span class="hs-identifier hs-var">hdExists</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesFileExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068480"><span class="hs-identifier hs-type">hd</span></a></span><span>
+</span><span id="line-217"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">when</span></span><span> </span><span class="annot"><a href="#local-6989586621679068501"><span class="hs-identifier hs-type">hdExists</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-218"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">addDependentFile</span></span><span> </span><span class="annot"><a href="#local-6989586621679068499"><span class="hs-identifier hs-type">hdFp</span></a></span><span>
+</span><span id="line-219"></span><span>        </span><span class="hs-comment">-- the HEAD file either contains the hash of a detached head</span><span>
+</span><span id="line-220"></span><span>        </span><span class="hs-comment">-- or a pointer to the file that contains the hash of the head</span><span>
+</span><span id="line-221"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">T.splitAt</span></span><span> </span><span class="annot"><span class="hs-number">5</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Development.GitRev.Utils.Git.html#readFileUtf8"><span class="hs-identifier hs-type">readFileUtf8</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068480"><span class="hs-identifier hs-type">hd</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-operator hs-type">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-222"></span><span>          </span><span class="hs-comment">-- pointer to ref</span><span>
+</span><span id="line-223"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;ref: &quot;</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679068504"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679068504"><span class="hs-identifier hs-var">relRef</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-224"></span><span>            </span><span id="local-6989586621679068505"><span class="annot"><a href="#local-6989586621679068505"><span class="hs-identifier hs-var">relRefOs</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Q OsPath
+forall (m :: * -&gt; *). MonadThrow m =&gt; String -&gt; m OsPath
+</span><span class="hs-identifier hs-var">OsPath.encodeUtf</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Q OsPath) -&gt; String -&gt; Q OsPath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679068504"><span class="hs-identifier hs-var">relRef</span></a></span><span>
+</span><span id="line-225"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679068508"><span class="annot"><a href="#local-6989586621679068508"><span class="hs-identifier hs-var hs-var">ref</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068474"><span class="hs-identifier hs-var">pwd</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath -&gt; OsPath
+</span><span class="hs-operator hs-var">&lt;/&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath
+</span><a href="Development.GitRev.Utils.Git.html#tillNewLineOsPath"><span class="hs-identifier hs-var">tillNewLineOsPath</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068505"><span class="hs-identifier hs-var">relRefOs</span></a></span><span>
+</span><span id="line-226"></span><span>            </span><span id="local-6989586621679068510"><span class="annot"><a href="#local-6989586621679068510"><span class="hs-identifier hs-var">refExists</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesFileExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068508"><span class="hs-identifier hs-type">ref</span></a></span><span>
+</span><span id="line-227"></span><span>            </span><span id="local-6989586621679068511"><span class="annot"><a href="#local-6989586621679068511"><span class="hs-identifier hs-var">refFp</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath.decodeUtf</span></span><span> </span><span class="annot"><a href="#local-6989586621679068508"><span class="hs-identifier hs-type">ref</span></a></span><span>
+</span><span id="line-228"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">when</span></span><span> </span><span class="annot"><a href="#local-6989586621679068510"><span class="hs-identifier hs-type">refExists</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">addDependentFile</span></span><span> </span><span class="annot"><a href="#local-6989586621679068511"><span class="hs-identifier hs-type">refFp</span></a></span><span>
+</span><span id="line-229"></span><span>          </span><span class="hs-comment">-- detached head</span><span>
+</span><span id="line-230"></span><span>          </span><span id="local-6989586621679068512"><span class="annot"><span class="annottext">(Text, Text)
+</span><a href="#local-6989586621679068512"><span class="hs-identifier hs-var">_hash</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; Q ()
+forall a. a -&gt; Q a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-231"></span><span>      </span><span class="hs-comment">-- add the index if it exists to set the dirty flag</span><span>
+</span><span id="line-232"></span><span>      </span><span id="local-6989586621679068513"><span class="annot"><a href="#local-6989586621679068513"><span class="hs-identifier hs-var">indexExists</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesFileExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068486"><span class="hs-identifier hs-type">index</span></a></span><span>
+</span><span id="line-233"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068513"><span class="hs-identifier hs-type">indexExists</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&amp;&amp;</span></span><span> </span><span class="annot"><a href="#local-6989586621679068466"><span class="hs-identifier hs-type">useIdx</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">==</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#IdxUsed"><span class="hs-identifier hs-type">IdxUsed</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-234"></span><span>        </span><span id="local-6989586621679068515"><span class="annot"><a href="#local-6989586621679068515"><span class="hs-identifier hs-var">indexFp</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath.decodeUtf</span></span><span> </span><span class="annot"><a href="#local-6989586621679068486"><span class="hs-identifier hs-type">index</span></a></span><span>
+</span><span id="line-235"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">addDependentFile</span></span><span> </span><span class="annot"><a href="#local-6989586621679068515"><span class="hs-identifier hs-type">indexFp</span></a></span><span>
+</span><span id="line-236"></span><span>      </span><span class="hs-comment">-- if the refs have been packed, the info we're looking for</span><span>
+</span><span id="line-237"></span><span>      </span><span class="hs-comment">-- might be in that file rather than the one-file-per-ref case</span><span>
+</span><span id="line-238"></span><span>      </span><span class="hs-comment">-- handled above</span><span>
+</span><span id="line-239"></span><span>      </span><span id="local-6989586621679068516"><span class="annot"><a href="#local-6989586621679068516"><span class="hs-identifier hs-var">packedExists</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesFileExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068498"><span class="hs-identifier hs-type">packedRefs</span></a></span><span>
+</span><span id="line-240"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">when</span></span><span> </span><span class="annot"><a href="#local-6989586621679068516"><span class="hs-identifier hs-type">packedExists</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-241"></span><span>        </span><span id="local-6989586621679068517"><span class="annot"><a href="#local-6989586621679068517"><span class="hs-identifier hs-var">packedRefsFp</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath.decodeUtf</span></span><span> </span><span class="annot"><a href="#local-6989586621679068498"><span class="hs-identifier hs-type">packedRefs</span></a></span><span>
+</span><span id="line-242"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">addDependentFile</span></span><span> </span><span class="annot"><a href="#local-6989586621679068517"><span class="hs-identifier hs-type">packedRefsFp</span></a></span><span>
+</span><span id="line-243"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">runIO</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-244"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679068518"><span class="annot"><a href="#local-6989586621679068518"><span class="hs-identifier hs-var">code</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679068519"><span class="annot"><a href="#local-6989586621679068519"><span class="hs-identifier hs-var">out</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679068520"><span class="annot"><a href="#local-6989586621679068520"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-245"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">readProcessWithExitCode</span></span><span> </span><span class="annot"><span class="hs-string">&quot;git&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679068465"><span class="hs-identifier hs-type">args</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#catchSync"><span class="hs-operator hs-type">`catchSync`</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068467"><span class="hs-identifier hs-type">oops</span></a></span><span>
+</span><span id="line-246"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679068518"><span class="hs-identifier hs-type">code</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-247"></span><span>          </span><span class="annot"><span class="annottext">ExitCode
+</span><span class="hs-identifier hs-var">ExitSuccess</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either GitError String -&gt; IO (Either GitError String)
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either GitError String -&gt; IO (Either GitError String))
+-&gt; Either GitError String -&gt; IO (Either GitError String)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Either GitError String
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; String
+</span><a href="#local-6989586621679068464"><span class="hs-identifier hs-var">postProcess</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679068519"><span class="hs-identifier hs-var">out</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-248"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either GitError String -&gt; IO (Either GitError String)
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either GitError String -&gt; IO (Either GitError String))
+-&gt; Either GitError String -&gt; IO (Either GitError String)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GitError -&gt; Either GitError String
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(GitError -&gt; Either GitError String)
+-&gt; GitError -&gt; Either GitError String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; GitError
+</span><a href="Development.GitRev.Utils.Git.html#GitRunError"><span class="hs-identifier hs-var">GitRunError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679068520"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-249"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#GitNotFound"><span class="hs-identifier hs-type">GitNotFound</span></a></span><span>
+</span><span id="line-250"></span><span>
+</span><span id="line-251"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#tillNewLineStr"><span class="hs-identifier hs-type">tillNewLineStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-252"></span><span id="tillNewLineStr"><span class="annot"><span class="annottext">tillNewLineStr :: String -&gt; String
+</span><a href="Development.GitRev.Utils.Git.html#tillNewLineStr"><span class="hs-identifier hs-var hs-var">tillNewLineStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; String -&gt; String
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">takeWhile</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679068523"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679068523"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679068523"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\n'</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679068523"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\r'</span></span><span class="hs-special">)</span><span>
+</span><span id="line-253"></span><span>
+</span><span id="line-254"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#tillNewLineOsPath"><span class="hs-identifier hs-type">tillNewLineOsPath</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span>
+</span><span id="line-255"></span><span id="tillNewLineOsPath"><span class="annot"><span class="annottext">tillNewLineOsPath :: OsPath -&gt; OsPath
+</span><a href="Development.GitRev.Utils.Git.html#tillNewLineOsPath"><span class="hs-identifier hs-var hs-var">tillNewLineOsPath</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(OsChar -&gt; Bool) -&gt; OsPath -&gt; OsPath
+</span><span class="hs-identifier hs-var">OsString.takeWhile</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679068526"><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679068526"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679068526"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">OsChar -&gt; OsChar -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679068527"><span class="hs-identifier hs-var">nl</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679068526"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">OsChar -&gt; OsChar -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679068528"><span class="hs-identifier hs-var">cr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-256"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-257"></span><span>    </span><span id="local-6989586621679068527"><span class="annot"><span class="annottext">nl :: OsChar
+</span><a href="#local-6989586621679068527"><span class="hs-identifier hs-var hs-var">nl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char -&gt; OsChar
+</span><span class="hs-identifier hs-var">OsString.unsafeFromChar</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\n'</span></span><span>
+</span><span id="line-258"></span><span>    </span><span id="local-6989586621679068528"><span class="annot"><span class="annottext">cr :: OsChar
+</span><a href="#local-6989586621679068528"><span class="hs-identifier hs-var hs-var">cr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char -&gt; OsChar
+</span><span class="hs-identifier hs-var">OsString.unsafeFromChar</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\r'</span></span><span>
+</span><span id="line-259"></span><span>
+</span><span id="line-260"></span><span class="hs-comment">-- | Determine where our @.git@ directory is, in case we're in a</span><span>
+</span><span id="line-261"></span><span class="hs-comment">-- submodule.</span><span>
+</span><span id="line-262"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#getDotGit"><span class="hs-identifier hs-type">getDotGit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span>
+</span><span id="line-263"></span><span id="getDotGit"><span class="annot"><span class="annottext">getDotGit :: IO OsPath
+</span><a href="Development.GitRev.Utils.Git.html#getDotGit"><span class="hs-identifier hs-var hs-var">getDotGit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-264"></span><span>  </span><span id="local-6989586621679068530"><span class="annot"><a href="#local-6989586621679068530"><span class="hs-identifier hs-var">pwd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO OsPath
+</span><a href="Development.GitRev.Utils.Git.html#getGitRoot"><span class="hs-identifier hs-var">getGitRoot</span></a></span><span>
+</span><span id="line-265"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679068536"><span class="annot"><a href="#local-6989586621679068536"><span class="hs-identifier hs-var hs-var">dotGit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068530"><span class="hs-identifier hs-var">pwd</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath -&gt; OsPath
+</span><span class="hs-operator hs-var">&lt;/&gt;</span></span><span> </span><span class="annot"><span class="">[osp|.git|]</span></span><span>
+</span><span id="line-266"></span><span>      </span><span id="local-6989586621679068539"><span class="annot"><a href="#local-6989586621679068539"><span class="hs-identifier hs-var hs-var">oops</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; IO OsPath
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068536"><span class="hs-identifier hs-var">dotGit</span></a></span><span> </span><span class="hs-comment">-- it's gonna fail, that's fine</span><span>
+</span><span id="line-267"></span><span>  </span><span id="local-6989586621679068540"><span class="annot"><a href="#local-6989586621679068540"><span class="hs-identifier hs-var">isDir</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesDirectoryExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068536"><span class="hs-identifier hs-type">dotGit</span></a></span><span>
+</span><span id="line-268"></span><span>
+</span><span id="line-269"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679068540"><span class="hs-identifier hs-type">isDir</span></a></span><span>
+</span><span id="line-270"></span><span>    </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><a href="#local-6989586621679068536"><span class="hs-identifier hs-type">dotGit</span></a></span><span>
+</span><span id="line-271"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-272"></span><span>      </span><span id="local-6989586621679068541"><span class="annot"><a href="#local-6989586621679068541"><span class="hs-identifier hs-var">isFile</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesFileExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068536"><span class="hs-identifier hs-type">dotGit</span></a></span><span>
+</span><span id="line-273"></span><span>      </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679068541"><span class="hs-identifier hs-type">isFile</span></a></span><span>
+</span><span id="line-274"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-275"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">T.splitAt</span></span><span> </span><span class="annot"><span class="hs-number">8</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="Development.GitRev.Utils.Git.html#readFileUtf8"><span class="hs-identifier hs-type">readFileUtf8</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679068536"><span class="hs-identifier hs-type">dotGit</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-276"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;gitdir: &quot;</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679068542"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679068542"><span class="hs-identifier hs-var">relDir</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-277"></span><span>              </span><span id="local-6989586621679068543"><span class="annot"><a href="#local-6989586621679068543"><span class="hs-identifier hs-var">relDirOs</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO OsPath
+forall (m :: * -&gt; *). MonadThrow m =&gt; String -&gt; m OsPath
+</span><span class="hs-identifier hs-var">OsPath.encodeUtf</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO OsPath) -&gt; String -&gt; IO OsPath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679068542"><span class="hs-identifier hs-var">relDir</span></a></span><span>
+</span><span id="line-278"></span><span>              </span><span id="local-6989586621679068544"><span class="annot"><a href="#local-6989586621679068544"><span class="hs-identifier hs-var">isRelDir</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">doesDirectoryExist</span></span><span> </span><span class="annot"><a href="#local-6989586621679068543"><span class="hs-identifier hs-type">relDirOs</span></a></span><span>
+</span><span id="line-279"></span><span>              </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679068544"><span class="hs-identifier hs-type">isRelDir</span></a></span><span>
+</span><span id="line-280"></span><span>                </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="hs-identifier hs-type">pure</span></span><span> </span><span class="annot"><a href="#local-6989586621679068543"><span class="hs-identifier hs-type">relDirOs</span></a></span><span>
+</span><span id="line-281"></span><span>                </span><span class="hs-keyword">else</span><span> </span><span class="annot"><a href="#local-6989586621679068539"><span class="hs-identifier hs-type">oops</span></a></span><span>
+</span><span id="line-282"></span><span>            </span><span class="annot"><span class="annottext">(Text, Text)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO OsPath
+</span><a href="#local-6989586621679068539"><span class="hs-identifier hs-var">oops</span></a></span><span>
+</span><span id="line-283"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="annot"><a href="#local-6989586621679068539"><span class="hs-identifier hs-type">oops</span></a></span><span>
+</span><span id="line-284"></span><span>
+</span><span id="line-285"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#readFileUtf8"><span class="hs-identifier hs-type">readFileUtf8</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-286"></span><span id="readFileUtf8"><span class="annot"><span class="annottext">readFileUtf8 :: OsPath -&gt; IO Text
+</span><a href="Development.GitRev.Utils.Git.html#readFileUtf8"><span class="hs-identifier hs-var hs-var">readFileUtf8</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-287"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(UnicodeException -&gt; IO Text)
+-&gt; (Text -&gt; IO Text) -&gt; Either UnicodeException Text -&gt; IO Text
+forall a c b. (a -&gt; c) -&gt; (b -&gt; c) -&gt; Either a b -&gt; c
+</span><span class="hs-identifier hs-var">either</span></span><span> </span><span class="annot"><span class="annottext">UnicodeException -&gt; IO Text
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; IO a
+</span><span class="hs-identifier hs-var">throwIO</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; IO Text
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span class="hs-special">)</span><span>
+</span><span id="line-288"></span><span>    </span><span class="annot"><span class="annottext">(Either UnicodeException Text -&gt; IO Text)
+-&gt; (ByteString -&gt; Either UnicodeException Text)
+-&gt; ByteString
+-&gt; IO Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Either UnicodeException Text
+</span><span class="hs-identifier hs-var">TEnc.decodeUtf8'</span></span><span>
+</span><span id="line-289"></span><span>    </span><span class="annot"><span class="annottext">(ByteString -&gt; IO Text)
+-&gt; (OsPath -&gt; IO ByteString) -&gt; OsPath -&gt; IO Text
+forall (m :: * -&gt; *) b c a.
+Monad m =&gt;
+(b -&gt; m c) -&gt; (a -&gt; m b) -&gt; a -&gt; m c
+</span><span class="hs-operator hs-var">&lt;=&lt;</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; IO ByteString
+</span><a href="file:///nix/store/7hi4k0i5s6mlq2qnl89s6g0v8pydkrnx-file-io-0.1.4-doc/share/doc/file-io-0.1.4/html/src/System.File.OsPath.Internal.html/System.File.OsPath.Internal.html#readFile%27"><span class="hs-identifier hs-var">FileIO.readFile'</span></a></span><span>
+</span><span id="line-290"></span><span>
+</span><span id="line-291"></span><span class="annot"><span class="hs-comment">-- | Get the root directory of the Git repo.</span></span><span>
+</span><span id="line-292"></span><span class="annot"><a href="Development.GitRev.Utils.Git.html#getGitRoot"><span class="hs-identifier hs-type">getGitRoot</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span>
+</span><span id="line-293"></span><span id="getGitRoot"><span class="annot"><span class="annottext">getGitRoot :: IO OsPath
+</span><a href="Development.GitRev.Utils.Git.html#getGitRoot"><span class="hs-identifier hs-var hs-var">getGitRoot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-294"></span><span>  </span><span id="local-6989586621679068549"><span class="annot"><a href="#local-6989586621679068549"><span class="hs-identifier hs-var">pwd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO OsPath
+</span><span class="hs-identifier hs-var">getCurrentDirectory</span></span><span>
+</span><span id="line-295"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679068550"><span class="annot"><a href="#local-6989586621679068550"><span class="hs-identifier hs-var">code</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679068551"><span class="annot"><a href="#local-6989586621679068551"><span class="hs-identifier hs-var">out</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-296"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">readProcessWithExitCode</span></span><span> </span><span class="annot"><span class="hs-string">&quot;git&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-string">&quot;rev-parse&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;--show-toplevel&quot;</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-297"></span><span>  </span><span id="local-6989586621679068552"><span class="annot"><a href="#local-6989586621679068552"><span class="hs-identifier hs-var">out'</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath.encodeUtf</span></span><span> </span><span class="annot"><a href="#local-6989586621679068551"><span class="hs-identifier hs-type">out</span></a></span><span>
+</span><span id="line-298"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679068550"><span class="hs-identifier hs-type">code</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-299"></span><span>    </span><span class="annot"><span class="annottext">ExitCode
+</span><span class="hs-identifier hs-var">ExitSuccess</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; IO OsPath
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(OsPath -&gt; IO OsPath) -&gt; OsPath -&gt; IO OsPath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; OsPath
+</span><a href="Development.GitRev.Utils.Git.html#tillNewLineOsPath"><span class="hs-identifier hs-var">tillNewLineOsPath</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068552"><span class="hs-identifier hs-var">out'</span></a></span><span>
+</span><span id="line-300"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; IO OsPath
+forall a. a -&gt; IO a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679068549"><span class="hs-identifier hs-var">pwd</span></a></span><span> </span><span class="hs-comment">-- later steps will fail, that's fine</span><span>
+</span><span id="line-301"></span><span>
+</span><span id="line-302"></span><span class="annot"><span class="hs-comment">-- | Type to flag if the git index is used or not in a call to runGit</span></span><span>
+</span><span id="line-303"></span><span class="hs-keyword">data</span><span> </span><span id="IndexUsed"><span class="annot"><a href="Development.GitRev.Utils.Git.html#IndexUsed"><span class="hs-identifier hs-var">IndexUsed</span></a></span></span><span>
+</span><span id="line-304"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | The git index is used</span></span><span>
+</span><span id="line-305"></span><span>    </span><span id="IdxUsed"><span class="annot"><a href="Development.GitRev.Utils.Git.html#IdxUsed"><span class="hs-identifier hs-var">IdxUsed</span></a></span></span><span>
+</span><span id="line-306"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | The git index is /not/ used</span></span><span>
+</span><span id="line-307"></span><span>    </span><span id="IdxNotUsed"><span class="annot"><a href="Development.GitRev.Utils.Git.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span></span><span>
+</span><span id="line-308"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679068554"><span id="local-6989586621679068558"><span class="annot"><span class="annottext">IndexUsed -&gt; IndexUsed -&gt; Bool
+(IndexUsed -&gt; IndexUsed -&gt; Bool)
+-&gt; (IndexUsed -&gt; IndexUsed -&gt; Bool) -&gt; Eq IndexUsed
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: IndexUsed -&gt; IndexUsed -&gt; Bool
+== :: IndexUsed -&gt; IndexUsed -&gt; Bool
+$c/= :: IndexUsed -&gt; IndexUsed -&gt; Bool
+/= :: IndexUsed -&gt; IndexUsed -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-309"></span><span>
+</span><span id="line-310"></span><span id="local-6989586621679068235"><span class="annot"><a href="Development.GitRev.Utils.Git.html#catchSync"><span class="hs-identifier hs-type">catchSync</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679068235"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">SomeException</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679068235"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679068235"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-311"></span><span id="catchSync"><span class="annot"><span class="annottext">catchSync :: forall a. IO a -&gt; (SomeException -&gt; IO a) -&gt; IO a
+</span><a href="Development.GitRev.Utils.Git.html#catchSync"><span class="hs-identifier hs-var hs-var">catchSync</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(SomeException -&gt; Bool) -&gt; IO a -&gt; (SomeException -&gt; IO a) -&gt; IO a
+forall e a.
+Exception e =&gt;
+(e -&gt; Bool) -&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+</span><a href="Development.GitRev.Utils.Git.html#catchIf"><span class="hs-identifier hs-var">catchIf</span></a></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; Bool
+forall e. Exception e =&gt; e -&gt; Bool
+</span><a href="Development.GitRev.Utils.Git.html#isSyncException"><span class="hs-identifier hs-var">isSyncException</span></a></span><span>
+</span><span id="line-312"></span><span>
+</span><span id="line-313"></span><span id="local-6989586621679068253"><span id="local-6989586621679068254"><span class="annot"><a href="Development.GitRev.Utils.Git.html#catchIf"><span class="hs-identifier hs-type">catchIf</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-314"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679068253"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-315"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068253"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-316"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679068254"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-317"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679068253"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679068254"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-318"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679068254"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-319"></span><span id="catchIf"><span class="annot"><span class="annottext">catchIf :: forall e a.
+Exception e =&gt;
+(e -&gt; Bool) -&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+</span><a href="Development.GitRev.Utils.Git.html#catchIf"><span class="hs-identifier hs-var hs-var">catchIf</span></a></span></span><span> </span><span id="local-6989586621679068566"><span class="annot"><span class="annottext">e -&gt; Bool
+</span><a href="#local-6989586621679068566"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(e -&gt; Maybe e) -&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+forall e b a.
+Exception e =&gt;
+(e -&gt; Maybe b) -&gt; IO a -&gt; (b -&gt; IO a) -&gt; IO a
+</span><span class="hs-identifier hs-var">catchJust</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679068567"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679068567"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">e -&gt; Bool
+</span><a href="#local-6989586621679068566"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679068567"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">e -&gt; Maybe e
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679068567"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe e
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span>
+</span><span id="line-320"></span><span>
+</span><span id="line-321"></span><span id="local-6989586621679068255"><span class="annot"><a href="Development.GitRev.Utils.Git.html#isSyncException"><span class="hs-identifier hs-type">isSyncException</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679068255"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679068255"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span></span><span>
+</span><span id="line-322"></span><span id="isSyncException"><span class="annot"><span class="annottext">isSyncException :: forall e. Exception e =&gt; e -&gt; Bool
+</span><a href="Development.GitRev.Utils.Git.html#isSyncException"><span class="hs-identifier hs-var hs-var">isSyncException</span></a></span></span><span> </span><span id="local-6989586621679068572"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679068572"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; Maybe SomeAsyncException
+forall e. Exception e =&gt; SomeException -&gt; Maybe e
+</span><span class="hs-identifier hs-var">fromException</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">e -&gt; SomeException
+forall e. Exception e =&gt; e -&gt; SomeException
+</span><span class="hs-identifier hs-var">toException</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679068572"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-323"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">SomeAsyncException</span></span><span> </span><span class="hs-special">{</span><span class="hs-special">}</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-324"></span><span>  </span><span class="annot"><span class="annottext">Maybe SomeAsyncException
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-325"></span></pre></body></html>
