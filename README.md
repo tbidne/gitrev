@@ -35,8 +35,8 @@ import Development.GitRev qualified as GR
 
 -- Returns a hash like "e67e943dd03744d3f93c21f84e127744e6a04543" or
 -- "UNKNOWN", if something goes wrong.
-projectHash :: String
-projectHash = $(GR.gitHash)
+myHash :: String
+myHash = $(GR.gitHash)
 ```
 
 ## 2. `Development.GitRev.Typed`
@@ -55,8 +55,8 @@ import Development.GitRev.Typed qualified as GRT
 
 -- Returns a hash like "e67e943dd03744d3f93c21f84e127744e6a04543" or
 -- "UNKNOWN", if something goes wrong.
-projectHash :: String
-projectHash = $$(GRT.gitHash)
+myHash :: String
+myHash = $$(GRT.gitHash)
 ```
 
 We also provide combinators for defining custom behavior. For instance, we can instead define a variant that fails at compile-time instead of returning the string `UNKNOWN`.
@@ -65,8 +65,8 @@ We also provide combinators for defining custom behavior. For instance, we can i
 -- gitHashQ :: Q (Either GitError String)
 -- projectError :: Q (Either GitError String) -> Q String
 -- qToCode :: Q a -> Code Q a
-projectHashOrDie :: String
-projectHashOrDie = $$(GRT.qToCode $ GRT.projectError GRT.gitHashQ)
+myHashOrDie :: String
+myHashOrDie = $$(GRT.qToCode $ GRT.projectError GRT.gitHashQ)
 ```
 
 ### Out-of-tree builds
@@ -74,8 +74,8 @@ projectHashOrDie = $$(GRT.qToCode $ GRT.projectError GRT.gitHashQ)
 Furthermore, we have workarounds for "out-of-tree" builds:
 
 ```haskell
-projectHashEnv :: Code Q String
-projectHashEnv = toCode gitHash
+myHashEnv :: Code Q String
+myHashEnv = toCode gitHash
   where
     toCode :: Q (Either (Exceptions GitOrLookupEnvError) String) -> Code Q String
     toCode = GRT.qToCode . GRT.projectError
@@ -96,7 +96,7 @@ projectHashEnv = toCode gitHash
         ]
 ```
 
-For example, `projectHashEnv` will work for `cabal install` if we include the
+For example, `myHashEnv` will work for `cabal install` if we include the
 environment variable:
 
 ```sh
