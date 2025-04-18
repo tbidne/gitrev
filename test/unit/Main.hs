@@ -3,6 +3,7 @@
 
 module Main (main) where
 
+import Control.Exception (Exception (displayException))
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Development.GitRev qualified as GR
 import Development.GitRev.Typed (Exceptions (MkExceptions))
@@ -178,16 +179,28 @@ testSemigroupQFirstSuccessLazy2 = testCase "Utils.firstSuccessQ is lazy 2" $ do
 
 testSemigroupQFirstSuccessAllLefts :: TestTree
 testSemigroupQFirstSuccessAllLefts = testCase desc $ do
-  let ((num1, num2, num3), result) = $$(GRT.qToCode Utils.qFirstSuccessAllLefts)
+  let ((num1, num2, num3), eResult) = $$(GRT.qToCode Utils.qFirstSuccessAllLefts)
   1 @=? num1
   1 @=? num2
   1 @=? num3
 
-  Left expected @=? result
+  case eResult of
+    Right x -> assertFailure $ "Received Right: " ++ x
+    Left result -> do
+      expected @=? result
+      expectedStr @=? (displayException result)
   where
     desc = "Utils.firstSuccessQ takes all Lefts"
 
-    expected = MkExceptions ("qFail1" :| ["qFail2", "qFail3"])
+    expected = MkExceptions @Utils.E ("qFail1" :| ["qFail2", "qFail3"])
+
+    expectedStr =
+      mconcat
+        [ "Exception(s):",
+          "\n1. qFail1",
+          "\n2. qFail2",
+          "\n3. qFail3"
+        ]
 
 assertNonEmpty :: String -> IO ()
 assertNonEmpty "" = assertFailure "Received empty"

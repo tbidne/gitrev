@@ -1,5 +1,6 @@
 module Utils
-  ( qSemigroup,
+  ( E (..),
+    qSemigroup,
     qFirstSemigroup,
     qFirstSuccess,
     qFirstSuccess2,
@@ -7,14 +8,17 @@ module Utils
   )
 where
 
+import Control.Exception (Exception (displayException))
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
+import Data.String (IsString)
 import Development.GitRev.Typed (Exceptions, QFirst (unQFirst))
 import Development.GitRev.Typed qualified as GRT
 import Language.Haskell.TH (Q, runIO)
+import Language.Haskell.TH.Syntax (Lift)
 
 type Counter = (Int, Int, Int)
 
-type QResult = Either String String
+type QResult = Either E String
 
 qSemigroup :: Q Counter
 qSemigroup = do
@@ -42,11 +46,18 @@ qFirstSuccess2 = do
   _ <- GRT.firstSuccessQ (qFail1 ref) [q2 ref, q3 ref]
   runIO $ readIORef ref
 
-qFirstSuccessAllLefts :: Q (Counter, Either (Exceptions String) String)
+qFirstSuccessAllLefts :: Q (Counter, Either (Exceptions E) String)
 qFirstSuccessAllLefts = do
   ref <- runIO $ newIORef (0, 0, 0)
   result <- GRT.firstSuccessQ (qFail1 ref) [qFail2 ref, qFail3 ref]
   (,result) <$> runIO (readIORef ref)
+
+newtype E = MkE String
+  deriving stock (Eq, Lift, Show)
+  deriving newtype (IsString)
+
+instance Exception E where
+  displayException (MkE s) = s
 
 q1 :: IORef Counter -> Q QResult
 q1 ref = do
