@@ -45,6 +45,7 @@ import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
+import Data.Text.Lazy.Builder.Int qualified as TLBI
 import Development.GitRev.Utils.Environment (LookupEnvError)
 import Development.GitRev.Utils.Environment qualified as Env
 import Development.GitRev.Utils.Git (GitError)
@@ -99,8 +100,10 @@ instance (Exception e) => Exception (Exceptions e) where
           . NE.zip @Int (1 :| [2 ..])
 
       renderErr (idx, e) =
-        (\b -> "\n" <> TLB.fromString (show idx) <> ". " <> b)
-          . TLB.fromString
+        (\b -> "\n" <> TLBI.decimal idx <> ". " <> b)
+          . TLB.fromText
+          . T.strip
+          . T.pack
           . displayException
           $ e
 
