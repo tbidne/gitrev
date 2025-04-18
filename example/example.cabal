@@ -35,7 +35,7 @@ executable example
   other-modules:  TH
   build-depends:
     , base              >=4.15.0.0 && <4.22
-    , gitrev            ^>=2.0
+    , gitrev-typed      ^>=0.1
     , template-haskell  >=2.17.0.0 && <2.24
 
   hs-source-dirs: .

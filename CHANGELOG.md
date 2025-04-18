@@ -1,4 +1,4 @@
-# Revision history for shrun
+# Revision history for gitrev-typed
 
 All notable changes to this project will be documented in this file.
 
@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to the
 [Haskell Package Versioning Policy](https://pvp.haskell.org/).
 
-## [2.0]
+Note that the first version, 0.1, is relative to its parent from which it was
+forked: https://github.com/acfoltzer/gitrev
+
+## [0.1]
 ### Changed
 * Updated GHC support to `>= 9 && < 9.13`.
 

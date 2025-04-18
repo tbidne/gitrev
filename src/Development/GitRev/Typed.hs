@@ -1,6 +1,6 @@
 -- | Typed version of "Development.GitRev".
 --
--- @since 2.0
+-- @since 0.1
 module Development.GitRev.Typed
   ( -- * Basic functions
     -- $basic
@@ -266,7 +266,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- >>> $$(gitHash)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitHash :: Code Q String
 gitHash = qToCode $ Utils.projectStringUnknown Git.gitHashQ
 
@@ -281,7 +281,7 @@ gitHash = qToCode $ Utils.projectStringUnknown Git.gitHashQ
 -- >>> $$(gitShortHash)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitShortHash :: Code Q String
 gitShortHash = qToCode $ Utils.projectStringUnknown Git.gitShortHashQ
 
@@ -297,7 +297,7 @@ gitShortHash = qToCode $ Utils.projectStringUnknown Git.gitShortHashQ
 -- >>> $$(gitBranch)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitBranch :: Code Q String
 gitBranch = qToCode $ Utils.projectStringUnknown Git.gitBranchQ
 
@@ -312,7 +312,7 @@ gitBranch = qToCode $ Utils.projectStringUnknown Git.gitBranchQ
 -- >>> $$(gitDescribe)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitDescribe :: Code Q String
 gitDescribe = qToCode $ Utils.projectStringUnknown Git.gitDescribeQ
 
@@ -327,7 +327,7 @@ gitDescribe = qToCode $ Utils.projectStringUnknown Git.gitDescribeQ
 -- >>> $$(gitDirty)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitDirty :: Code Q Bool
 gitDirty = qToCode $ Utils.projectFalse Git.gitDirtyQ
 
@@ -342,7 +342,7 @@ gitDirty = qToCode $ Utils.projectFalse Git.gitDirtyQ
 -- >>> $$(gitDirtyTracked)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitDirtyTracked :: Code Q Bool
 gitDirtyTracked = qToCode $ Utils.projectFalse Git.gitDirtyTrackedQ
 
@@ -356,7 +356,7 @@ gitDirtyTracked = qToCode $ Utils.projectFalse Git.gitDirtyTrackedQ
 -- >>> $$(gitCommitCount)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitCommitCount :: Code Q String
 gitCommitCount = qToCode $ Utils.projectStringUnknown Git.gitCommitCountQ
 
@@ -370,7 +370,7 @@ gitCommitCount = qToCode $ Utils.projectStringUnknown Git.gitCommitCountQ
 -- >>> $$(gitCommitDate)
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 gitCommitDate :: Code Q String
 gitCommitDate = qToCode $ Utils.projectStringUnknown Git.gitCommitDateQ
 
@@ -400,6 +400,6 @@ gitTree = qToCode $ Utils.projectStringUnknown Git.gitTreeQ
 
 -- | Lifts a 'Q' computation to 'Code', for usage with typed TH.
 --
--- @since 2.0
+-- @since 0.1
 qToCode :: forall a. (Lift a) => Q a -> Code Q a
 qToCode = TH.liftCode . fmap TExp . (>>= lift)

@@ -2,7 +2,7 @@ set -e
 
 export LANG="C.UTF-8"
 
-cabal haddock gitrev --haddock-hyperlink-source --haddock-quickjump
+cabal haddock gitrev-typed --haddock-hyperlink-source --haddock-quickjump
 
 mkdir -p docs/
 
@@ -11,4 +11,4 @@ fd -t f . docs | xargs -I % sh -c "rm -r %"
 
 dir=$(fd -t d html dist-newstyle/build)
 
-cp -r $dir/gitrev/* docs/
+cp -r $dir/gitrev-typed/* docs/

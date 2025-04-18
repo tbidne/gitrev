@@ -48,7 +48,7 @@ jobs:
         run: cabal configure --ghc-options -Werror
 
       - name: Compile
-        run: cabal build gitrev
+        run: cabal build gitrev-typed
 
       - name: Test build example
         run: |

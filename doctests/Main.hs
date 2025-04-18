@@ -18,4 +18,4 @@ main =
     run
     (putStrLn "*** Doctests disabled. Run with env var RUN_DOCTEST=1 to enable ***")
   where
-    run = DT.mainFromCabal "gitrev" =<< getArgs
+    run = DT.mainFromCabal "gitrev-typed" =<< getArgs

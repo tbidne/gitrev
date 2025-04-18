@@ -1,12 +1,12 @@
 cabal-version: 2.2
 name:          gitrev-doctest
 version:       0.1
-synopsis:      Doctests for gitrev
+synopsis:      Doctests for gitrev-typed
 category:      Testing
 build-type:    Simple
 tested-with:   GHC ==9.10.1 || ==9.12.1
 description:
-  Doctests for gitrev. This is split from the normal gitrev library, since
+  Doctests for gitrev-typed. This is split from the normal gitrev library, since
   doctest incurs a dependency on GHC, which can make solving more difficult
   with --enable-tests because GHC requires exact dependencies.
 
@@ -21,7 +21,7 @@ test-suite doctest
     , base              >=4.15.0.0 && <4.22
     , doctest-parallel  ^>=0.3
     , env-guard         ^>=0.2
-    , gitrev
+    , gitrev-typed
 
   hs-source-dirs: ./
   ghc-options:    -threaded

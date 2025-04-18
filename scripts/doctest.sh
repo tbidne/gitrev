@@ -7,7 +7,7 @@ trap cleanup EXIT
 
 export LANG="C.UTF-8"
 
-cabal build gitrev --write-ghc-environment-files=always
+cabal build gitrev-typed --write-ghc-environment-files=always
 
 # Run rather than test as 'cabal test' can have problems with doctest,
 # apparently.

@@ -1,6 +1,6 @@
 cabal-version:      2.2
-name:               gitrev
-version:            2.0
+name:               gitrev-typed
+version:            0.1
 synopsis:           Compile git revision info into Haskell projects
 homepage:           https://github.com/tbidne/gitrev
 license:            BSD-3-Clause
@@ -75,7 +75,7 @@ test-suite unit
   other-modules:  Utils
   build-depends:
     , base
-    , gitrev
+    , gitrev-typed
     , tasty             >=1.1.0.3 && <1.6
     , tasty-hunit       >=0.9     && <0.11
     , template-haskell

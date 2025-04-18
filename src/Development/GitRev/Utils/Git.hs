@@ -2,7 +2,7 @@
 
 -- | Provides utilities for querying git.
 --
--- @since 2.0
+-- @since 0.1
 module Development.GitRev.Utils.Git
   ( GitError (..),
     gitBranchQ,
@@ -57,7 +57,7 @@ import System.Process (readProcessWithExitCode)
 -- >>> $$(qToCode gitHashQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitHashQ :: Q (Either GitError String)
 gitHashQ = runGit ["rev-parse", "HEAD"] IdxNotUsed
 
@@ -68,7 +68,7 @@ gitHashQ = runGit ["rev-parse", "HEAD"] IdxNotUsed
 -- >>> $$(qToCode gitShortHashQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitShortHashQ :: Q (Either GitError String)
 gitShortHashQ = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
 
@@ -79,7 +79,7 @@ gitShortHashQ = runGit ["rev-parse", "--short", "HEAD"] IdxNotUsed
 -- >>> $$(qToCode gitBranchQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitBranchQ :: Q (Either GitError String)
 gitBranchQ = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
 
@@ -90,7 +90,7 @@ gitBranchQ = runGit ["rev-parse", "--abbrev-ref", "HEAD"] IdxNotUsed
 -- >>> $$(qToCode gitDescribeQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDescribeQ :: Q (Either GitError String)
 gitDescribeQ = runGit ["describe", "--long", "--always"] IdxNotUsed
 
@@ -101,7 +101,7 @@ gitDescribeQ = runGit ["describe", "--long", "--always"] IdxNotUsed
 -- >>> $$(qToCode gitDirtyQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDirtyQ :: Q (Either GitError Bool)
 gitDirtyQ = fmap nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
 
@@ -112,7 +112,7 @@ gitDirtyQ = fmap nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
 -- >>> $$(qToCode gitDirtyTrackedQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDirtyTrackedQ :: Q (Either GitError Bool)
 gitDirtyTrackedQ =
   fmap nonEmpty
@@ -125,7 +125,7 @@ gitDirtyTrackedQ =
 -- >>> $$(qToCode gitCommitCountQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitCommitCountQ :: Q (Either GitError String)
 gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 
@@ -136,7 +136,7 @@ gitCommitCountQ = runGit ["rev-list", "HEAD", "--count"] IdxNotUsed
 -- >>> $$(qToCode gitCommitDateQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitCommitDateQ :: Q (Either GitError String)
 gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 
@@ -147,7 +147,7 @@ gitCommitDateQ = runGit ["log", "HEAD", "-1", "--format=%cd"] IdxNotUsed
 -- >>> $$(qToCode gitDiffQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDiffQ :: Q (Either GitError String)
 gitDiffQ = runGitPostprocess id ["diff", "HEAD"] IdxNotUsed
 
@@ -158,7 +158,7 @@ gitDiffQ = runGitPostprocess id ["diff", "HEAD"] IdxNotUsed
 -- >>> $$(qToCode gitTreeQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitTreeQ :: Q (Either GitError String)
 gitTreeQ = runGit ["show", "HEAD", "--format=%T", "--no-patch"] IdxNotUsed
 
@@ -168,22 +168,22 @@ nonEmpty _ = True
 
 -- | Errors that can be encountered with git.
 --
--- @since 2.0
+-- @since 0.1
 data GitError
-  = -- | @since 2.0
+  = -- | @since 0.1
     GitNotFound
-  | -- | @since 2.0
+  | -- | @since 0.1
     GitRunError String
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 2.0
+      -- | @since 0.1
       Lift,
-      -- | @since 2.0
+      -- | @since 0.1
       Show
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance Exception GitError where
   displayException GitNotFound = "Git executable not found"
   displayException (GitRunError s) = "Git error: " ++ s

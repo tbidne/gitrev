@@ -25,7 +25,7 @@
             returnShellEnv:
             nix-hs-utils.mkHaskellPkg {
               inherit compiler pkgs returnShellEnv;
-              name = "gitrev";
+              name = "gitrev-typed";
               root = ./.;
 
               devTools = [
@@ -62,7 +62,7 @@
                 });
               source-overrides = {
                 # depends on gitrev here...
-                gitrev = ./.;
+                gitrev-typed = ./.;
               };
             };
           };

@@ -3,7 +3,7 @@
 
 -- | Utils module.
 --
--- @since 2.0
+-- @since 0.1
 module Development.GitRev.Utils
   ( -- * Combining Q actions lazily
     QFirst (..),
@@ -62,28 +62,28 @@ import Language.Haskell.TH.Syntax (Lift)
 
 -- | Collects multiple exceptions.
 --
--- @since 2.0
+-- @since 0.1
 newtype Exceptions e = MkExceptions {unExceptions :: (NonEmpty e)}
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 2.0
+      -- | @since 0.1
       Functor,
-      -- | @since 2.0
+      -- | @since 0.1
       Lift,
-      -- | @since 2.0
+      -- | @since 0.1
       Show
     )
   deriving newtype
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Applicative,
-      -- | @since 2.0
+      -- | @since 0.1
       Monad,
-      -- | @since 2.0
+      -- | @since 0.1
       Semigroup
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance (Exception e) => Exception (Exceptions e) where
   displayException (MkExceptions errs) =
     mconcat
@@ -107,7 +107,7 @@ instance (Exception e) => Exception (Exceptions e) where
           . displayException
           $ e
 
--- | @since 2.0
+-- | @since 0.1
 mkExceptions :: forall e. e -> Exceptions e
 mkExceptions = MkExceptions . NE.singleton
 
@@ -123,18 +123,18 @@ mkExceptions = MkExceptions . NE.singleton
 --
 -- 'QFirst' also collects all errors in 'Exceptions'.
 --
--- @since 2.0
+-- @since 0.1
 newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Exceptions e) a)}
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Functor
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance Bifunctor QFirst where
   bimap f g (MkQFirst q) = MkQFirst $ fmap (bimap (fmap f) g) q
 
--- | @since 2.0
+-- | @since 0.1
 instance Semigroup (QFirst e a) where
   MkQFirst q1 <> q2 =
     MkQFirst $
@@ -142,7 +142,7 @@ instance Semigroup (QFirst e a) where
         Right x -> pure $ Right x
         Left errs -> first (errs <>) <$> unQFirst q2
 
--- | @since 2.0
+-- | @since 0.1
 mkQFirst :: forall e a. Q (Either e a) -> QFirst e a
 mkQFirst = MkQFirst . fmap (first mkExceptions)
 
@@ -163,7 +163,7 @@ mkQFirst = MkQFirst . fmap (first mkExceptions)
 -- :}
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 firstSuccessQ ::
   forall e a.
   Q (Either e a) ->
@@ -186,7 +186,7 @@ firstSuccessQ q qs = unQFirst $ foldMap1 mkQFirst (q :| qs)
 -- >>> $$(qToCode $ projectStringUnknown (pure $ Left ()))
 -- "UNKNOWN"
 --
--- @since 2.0
+-- @since 0.1
 projectStringUnknown ::
   forall f e.
   (Functor f) =>
@@ -208,7 +208,7 @@ projectStringUnknown = projectString "UNKNOWN"
 -- >>> $$(qToCode $ projectString "FAILURE" (pure $ Left ()))
 -- "FAILURE"
 --
--- @since 2.0
+-- @since 0.1
 projectString ::
   forall f e.
   (Functor f) =>
@@ -231,7 +231,7 @@ projectString = projectLeft . const
 -- >>> $$(qToCode $ projectFalse (pure $ Left ()))
 -- False
 --
--- @since 2.0
+-- @since 0.1
 projectFalse :: forall f e. (Functor f) => f (Either e Bool) -> f Bool
 projectFalse = projectLeft (const False)
 
@@ -247,7 +247,7 @@ projectFalse = projectLeft (const False)
 -- :}
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 projectError :: forall f e a. (Exception e, Functor f) => f (Either e a) -> f a
 projectError = projectErrorMap displayException
 
@@ -263,7 +263,7 @@ projectError = projectErrorMap displayException
 -- :}
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 projectErrorMap ::
   forall f e a.
   (Functor f) =>
@@ -277,22 +277,22 @@ projectLeft f = fmap (either f id)
 
 -- | Git or env lookup error.
 --
--- @since 2.0
+-- @since 0.1
 data GitOrLookupEnvError
-  = -- | @since 2.0
+  = -- | @since 0.1
     GitOrLookupEnvGit GitError
-  | -- | @since 2.0
+  | -- | @since 0.1
     GitOrLookupEnvLookupEnv LookupEnvError
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 2.0
+      -- | @since 0.1
       Lift,
-      -- | @since 2.0
+      -- | @since 0.1
       Show
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance Exception GitOrLookupEnvError where
   displayException (GitOrLookupEnvGit ge) = displayException ge
   displayException (GitOrLookupEnvLookupEnv x) = displayException x
@@ -306,7 +306,7 @@ instance Exception GitOrLookupEnvError where
 -- >>> $$(qToCode $ runGitInEnvDirQ "SOME_DIR" gitHashQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 runGitInEnvDirQ ::
   forall a.
   -- | Environment variable pointing to a directory path, in which we run
@@ -331,7 +331,7 @@ runGitInEnvDirQ var = joinErrors . Env.runInEnvDirQ var
 -- :}
 -- Left (GitOrLookupEnvGit GitNotFound)
 --
--- @since 2.0
+-- @since 0.1
 joinLookupEnvGitErrors ::
   forall p a.
   ( Bifunctor p,
@@ -356,7 +356,7 @@ joinLookupEnvGitErrors =
 -- :}
 -- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
--- @since 2.0
+-- @since 0.1
 joinGitLookupEnvErrors ::
   forall p a.
   ( Bifunctor p,
@@ -381,7 +381,7 @@ joinGitLookupEnvErrors =
 -- :}
 -- Left (GitOrLookupEnvGit GitNotFound)
 --
--- @since 2.0
+-- @since 0.1
 embedGitError ::
   forall f p a.
   ( Bifunctor p,
@@ -403,7 +403,7 @@ embedGitError = fmap (first GitOrLookupEnvGit)
 -- :}
 -- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
--- @since 2.0
+-- @since 0.1
 embedLookupEnvError ::
   forall f p a.
   ( Bifunctor p,

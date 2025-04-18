@@ -1,6 +1,6 @@
 <div align="center">
 
-# Gitrev
+# Gitrev-typed
 
 ## Embedding git metadata in haskell projects
 

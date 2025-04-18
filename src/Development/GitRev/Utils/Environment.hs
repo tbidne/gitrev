@@ -1,6 +1,6 @@
 -- | Provides utilities for querying environment variables.
 --
--- @since 2.0
+-- @since 0.1
 module Development.GitRev.Utils.Environment
   ( LookupEnvError (..),
     envValQ,
@@ -32,7 +32,7 @@ import System.OsPath qualified as OsPath
 -- >>> $$(qToCode $ envValQ "SOME_VAR")
 -- Right "val"
 --
--- @since 2.0
+-- @since 0.1
 envValQ ::
   -- | The environment variable @k@.
   String ->
@@ -50,7 +50,7 @@ envValQ var = withEnvValQ var pure
 -- >>> $$(qToCode $ runInEnvDirQ "SOME_DIR" $ runIO (listDirectory "./"))
 -- Right ["Development"]
 --
--- @since 2.0
+-- @since 0.1
 runInEnvDirQ ::
   forall a.
   -- | The environment variable @k@ that should point to some directory
@@ -71,18 +71,18 @@ runInEnvDirQ var m = withEnvValQ var $ \repoDirFp -> do
 -- | Environment variable lookup failure. The value is the variable we
 -- attempted to look up.
 --
--- @since 2.0
+-- @since 0.1
 newtype LookupEnvError = MkLookupEnvError String
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 2.0
+      -- | @since 0.1
       Lift,
-      -- | @since 2.0
+      -- | @since 0.1
       Show
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance Exception LookupEnvError where
   displayException (MkLookupEnvError var) =
     "Failed to lookup environment variable: " ++ var
@@ -96,7 +96,7 @@ instance Exception LookupEnvError where
 -- >>> $$(qToCode $ withEnvValQ "SOME_DIR" (runIO . listDirectory))
 -- Right ["Development"]
 --
--- @since 2.0
+-- @since 0.1
 withEnvValQ ::
   forall a.
   -- | The environment variable @k@ to lookup.
