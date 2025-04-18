@@ -12,11 +12,15 @@ where
 import Control.Exception
   ( Exception (displayException),
   )
+import GHC.IO.Encoding.Failure (CodingFailureMode (TransliterateCodingFailure))
+import GHC.IO.Encoding.UTF16 qualified as UTF16
+import GHC.IO.Encoding.UTF8 qualified as UTF8
 import Language.Haskell.TH (Q, runIO)
 import Language.Haskell.TH.Syntax (Lift)
 import System.Directory.OsPath qualified as Dir
-import System.Environment qualified as Env
-import System.OsPath qualified as OsPath
+import System.OsString (OsString)
+import System.OsString qualified as OsString
+import System.Process.Environment.OsString qualified as Env
 
 -- $setup
 -- >>> :set -XTemplateHaskell
@@ -35,9 +39,9 @@ import System.OsPath qualified as OsPath
 -- @since 2.0
 envValQ ::
   -- | The environment variable @k@.
-  String ->
+  OsString ->
   -- | The result @v@ or an error.
-  Q (Either LookupEnvError String)
+  Q (Either LookupEnvError OsString)
 envValQ var = withEnvValQ var pure
 
 -- | Runs the given 'Q'-action under the directory @d@ pointed to by the
@@ -55,15 +59,14 @@ runInEnvDirQ ::
   forall a.
   -- | The environment variable @k@ that should point to some directory
   -- @d@.
-  String ->
+  OsString ->
   -- | The 'Q' action @q@.
   Q a ->
   -- | The result of running @q@ in directory @d@.
   Q (Either LookupEnvError a)
-runInEnvDirQ var m = withEnvValQ var $ \repoDirFp -> do
-  repoDirOs <- OsPath.encodeUtf repoDirFp
+runInEnvDirQ var m = withEnvValQ var $ \repoDir -> do
   currDir <- runIO Dir.getCurrentDirectory
-  runIO $ Dir.setCurrentDirectory repoDirOs
+  runIO $ Dir.setCurrentDirectory repoDir
   r <- m
   runIO $ Dir.setCurrentDirectory currDir
   pure $ r
@@ -72,7 +75,7 @@ runInEnvDirQ var m = withEnvValQ var $ \repoDirFp -> do
 -- attempted to look up.
 --
 -- @since 2.0
-newtype LookupEnvError = MkLookupEnvError String
+newtype LookupEnvError = MkLookupEnvError OsString
   deriving stock
     ( -- | @since 2.0
       Eq,
@@ -85,7 +88,7 @@ newtype LookupEnvError = MkLookupEnvError String
 -- | @since 2.0
 instance Exception LookupEnvError where
   displayException (MkLookupEnvError var) =
-    "Failed to lookup environment variable: " ++ var
+    "Failed to lookup environment variable: " ++ decodeLenient var
 
 -- | Runs a 'Q'-action on the result of an environment variable, if it exists.
 --
@@ -100,14 +103,21 @@ instance Exception LookupEnvError where
 withEnvValQ ::
   forall a.
   -- | The environment variable @k@ to lookup.
-  String ->
+  OsString ->
   -- | Function to run on @k@'s /value/ if @k@ exists.
-  (String -> Q a) ->
+  (OsString -> Q a) ->
   Q (Either LookupEnvError a)
 withEnvValQ var onEnv = do
   lookupEnvQ var >>= \case
     Nothing -> pure $ Left $ MkLookupEnvError var
     Just result -> Right <$> onEnv result
 
-lookupEnvQ :: String -> Q (Maybe String)
-lookupEnvQ = runIO . Env.lookupEnv
+lookupEnvQ :: OsString -> Q (Maybe OsString)
+lookupEnvQ = runIO . Env.getEnv
+
+decodeLenient :: OsString -> FilePath
+decodeLenient = elimEx . OsString.decodeWith uft8Encoding utf16Encoding
+  where
+    uft8Encoding = UTF8.mkUTF8 TransliterateCodingFailure
+    utf16Encoding = UTF16.mkUTF16le TransliterateCodingFailure
+    elimEx = either (error . show) id

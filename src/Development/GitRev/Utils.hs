@@ -51,6 +51,7 @@ import Development.GitRev.Utils.Environment qualified as Env
 import Development.GitRev.Utils.Git (GitError)
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
+import System.OsString (OsString)
 
 -- $setup
 -- >>> :set -XTemplateHaskell
@@ -311,7 +312,7 @@ runGitInEnvDirQ ::
   forall a.
   -- | Environment variable pointing to a directory path, in which we run
   -- the git process.
-  String ->
+  OsString ->
   -- | Git process to run.
   Q (Either GitError a) ->
   -- | The result.
