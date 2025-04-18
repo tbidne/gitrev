@@ -7,9 +7,8 @@ module TH
 where
 
 import Development.GitRev qualified as GR
+import Development.GitRev.Typed (GitOrLookupEnvError)
 import Development.GitRev.Typed qualified as GRT
-import Development.GitRev.Utils (GitOrLookupEnvError)
-import Development.GitRev.Utils qualified as GRU
 import Language.Haskell.TH (Code, ExpQ, Q)
 
 -- | Returns the hash or @UNKNOWN@.
@@ -22,18 +21,26 @@ hashEnvVal :: Code Q String
 hashEnvVal =
   GRT.qToCode
     . GRT.projectStringUnknown
-    $ GRU.firstSuccessQ
+    $ GRT.firstSuccessQ
       (GRT.embedGitError GRT.gitHashQ)
-      [GRT.envValQ "EXAMPLE_HASH"]
+      [GRT.embedLookupEnvError $ GRT.envValQ "EXAMPLE_HASH"]
 
+-- | Returns the hash or @UNKNOWN@. If the first attempt fails, we run git
+-- again in the directory pointed to by environment variable @EXAMPLE_HOME@.
 hashEnvDir :: Code Q String
 hashEnvDir =
   GRT.qToCode
     . GRT.projectStringUnknown
-    $ GRU.firstSuccessQ
+    $ GRT.firstSuccessQ
       (GRT.embedGitError GRT.gitHashQ)
       [GRT.runGitInEnvDirQ "EXAMPLE_HOME" GRT.gitHashQ]
 
+-- | Returns the hash or @UNKNOWN@. Tries, in order:
+--
+-- 1. Normal git hash lookup.
+-- 2. Environment variable lookup @EXAMPLE_HASH@.
+-- 3. Git hash lookup in directory pointed to by environment variable
+--    @EXAMPLE_HOME@.
 hashEnvValDir :: Code Q String
 hashEnvValDir = toCode gitHash
   where
@@ -42,8 +49,8 @@ hashEnvValDir = toCode gitHash
 
     gitHash :: Q (Either GitOrLookupEnvError String)
     gitHash =
-      GRU.firstSuccessQ
+      GRT.firstSuccessQ
         (GRT.embedGitError GRT.gitHashQ)
-        [ GRT.envValQ "EXAMPLE_HASH",
+        [ GRT.embedLookupEnvError $ GRT.envValQ "EXAMPLE_HASH",
           GRT.runGitInEnvDirQ "EXAMPLE_HOME" GRT.gitHashQ
         ]
