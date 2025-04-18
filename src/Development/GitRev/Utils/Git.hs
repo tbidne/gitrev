@@ -115,7 +115,8 @@ gitDirtyQ = fmap nonEmpty <$> runGit ["status", "--porcelain"] IdxUsed
 -- @since 2.0
 gitDirtyTrackedQ :: Q (Either GitError Bool)
 gitDirtyTrackedQ =
-  fmap nonEmpty <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
+  fmap nonEmpty
+    <$> runGit ["status", "--porcelain", "--untracked-files=no"] IdxUsed
 
 -- | Returns the git commit count.
 --
@@ -190,7 +191,14 @@ runGit = runGitPostprocess tillNewLineStr
 
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output.
-runGitPostprocess :: (String -> String) -> [String] -> IndexUsed -> Q (Either GitError String)
+runGitPostprocess ::
+  -- | Post-processing on the result.
+  (String -> String) ->
+  -- | Args to run with git.
+  [String] ->
+  -- | Whether the index is used.
+  IndexUsed ->
+  Q (Either GitError String)
 runGitPostprocess postProcess args useIdx = do
   let oops :: SomeException -> IO (ExitCode, String, String)
       oops ex = pure (ExitFailure 1, "", displayException ex)
@@ -231,7 +239,8 @@ runGitPostprocess postProcess args useIdx = do
         packedRefsFp <- OsPath.decodeUtf packedRefs
         addDependentFile packedRefsFp
       runIO $ do
-        (code, out, err) <- readProcessWithExitCode "git" args "" `catchSync` oops
+        (code, out, err) <-
+          readProcessWithExitCode "git" args "" `catchSync` oops
         case code of
           ExitSuccess -> pure $ Right (postProcess out)
           ExitFailure _ -> pure $ Left $ GitRunError err

@@ -7,23 +7,24 @@
 module Development.GitRev.Utils
   ( -- * Combining Q actions lazily
     QFirst (..),
-    firstRight,
+    firstSuccessQ,
 
-    -- * Basic Either lifting
-    liftDefString,
-    liftFalse,
-    liftError,
+    -- * Either projections
+    projectStringUnknown,
+    projectString,
+    projectFalse,
+    projectError,
+    projectErrorMap,
 
     -- * Composing errors
     GitOrLookupEnvError (..),
 
-    -- ** Lifted functions
-    envValQ,
+    -- ** Functions
     runGitInEnvDirQ,
 
-    -- ** Lifting utilities
-    liftGitError,
-    liftLookupEnvError,
+    -- ** Mapping utilities
+    embedGitError,
+    embedLookupEnvError,
     joinLookupEnvGitErrors,
     joinGitLookupEnvErrors,
   )
@@ -36,9 +37,9 @@ import Data.Bifunctor (Bifunctor (first))
 import Data.Foldable1 (Foldable1 (foldMap1))
 #endif
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import Development.GitRev.Utils.Environment (LookupEnvError)
+import Development.GitRev.Utils.Environment qualified as Env
 import Development.GitRev.Utils.Git (GitError)
-import Development.GitRev.Utils.LookupEnv (LookupEnvError)
-import Development.GitRev.Utils.LookupEnv qualified as LookupEnv
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
 
@@ -46,7 +47,7 @@ import Language.Haskell.TH.Syntax (Lift)
 -- >>> :set -XTemplateHaskell
 -- >>> import Development.GitRev.Typed (qToCode)
 -- >>> import Development.GitRev.Utils.Git (GitError (..), gitDirtyQ, gitHashQ)
--- >>> import Development.GitRev.Utils.LookupEnv (LookupEnvError (..))
+-- >>> import Development.GitRev.Utils.Environment (LookupEnvError (..))
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
 
@@ -69,7 +70,7 @@ instance Semigroup (QFirst e a) where
         Right x -> pure $ Right x
         Left _ -> unQFirst q2
 
--- | @firstRight q qs@ takes the first @qi@ in @q : qs@ that returns
+-- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns
 -- 'Right', without executing any @qj@ for @j > i@. If there are no
 -- 'Right'\'s, returns the final result.
 --
@@ -77,7 +78,7 @@ instance Semigroup (QFirst e a) where
 --
 -- >>> :{
 --    $$( qToCode $
---          firstRight
+--          firstSuccessQ
 --            (pure (Left GitNotFound))
 --            [ gitHashQ,
 --              error "oh no"
@@ -87,54 +88,112 @@ instance Semigroup (QFirst e a) where
 -- Right ...
 --
 -- @since 2.0
-firstRight :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
-firstRight q qs = unQFirst $ foldMap1 MkQFirst (q :| qs)
+firstSuccessQ :: forall e a. Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
+firstSuccessQ q qs = unQFirst $ foldMap1 MkQFirst (q :| qs)
 
--- | Lifts 'Left' to string @UNKNOWN@.
+-- | Projects 'Left' to the string @UNKNOWN@.
+--
+-- ==== __Examples__
+--
+-- >>> :{
+--   let gitHashUnknownQ :: Q String
+--       gitHashUnknownQ = projectStringUnknown gitHashQ
+--   -- inling gitHashUnknownQ here due to stage restriction
+--   in $$(qToCode $ projectStringUnknown gitHashQ)
+-- :}
+-- ...
+--
+-- >>> $$(qToCode $ projectStringUnknown (pure $ Left ()))
+-- "UNKNOWN"
+--
+-- @since 2.0
+projectStringUnknown ::
+  forall f e.
+  (Functor f) =>
+  f (Either e String) ->
+  f String
+projectStringUnknown = projectString "UNKNOWN"
+
+-- | Projects 'Left' to the given string.
 --
 -- ==== __Examples__
 --
 -- >>> :{
 --   let gitHashDefStringQ :: Q String
---       gitHashDefStringQ = liftDefString gitHashQ
---   -- inling gitHashDefStringQ here due to stage restriction
---   in $$(qToCode $ liftDefString gitHashQ)
+--       gitHashDefStringQ = projectString "FAILURE" gitHashQ
+--   in $$(qToCode $ projectString "FAILURE" gitHashQ)
 -- :}
 -- ...
 --
+-- >>> $$(qToCode $ projectString "FAILURE" (pure $ Left ()))
+-- "FAILURE"
+--
 -- @since 2.0
-liftDefString :: (Functor f) => f (Either e String) -> f String
-liftDefString = fmap (either (const "UNKNOWN") id)
+projectString ::
+  forall f e.
+  (Functor f) =>
+  String ->
+  f (Either e String) ->
+  f String
+projectString = projectLeft . const
 
--- | Lifts 'Left' to 'False'.
+-- | Projects 'Left' to 'False'.
 --
 -- ==== __Examples__
 --
 -- >>> :{
 --   let gitDirtyDefFalseQ :: Q Bool
---       gitDirtyDefFalseQ = liftFalse gitDirtyQ
---   in $$(qToCode $ liftFalse gitDirtyQ)
+--       gitDirtyDefFalseQ = projectFalse gitDirtyQ
+--   in $$(qToCode $ projectFalse gitDirtyQ)
 -- :}
 -- ...
 --
+-- >>> $$(qToCode $ projectFalse (pure $ Left ()))
+-- False
+--
 -- @since 2.0
-liftFalse :: (Functor f) => f (Either e Bool) -> f Bool
-liftFalse = fmap (either (const False) id)
+projectFalse :: forall f e. (Functor f) => f (Either e Bool) -> f Bool
+projectFalse = projectLeft (const False)
 
--- | Calls 'error' on 'Left'.
+-- | Projects 'Left' via 'error', rendering via 'displayException'. Hence
+-- an error will cause a compilation failure.
 --
 -- ==== __Examples__
 --
 -- >>> :{
 --   let gitHashOrDieQ :: Q String
---       gitHashOrDieQ = liftError gitHashQ
---   in $$(qToCode $ liftError gitHashQ)
+--       gitHashOrDieQ = projectError gitHashQ
+--   in $$(qToCode $ projectError gitHashQ)
 -- :}
 -- ...
 --
 -- @since 2.0
-liftError :: (Exception e, Functor f) => f (Either e a) -> f a
-liftError = fmap (either (error . displayException) id)
+projectError :: forall f e a. (Exception e, Functor f) => f (Either e a) -> f a
+projectError = projectErrorMap displayException
+
+-- | Projects 'Left' via 'error', rendering via the given function. Hence
+-- an error will cause a compilation failure.
+--
+-- ==== __Examples__
+--
+-- >>> :{
+--   let gitHashOrDieQ :: Q String
+--       gitHashOrDieQ = (projectErrorMap show) gitHashQ
+--   in $$(qToCode $ (projectErrorMap show) gitHashQ)
+-- :}
+-- ...
+--
+-- @since 2.0
+projectErrorMap ::
+  forall f e a.
+  (Functor f) =>
+  (e -> String) ->
+  f (Either e a) ->
+  f a
+projectErrorMap onErr = projectLeft (error . onErr)
+
+projectLeft :: forall f e a. (Functor f) => (e -> a) -> f (Either e a) -> f a
+projectLeft f = fmap (either f id)
 
 -- | Git or env lookup error.
 --
@@ -156,24 +215,6 @@ instance Exception GitOrLookupEnvError where
   displayException (GitOrLookupEnvGit ge) = displayException ge
   displayException (GitOrLookupEnvLookupEnv x) = displayException x
 
--- | Performs an environment variable lookup in 'Q'. Wrapper for
--- 'LookupEnv.envValQ' that lifts 'LookupEnvError' to 'GitOrLookupEnvError'
--- for convenience.
---
--- ==== __Examples__
---
--- >>> setEnv "SOME_VAR" "val"
--- >>> $$(qToCode $ envValQ "SOME_VAR")
--- Right "val"
---
--- @since 2.0
-envValQ ::
-  -- | Environment variable @k@ to lookup.
-  String ->
-  -- | The result @v@ or an error.
-  Q (Either GitOrLookupEnvError String)
-envValQ = liftLookupEnvError . LookupEnv.envValQ
-
 -- | @runGitInEnvDirQ var q@ runs @q@ in the directory given by the
 -- environment variable.
 --
@@ -185,6 +226,7 @@ envValQ = liftLookupEnvError . LookupEnv.envValQ
 --
 -- @since 2.0
 runGitInEnvDirQ ::
+  forall a.
   -- | Environment variable pointing to a directory path, in which we run
   -- the git process.
   String ->
@@ -192,7 +234,7 @@ runGitInEnvDirQ ::
   Q (Either GitError a) ->
   -- | The result.
   Q (Either GitOrLookupEnvError a)
-runGitInEnvDirQ var = joinErrors . LookupEnv.runInEnvDirQ var
+runGitInEnvDirQ var = joinErrors . Env.runInEnvDirQ var
   where
     joinErrors = fmap joinLookupEnvGitErrors
 
@@ -209,6 +251,7 @@ runGitInEnvDirQ var = joinErrors . LookupEnv.runInEnvDirQ var
 --
 -- @since 2.0
 joinLookupEnvGitErrors ::
+  forall p a.
   ( Bifunctor p,
     forall e. Monad (p e)
   ) =>
@@ -217,7 +260,7 @@ joinLookupEnvGitErrors ::
   p GitOrLookupEnvError a
 joinLookupEnvGitErrors =
   join
-    . liftGitError
+    . embedGitError
     . first GitOrLookupEnvLookupEnv
 
 -- | Utility function for joining git and lookup errors.
@@ -233,6 +276,7 @@ joinLookupEnvGitErrors =
 --
 -- @since 2.0
 joinGitLookupEnvErrors ::
+  forall p a.
   ( Bifunctor p,
     forall e. Monad (p e)
   ) =>
@@ -241,7 +285,7 @@ joinGitLookupEnvErrors ::
   p GitOrLookupEnvError a
 joinGitLookupEnvErrors =
   join
-    . liftLookupEnvError
+    . embedLookupEnvError
     . first GitOrLookupEnvGit
 
 -- | Utility function for lifting a 'GitError' to the larger
@@ -252,19 +296,20 @@ joinGitLookupEnvErrors =
 -- >>> :{
 --   let q :: Q (Either GitError ())
 --       q = pure (Left GitNotFound)
---   in runQ $ liftGitError q
+--   in runQ $ embedGitError q
 -- :}
 -- Left (GitOrLookupEnvGit GitNotFound)
 --
 -- @since 2.0
-liftGitError ::
+embedGitError ::
+  forall f p a.
   ( Bifunctor p,
     Functor f
   ) =>
   -- | .
   f (p GitError a) ->
   f (p GitOrLookupEnvError a)
-liftGitError = fmap (first GitOrLookupEnvGit)
+embedGitError = fmap (first GitOrLookupEnvGit)
 
 -- | Utility function for lifting a 'LookupEnvError' to the larger
 -- 'GitOrLookupEnvError'.
@@ -274,19 +319,20 @@ liftGitError = fmap (first GitOrLookupEnvGit)
 -- >>> :{
 --   let q :: Q (Either LookupEnvError ())
 --       q = pure (Left $ MkLookupEnvError "VAR")
---   in runQ $ liftLookupEnvError q
+--   in runQ $ embedLookupEnvError q
 -- :}
 -- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
 -- @since 2.0
-liftLookupEnvError ::
+embedLookupEnvError ::
+  forall f p a.
   ( Bifunctor p,
     Functor f
   ) =>
   -- | .
   f (p LookupEnvError a) ->
   f (p GitOrLookupEnvError a)
-liftLookupEnvError = fmap (first GitOrLookupEnvLookupEnv)
+embedLookupEnvError = fmap (first GitOrLookupEnvLookupEnv)
 
 #if !MIN_VERSION_base(4, 18, 0)
 -- Copied from base. Technically not the same as the import above since

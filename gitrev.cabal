@@ -35,6 +35,7 @@ common common-lang
   default-extensions:
     DeriveLift
     DerivingStrategies
+    ExplicitForAll
     ImportQualifiedPost
     LambdaCase
     OverloadedStrings
@@ -59,8 +60,8 @@ library
     Development.GitRev
     Development.GitRev.Typed
     Development.GitRev.Utils
+    Development.GitRev.Utils.Environment
     Development.GitRev.Utils.Git
-    Development.GitRev.Utils.LookupEnv
 
 test-suite unit
   import:         common-lang

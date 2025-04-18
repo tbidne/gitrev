@@ -21,29 +21,29 @@ hashLegacy = GR.gitHash
 hashEnvVal :: Code Q String
 hashEnvVal =
   GRT.qToCode
-    . GRT.liftDefString
-    $ GRU.firstRight
-      (GRT.liftGitError GRT.gitHashQ)
+    . GRT.projectStringUnknown
+    $ GRU.firstSuccessQ
+      (GRT.embedGitError GRT.gitHashQ)
       [GRT.envValQ "EXAMPLE_HASH"]
 
 hashEnvDir :: Code Q String
 hashEnvDir =
   GRT.qToCode
-    . GRT.liftDefString
-    $ GRU.firstRight
-      (GRT.liftGitError GRT.gitHashQ)
+    . GRT.projectStringUnknown
+    $ GRU.firstSuccessQ
+      (GRT.embedGitError GRT.gitHashQ)
       [GRT.runGitInEnvDirQ "EXAMPLE_HOME" GRT.gitHashQ]
 
 hashEnvValDir :: Code Q String
 hashEnvValDir = toCode gitHash
   where
     toCode :: Q (Either GitOrLookupEnvError String) -> Code Q String
-    toCode = GRT.qToCode . GRT.liftDefString
+    toCode = GRT.qToCode . GRT.projectStringUnknown
 
     gitHash :: Q (Either GitOrLookupEnvError String)
     gitHash =
-      GRU.firstRight
-        (GRT.liftGitError GRT.gitHashQ)
+      GRU.firstSuccessQ
+        (GRT.embedGitError GRT.gitHashQ)
         [ GRT.envValQ "EXAMPLE_HASH",
           GRT.runGitInEnvDirQ "EXAMPLE_HOME" GRT.gitHashQ
         ]

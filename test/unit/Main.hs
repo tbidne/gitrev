@@ -117,21 +117,21 @@ testGitShortHashTyped = testCase "gitShortHash" $ do
 testLiftError :: TestTree
 testLiftError = testCase "Lifts with default string" $ do
   assertNonEmpty
-    $$(GRT.qToCode $ GRT.liftDefString GRT.gitHashQ)
+    $$(GRT.qToCode $ GRT.projectStringUnknown GRT.gitHashQ)
 
 testHashAndEnvVal :: TestTree
 testHashAndEnvVal = testCase "Composes hash and env val lookup" $ do
   assertGitResult
     $$( GRT.qToCode $
-          GRT.liftGitError GRT.gitHashQ
-            <> GRT.envValQ "var"
+          GRT.embedGitError GRT.gitHashQ
+            <> GRT.embedLookupEnvError (GRT.envValQ "var")
       )
 
 testHashAndEnvDir :: TestTree
 testHashAndEnvDir = testCase "Composes hash and env dir lookup" $ do
   assertGitResult
     $$( GRT.qToCode $
-          GRT.liftGitError GRT.gitHashQ
+          GRT.embedGitError GRT.gitHashQ
             <> GRT.runGitInEnvDirQ "var" GRT.gitHashQ
       )
 
@@ -161,14 +161,14 @@ testSemigroupQFirstLazy = testCase "QFirst Semigroup is lazy in the rhs" $ do
   0 @=? num3
 
 testSemigroupQFirstRightLazy :: TestTree
-testSemigroupQFirstRightLazy = testCase "Utils.firstRight is lazy" $ do
+testSemigroupQFirstRightLazy = testCase "Utils.firstSuccessQ is lazy" $ do
   let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstRight)
   1 @=? num1
   0 @=? num2
   0 @=? num3
 
 testSemigroupQFirstRightLazy2 :: TestTree
-testSemigroupQFirstRightLazy2 = testCase "Utils.firstRight is lazy 2" $ do
+testSemigroupQFirstRightLazy2 = testCase "Utils.firstSuccessQ is lazy 2" $ do
   let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstRight2)
   1 @=? num1
   1 @=? num2
@@ -183,7 +183,7 @@ testSemigroupQFirstRightLastLeft = testCase desc $ do
 
   Left "qFail3" @=? result
   where
-    desc = "Utils.firstRight takes the last when all Lefts"
+    desc = "Utils.firstSuccessQ takes the last when all Lefts"
 
 assertNonEmpty :: String -> IO ()
 assertNonEmpty "" = assertFailure "Received empty"

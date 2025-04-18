@@ -1,11 +1,11 @@
 -- | Provides utilities for querying environment variables.
 --
 -- @since 2.0
-module Development.GitRev.Utils.LookupEnv
+module Development.GitRev.Utils.Environment
   ( LookupEnvError (..),
     envValQ,
     runInEnvDirQ,
-    withEnvVarQ,
+    withEnvValQ,
   )
 where
 
@@ -38,7 +38,7 @@ envValQ ::
   String ->
   -- | The result @v@ or an error.
   Q (Either LookupEnvError String)
-envValQ var = withEnvVarQ var pure
+envValQ var = withEnvValQ var pure
 
 -- | Runs the given 'Q'-action under the directory @d@ pointed to by the
 -- given environment variable.
@@ -52,6 +52,7 @@ envValQ var = withEnvVarQ var pure
 --
 -- @since 2.0
 runInEnvDirQ ::
+  forall a.
   -- | The environment variable @k@ that should point to some directory
   -- @d@.
   String ->
@@ -59,7 +60,7 @@ runInEnvDirQ ::
   Q a ->
   -- | The result of running @q@ in directory @d@.
   Q (Either LookupEnvError a)
-runInEnvDirQ var m = withEnvVarQ var $ \repoDirFp -> do
+runInEnvDirQ var m = withEnvValQ var $ \repoDirFp -> do
   repoDirOs <- OsPath.encodeUtf repoDirFp
   currDir <- runIO Dir.getCurrentDirectory
   runIO $ Dir.setCurrentDirectory repoDirOs
@@ -90,20 +91,21 @@ instance Exception LookupEnvError where
 --
 -- >>> import System.Directory (listDirectory)
 -- >>> setEnv "SOME_DIR" "./src"
--- >>> $$(qToCode $ withEnvVarQ "SOME_DIR" (runIO . listDirectory))
+-- >>> $$(qToCode $ withEnvValQ "SOME_DIR" (runIO . listDirectory))
 -- Right ["Development"]
 --
 -- @since 2.0
-withEnvVarQ ::
+withEnvValQ ::
+  forall a.
   -- | The environment variable @k@ to lookup.
   String ->
   -- | Function to run on @k@'s /value/ if @k@ exists.
   (String -> Q a) ->
   Q (Either LookupEnvError a)
-withEnvVarQ var onEnv = do
+withEnvValQ var onEnv = do
   lookupEnvQ var >>= \case
     Nothing -> pure $ Left $ MkLookupEnvError var
     Just result -> Right <$> onEnv result
 
 lookupEnvQ :: String -> Q (Maybe String)
-lookupEnvQ s = runIO (Env.lookupEnv s)
+lookupEnvQ = runIO . Env.lookupEnv

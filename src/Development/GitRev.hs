@@ -40,7 +40,7 @@ import Language.Haskell.TH.Syntax (Lift (lift))
 -- >>> $(gitHash)
 -- ...
 gitHash :: ExpQ
-gitHash = qToExp $ Utils.liftDefString Git.gitHashQ
+gitHash = qToExp $ Utils.projectStringUnknown Git.gitHashQ
 
 -- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
 -- a git repository.
@@ -53,7 +53,7 @@ gitHash = qToExp $ Utils.liftDefString Git.gitHashQ
 -- >>> $(gitShortHash)
 -- ...
 gitShortHash :: ExpQ
-gitShortHash = qToExp $ Utils.liftDefString Git.gitShortHashQ
+gitShortHash = qToExp $ Utils.projectStringUnknown Git.gitShortHashQ
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
 -- if not in a git repository. For detached heads, this will just be
@@ -67,7 +67,7 @@ gitShortHash = qToExp $ Utils.liftDefString Git.gitShortHashQ
 -- >>> $(gitBranch)
 -- ...
 gitBranch :: ExpQ
-gitBranch = qToExp $ Utils.liftDefString Git.gitBranchQ
+gitBranch = qToExp $ Utils.projectStringUnknown Git.gitBranchQ
 
 -- | Return the long git description for the current git commit, or
 -- @UNKNOWN@ if not in a git repository.
@@ -80,7 +80,7 @@ gitBranch = qToExp $ Utils.liftDefString Git.gitBranchQ
 -- >>> $(gitDescribe)
 -- ...
 gitDescribe :: ExpQ
-gitDescribe = qToExp $ Utils.liftDefString Git.gitDescribeQ
+gitDescribe = qToExp $ Utils.projectStringUnknown Git.gitDescribeQ
 
 -- | Return @True@ if there are non-committed files present in the
 -- repository.
@@ -93,7 +93,7 @@ gitDescribe = qToExp $ Utils.liftDefString Git.gitDescribeQ
 -- >>> $(gitDirty)
 -- ...
 gitDirty :: ExpQ
-gitDirty = qToExp $ Utils.liftFalse Git.gitDirtyQ
+gitDirty = qToExp $ Utils.projectFalse Git.gitDirtyQ
 
 -- | Return @True@ if there are non-commited changes to tracked files
 -- present in the repository.
@@ -106,7 +106,7 @@ gitDirty = qToExp $ Utils.liftFalse Git.gitDirtyQ
 -- >>> $(gitDirtyTracked)
 -- ...
 gitDirtyTracked :: ExpQ
-gitDirtyTracked = qToExp $ Utils.liftFalse Git.gitDirtyTrackedQ
+gitDirtyTracked = qToExp $ Utils.projectFalse Git.gitDirtyTrackedQ
 
 -- | Return the number of commits in the current head.
 --
@@ -118,7 +118,7 @@ gitDirtyTracked = qToExp $ Utils.liftFalse Git.gitDirtyTrackedQ
 -- >>> $(gitCommitCount)
 -- ...
 gitCommitCount :: ExpQ
-gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
+gitCommitCount = qToExp $ Utils.projectStringUnknown Git.gitCommitCountQ
 
 -- | Return the commit date of the current head.
 --
@@ -130,7 +130,7 @@ gitCommitCount = qToExp $ Utils.liftDefString Git.gitCommitCountQ
 -- >>> $(gitCommitDate)
 -- ...
 gitCommitDate :: ExpQ
-gitCommitDate = qToExp $ Utils.liftDefString Git.gitCommitDateQ
+gitCommitDate = qToExp $ Utils.projectStringUnknown Git.gitCommitDateQ
 
 -- | Return the diff of the working copy with HEAD.
 --
@@ -142,7 +142,7 @@ gitCommitDate = qToExp $ Utils.liftDefString Git.gitCommitDateQ
 -- >>> $(gitDiff)
 -- ...
 gitDiff :: ExpQ
-gitDiff = qToExp $ Utils.liftDefString Git.gitDiffQ
+gitDiff = qToExp $ Utils.projectStringUnknown Git.gitDiffQ
 
 -- | Return the hash of the current tree.
 --
@@ -154,7 +154,7 @@ gitDiff = qToExp $ Utils.liftDefString Git.gitDiffQ
 -- >>> $(gitTreeQ)
 -- ...
 gitTree :: ExpQ
-gitTree = qToExp $ Utils.liftDefString Git.gitTreeQ
+gitTree = qToExp $ Utils.projectStringUnknown Git.gitTreeQ
 
-qToExp :: (Lift a) => Q a -> ExpQ
+qToExp :: forall a. (Lift a) => Q a -> ExpQ
 qToExp = (>>= lift)

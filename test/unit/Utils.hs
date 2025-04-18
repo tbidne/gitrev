@@ -31,19 +31,19 @@ qFirstSemigroup = do
 qFirstRight :: Q Counter
 qFirstRight = do
   ref <- runIO $ newIORef (0, 0, 0)
-  _ <- GRU.firstRight (q1 ref) [q2 ref, q3 ref]
+  _ <- GRU.firstSuccessQ (q1 ref) [q2 ref, q3 ref]
   runIO $ readIORef ref
 
 qFirstRight2 :: Q Counter
 qFirstRight2 = do
   ref <- runIO $ newIORef (0, 0, 0)
-  _ <- GRU.firstRight (qFail1 ref) [q2 ref, q3 ref]
+  _ <- GRU.firstSuccessQ (qFail1 ref) [q2 ref, q3 ref]
   runIO $ readIORef ref
 
 qFirstRightLastLeft :: Q (Counter, Either String String)
 qFirstRightLastLeft = do
   ref <- runIO $ newIORef (0, 0, 0)
-  result <- GRU.firstRight (qFail1 ref) [qFail2 ref, qFail3 ref]
+  result <- GRU.firstSuccessQ (qFail1 ref) [qFail2 ref, qFail3 ref]
   (,result) <$> runIO (readIORef ref)
 
 q1 :: IORef Counter -> Q QResult
