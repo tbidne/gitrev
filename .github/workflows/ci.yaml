@@ -55,8 +55,9 @@ jobs:
           .github/scripts/run_example_cabal_build.sh
 
       - name: Install exe
+        shell: bash
         run: |
-          ${{ matrix.platform.set-env }} EXAMPLE_HOME=$(pwd); cabal install example --installdir=./build
+          export EXAMPLE_HOME=$(pwd); cabal install example --installdir=./build
 
       - name: Test installed example
         run: |
