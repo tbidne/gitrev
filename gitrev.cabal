@@ -2,11 +2,11 @@ cabal-version:      2.2
 name:               gitrev
 version:            2.0
 synopsis:           Compile git revision info into Haskell projects
-homepage:           https://github.com/acfoltzer/gitrev
+homepage:           https://github.com/tbidne/gitrev
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Adam C. Foltzer
-maintainer:         acfoltzer@galois.com
+maintainer:         tbidne@protonmail.com
 category:           Development
 build-type:         Simple
 tested-with:
