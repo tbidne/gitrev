@@ -44,7 +44,10 @@ module Development.GitRev.Typed
 
     -- *** First success
     QFirst (..),
+    Utils.mkQFirst,
     Utils.firstSuccessQ,
+    Exceptions (MkExceptions),
+    Utils.mkExceptions,
 
     -- *** Eliminating Either
     Utils.projectStringUnknown,
@@ -67,7 +70,8 @@ module Development.GitRev.Typed
 where
 
 import Development.GitRev.Utils
-  ( GitOrLookupEnvError
+  ( Exceptions (MkExceptions),
+    GitOrLookupEnvError
       ( GitOrLookupEnvGit,
         GitOrLookupEnvLookupEnv
       ),
@@ -112,7 +116,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- that returns 'Right'.
 --
 -- >>> :{
---   let gitHashEnv :: String -> Code Q (Either GitOrLookupEnvError String)
+--   let gitHashEnv :: String -> Code Q (Either (Exceptions GitOrLookupEnvError) String)
 --       gitHashEnv var =
 --         qToCode $
 --           firstSuccessQ
@@ -235,8 +239,8 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --
 -- >>> :{
 --   $$( qToCode $ unQFirst $
---       (MkQFirst $ runIO (putStrLn "in q1") $> (Right "q1") :: QFirst () String)
---         <> (MkQFirst $ runIO (putStrLn "in q2") $> Left ())
+--       (mkQFirst $ runIO (putStrLn "in q1") $> (Right "q1") :: QFirst () String)
+--         <> (mkQFirst $ runIO (putStrLn "in q2") $> Left ())
 --     )
 -- :}
 -- in q1

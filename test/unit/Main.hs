@@ -3,7 +3,9 @@
 
 module Main (main) where
 
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Development.GitRev qualified as GR
+import Development.GitRev.Typed (Exceptions (MkExceptions))
 import Development.GitRev.Typed qualified as GRT
 import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
@@ -141,9 +143,9 @@ semigroupTests =
     "Semigroup"
     [ testSemigroupQNotLazy,
       testSemigroupQFirstLazy,
-      testSemigroupQFirstRightLazy,
-      testSemigroupQFirstRightLazy2,
-      testSemigroupQFirstRightLastLeft
+      testSemigroupQFirstSuccessLazy,
+      testSemigroupQFirstSuccessLazy2,
+      testSemigroupQFirstSuccessAllLefts
     ]
 
 testSemigroupQNotLazy :: TestTree
@@ -160,30 +162,32 @@ testSemigroupQFirstLazy = testCase "QFirst Semigroup is lazy in the rhs" $ do
   0 @=? num2
   0 @=? num3
 
-testSemigroupQFirstRightLazy :: TestTree
-testSemigroupQFirstRightLazy = testCase "Utils.firstSuccessQ is lazy" $ do
-  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstRight)
+testSemigroupQFirstSuccessLazy :: TestTree
+testSemigroupQFirstSuccessLazy = testCase "Utils.firstSuccessQ is lazy" $ do
+  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstSuccess)
   1 @=? num1
   0 @=? num2
   0 @=? num3
 
-testSemigroupQFirstRightLazy2 :: TestTree
-testSemigroupQFirstRightLazy2 = testCase "Utils.firstSuccessQ is lazy 2" $ do
-  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstRight2)
+testSemigroupQFirstSuccessLazy2 :: TestTree
+testSemigroupQFirstSuccessLazy2 = testCase "Utils.firstSuccessQ is lazy 2" $ do
+  let (num1, num2, num3) = $$(GRT.qToCode Utils.qFirstSuccess2)
   1 @=? num1
   1 @=? num2
   0 @=? num3
 
-testSemigroupQFirstRightLastLeft :: TestTree
-testSemigroupQFirstRightLastLeft = testCase desc $ do
-  let ((num1, num2, num3), result) = $$(GRT.qToCode Utils.qFirstRightLastLeft)
+testSemigroupQFirstSuccessAllLefts :: TestTree
+testSemigroupQFirstSuccessAllLefts = testCase desc $ do
+  let ((num1, num2, num3), result) = $$(GRT.qToCode Utils.qFirstSuccessAllLefts)
   1 @=? num1
   1 @=? num2
   1 @=? num3
 
-  Left "qFail3" @=? result
+  Left expected @=? result
   where
-    desc = "Utils.firstSuccessQ takes the last when all Lefts"
+    desc = "Utils.firstSuccessQ takes all Lefts"
+
+    expected = MkExceptions ("qFail1" :| ["qFail2", "qFail3"])
 
 assertNonEmpty :: String -> IO ()
 assertNonEmpty "" = assertFailure "Received empty"

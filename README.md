@@ -77,10 +77,10 @@ Furthermore, we have workarounds for "out-of-tree" builds:
 projectHashEnv :: Code Q String
 projectHashEnv = toCode gitHash
   where
-    toCode :: Q (Either GitOrLookupEnvError String) -> Code Q String
+    toCode :: Q (Either (Exceptions GitOrLookupEnvError) String) -> Code Q String
     toCode = GRT.qToCode . GRT.projectError
 
-    gitHash :: Q (Either GitOrLookupEnvError String)
+    gitHash :: Q (Either (Exceptions GitOrLookupEnvError) String)
     gitHash =
       -- Tries, in order:
       --

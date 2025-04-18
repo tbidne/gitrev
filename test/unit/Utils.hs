@@ -1,15 +1,15 @@
 module Utils
   ( qSemigroup,
     qFirstSemigroup,
-    qFirstRight,
-    qFirstRight2,
-    qFirstRightLastLeft,
+    qFirstSuccess,
+    qFirstSuccess2,
+    qFirstSuccessAllLefts,
   )
 where
 
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
-import Development.GitRev.Utils (QFirst (MkQFirst, unQFirst))
-import Development.GitRev.Utils qualified as GRU
+import Development.GitRev.Typed (Exceptions, QFirst (unQFirst))
+import Development.GitRev.Typed qualified as GRT
 import Language.Haskell.TH (Q, runIO)
 
 type Counter = (Int, Int, Int)
@@ -25,25 +25,27 @@ qSemigroup = do
 qFirstSemigroup :: Q Counter
 qFirstSemigroup = do
   ref <- runIO $ newIORef (0, 0, 0)
-  _ <- unQFirst $ MkQFirst (q1 ref) <> MkQFirst (q2 ref) <> MkQFirst (q3 ref)
+  _ <-
+    unQFirst $
+      GRT.mkQFirst (q1 ref) <> GRT.mkQFirst (q2 ref) <> GRT.mkQFirst (q3 ref)
   runIO $ readIORef ref
 
-qFirstRight :: Q Counter
-qFirstRight = do
+qFirstSuccess :: Q Counter
+qFirstSuccess = do
   ref <- runIO $ newIORef (0, 0, 0)
-  _ <- GRU.firstSuccessQ (q1 ref) [q2 ref, q3 ref]
+  _ <- GRT.firstSuccessQ (q1 ref) [q2 ref, q3 ref]
   runIO $ readIORef ref
 
-qFirstRight2 :: Q Counter
-qFirstRight2 = do
+qFirstSuccess2 :: Q Counter
+qFirstSuccess2 = do
   ref <- runIO $ newIORef (0, 0, 0)
-  _ <- GRU.firstSuccessQ (qFail1 ref) [q2 ref, q3 ref]
+  _ <- GRT.firstSuccessQ (qFail1 ref) [q2 ref, q3 ref]
   runIO $ readIORef ref
 
-qFirstRightLastLeft :: Q (Counter, Either String String)
-qFirstRightLastLeft = do
+qFirstSuccessAllLefts :: Q (Counter, Either (Exceptions String) String)
+qFirstSuccessAllLefts = do
   ref <- runIO $ newIORef (0, 0, 0)
-  result <- GRU.firstSuccessQ (qFail1 ref) [qFail2 ref, qFail3 ref]
+  result <- GRT.firstSuccessQ (qFail1 ref) [qFail2 ref, qFail3 ref]
   (,result) <$> runIO (readIORef ref)
 
 q1 :: IORef Counter -> Q QResult

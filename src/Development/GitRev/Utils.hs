@@ -7,7 +7,10 @@
 module Development.GitRev.Utils
   ( -- * Combining Q actions lazily
     QFirst (..),
+    mkQFirst,
     firstSuccessQ,
+    Exceptions (..),
+    mkExceptions,
 
     -- * Either projections
     projectStringUnknown,
@@ -32,11 +35,16 @@ where
 
 import Control.Exception (Exception (displayException))
 import Control.Monad (join)
-import Data.Bifunctor (Bifunctor (first))
+import Data.Bifunctor (Bifunctor (bimap, first))
+import Data.Foldable (Foldable (fold))
 #if MIN_VERSION_base(4, 18, 0)
 import Data.Foldable1 (Foldable1 (foldMap1))
 #endif
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import Data.List.NonEmpty qualified as NE
+import Data.Text qualified as T
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Builder qualified as TLB
 import Development.GitRev.Utils.Environment (LookupEnvError)
 import Development.GitRev.Utils.Environment qualified as Env
 import Development.GitRev.Utils.Git (GitError)
@@ -51,6 +59,55 @@ import Language.Haskell.TH.Syntax (Lift)
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
 
+-- | Collects multiple exceptions.
+--
+-- @since 2.0
+newtype Exceptions e = MkExceptions {unExceptions :: (NonEmpty e)}
+  deriving stock
+    ( -- | @since 2.0
+      Eq,
+      -- | @since 2.0
+      Functor,
+      -- | @since 2.0
+      Lift,
+      -- | @since 2.0
+      Show
+    )
+  deriving newtype
+    ( -- | @since 2.0
+      Applicative,
+      -- | @since 2.0
+      Monad,
+      -- | @since 2.0
+      Semigroup
+    )
+
+-- | @since 2.0
+instance (Exception e) => Exception (Exceptions e) where
+  displayException (MkExceptions errs) =
+    mconcat
+      [ "Exception(s):",
+        renderErrs errs
+      ]
+    where
+      renderErrs =
+        T.unpack
+          . TL.toStrict
+          . TLB.toLazyText
+          . fold
+          . fmap renderErr
+          . NE.zip @Int (1 :| [2 ..])
+
+      renderErr (idx, e) =
+        (\b -> "\n" <> TLB.fromString (show idx) <> ". " <> b)
+          . TLB.fromString
+          . displayException
+          $ e
+
+-- | @since 2.0
+mkExceptions :: forall e. e -> Exceptions e
+mkExceptions = MkExceptions . NE.singleton
+
 -- | Wrapper for 'Q' over 'Either' with a lazier 'Semigroup'. With this, we
 -- can run:
 --
@@ -60,7 +117,19 @@ import Language.Haskell.TH.Syntax (Lift)
 --
 -- This will only execute @q2@ if @q1@ returns 'Left', unlike 'Q'\'s normal
 -- 'Semigroup' instance.
-data QFirst e a = MkQFirst {unQFirst :: Q (Either e a)}
+--
+-- 'QFirst' also collects all errors in 'Exceptions'.
+--
+-- @since 2.0
+newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Exceptions e) a)}
+  deriving stock
+    ( -- | @since 2.0
+      Functor
+    )
+
+-- | @since 2.0
+instance Bifunctor QFirst where
+  bimap f g (MkQFirst q) = MkQFirst $ fmap (bimap (fmap f) g) q
 
 -- | @since 2.0
 instance Semigroup (QFirst e a) where
@@ -68,7 +137,11 @@ instance Semigroup (QFirst e a) where
     MkQFirst $
       q1 >>= \case
         Right x -> pure $ Right x
-        Left _ -> unQFirst q2
+        Left errs -> first (errs <>) <$> unQFirst q2
+
+-- | @since 2.0
+mkQFirst :: forall e a. Q (Either e a) -> QFirst e a
+mkQFirst = MkQFirst . fmap (first mkExceptions)
 
 -- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns
 -- 'Right', without executing any @qj@ for @j > i@. If there are no
@@ -88,8 +161,12 @@ instance Semigroup (QFirst e a) where
 -- Right ...
 --
 -- @since 2.0
-firstSuccessQ :: forall e a. Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
-firstSuccessQ q qs = unQFirst $ foldMap1 MkQFirst (q :| qs)
+firstSuccessQ ::
+  forall e a.
+  Q (Either e a) ->
+  [Q (Either e a)] ->
+  Q (Either (Exceptions e) a)
+firstSuccessQ q qs = unQFirst $ foldMap1 mkQFirst (q :| qs)
 
 -- | Projects 'Left' to the string @UNKNOWN@.
 --
@@ -205,6 +282,8 @@ data GitOrLookupEnvError
     GitOrLookupEnvLookupEnv LookupEnvError
   deriving stock
     ( -- | @since 2.0
+      Eq,
+      -- | @since 2.0
       Lift,
       -- | @since 2.0
       Show

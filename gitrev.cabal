@@ -35,13 +35,16 @@ source-repository head
 
 common common-lang
   default-extensions:
+    DeriveFunctor
     DeriveLift
     DerivingStrategies
     ExplicitForAll
+    GeneralizedNewtypeDeriving
     ImportQualifiedPost
     LambdaCase
     OverloadedStrings
     TupleSections
+    TypeApplications
 
   default-language:   Haskell2010
 
