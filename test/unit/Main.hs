@@ -12,6 +12,10 @@ import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
 import Utils qualified
 
+-- TODO:
+-- - Split tests, add OssString tests.
+-- - Add OsString example as well.
+
 main :: IO ()
 main = do
   defaultMain $
