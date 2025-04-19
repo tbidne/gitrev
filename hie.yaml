@@ -9,8 +9,11 @@ cradle:
     - path: "./example/./TH.hs"
       component: "example:exe:example"
 
-    - path: "./src"
+    - path: "./lib/gitrev/src"
       component: "lib:gitrev"
 
-    - path: "./test/unit"
+    - path: "./lib/gitrev/test/unit"
       component: "gitrev:test:unit"
+
+    - path: "./lib/gitrev-internal/src"
+      component: "lib:gitrev-internal"

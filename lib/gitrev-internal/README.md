@@ -15,4 +15,4 @@
 
 # Description
 
-This is a fork of the popular `girev` package, offering a typed interface and `OsString` compatibility. See the main [README](./lib/gitrev/README.md) for full documentation.
+This is an internal package for `gitrev`.

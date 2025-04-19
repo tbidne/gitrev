@@ -22,6 +22,7 @@ test-suite doctest
     , doctest-parallel  ^>=0.3
     , env-guard         ^>=0.2
     , gitrev
+    , gitrev-internal
 
   hs-source-dirs: ./
   ghc-options:    -threaded

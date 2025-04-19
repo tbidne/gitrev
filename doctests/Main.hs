@@ -3,6 +3,7 @@
 module Main (main) where
 
 import Development.GitRev qualified
+import Development.GitRev.Internal qualified
 import System.Environment (getArgs)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.DocTest qualified as DT
@@ -18,4 +19,7 @@ main =
     run
     (putStrLn "*** Doctests disabled. Run with env var RUN_DOCTEST=1 to enable ***")
   where
-    run = DT.mainFromCabal "gitrev" =<< getArgs
+    run = do
+      args <- getArgs
+      DT.mainFromCabal "gitrev-internal" args
+      DT.mainFromCabal "gitrev" args

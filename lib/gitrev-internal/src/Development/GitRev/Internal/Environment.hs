@@ -46,7 +46,7 @@ envValQ var = withEnvValQ var pure
 -- ==== __Examples__
 --
 -- >>> import System.Directory (listDirectory)
--- >>> setEnv "SOME_DIR" "./src"
+-- >>> setEnv "SOME_DIR" "./lib/gitrev/src"
 -- >>> $$(qToCode $ runInEnvDirQ "SOME_DIR" $ runIO (listDirectory "./"))
 -- Right ["Development"]
 --
@@ -92,7 +92,7 @@ instance Exception LookupEnvError where
 -- ==== __Examples__
 --
 -- >>> import System.Directory (listDirectory)
--- >>> setEnv "SOME_DIR" "./src"
+-- >>> setEnv "SOME_DIR" "./lib/gitrev/src"
 -- >>> $$(qToCode $ withEnvValQ "SOME_DIR" (runIO . listDirectory))
 -- Right ["Development"]
 --

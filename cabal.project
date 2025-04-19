@@ -1,7 +1,8 @@
 packages:
   ./doctests/gitrev-doctest.cabal
   ./example/example.cabal
-  ./gitrev.cabal
+  ./lib/gitrev/gitrev.cabal
+  ./lib/gitrev-internal/gitrev-internal.cabal
 
 program-options
   ghc-options:

@@ -26,7 +26,11 @@
             nix-hs-utils.mkHaskellPkg {
               inherit compiler pkgs returnShellEnv;
               name = "gitrev";
-              root = ./.;
+              root = ./lib/gitrev;
+
+              source-overrides = {
+                gitrev-internal = ./lib/gitrev-internal;
+              };
 
               devTools = [
                 (hlib.dontCheck compiler.cabal-fmt)
@@ -62,7 +66,8 @@
                 });
               source-overrides = {
                 # depends on gitrev here...
-                gitrev = ./.;
+                gitrev = ./lib/gitrev;
+                gitrev-internal = ./lib/gitrev-internal;
               };
             };
           };
