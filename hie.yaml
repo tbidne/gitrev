@@ -1,5 +1,8 @@
 cradle:
   cabal:
+    - path: "./doctests/./"
+      component: "gitrev-doctest:test:doctest"
+
     - path: "./example/./Main.hs"
       component: "example:exe:example"
 
@@ -11,6 +14,3 @@ cradle:
 
     - path: "./test/unit"
       component: "gitrev:test:unit"
-
-    - path: "./test/doctest"
-      component: "gitrev:test:doctest"

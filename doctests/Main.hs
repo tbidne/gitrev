@@ -16,6 +16,6 @@ main =
     "RUN_DOCTEST"
     ExpectEnvSet
     run
-    (putStrLn "*** Doctests Disabled ***")
+    (putStrLn "*** Doctests disabled. Run with env var RUN_DOCTEST=1 to enable ***")
   where
     run = DT.mainFromCabal "gitrev" =<< getArgs

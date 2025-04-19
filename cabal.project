@@ -1,4 +1,5 @@
 packages:
+  ./doctests/gitrev-doctest.cabal
   ./example/example.cabal
   ./gitrev.cabal
 

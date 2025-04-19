@@ -1,0 +1,50 @@
+cabal-version: 2.2
+name:          gitrev-doctest
+version:       0.1
+synopsis:      Doctests for gitrev
+category:      Testing
+build-type:    Simple
+tested-with:   GHC ==9.10.1 || ==9.12.1
+description:
+  Doctests for gitrev. This is split from the normal gitrev library, since
+  doctest incurs a dependency on GHC, which can make solving more difficult
+  with --enable-tests because GHC requires exact dependencies.
+
+common common-lang
+  default-language:   GHC2021
+
+test-suite doctest
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  build-depends:
+    , base              >=4.15.0.0 && <4.22
+    , doctest-parallel  ^>=0.3
+    , env-guard         ^>=0.2
+    , gitrev
+
+  hs-source-dirs: ./
+  ghc-options:    -threaded
+
+-- NOTE: For a while, running doctests would give some maddening error about
+-- not being able to find a directory in ~/.cache/hie-bios. I encountered this
+-- with both doctest and doctest-parallel.
+--
+-- It __seemed__ that adding -threaded to the ghc-options fixed it. I say
+-- "seemed" because
+--
+--   1. doctest continued to fail; only doctest-parallel was "fixed".
+--   2. doctest-parallel continuted to work even after __removing__ -threaded!
+--
+-- So, I don't know. That said, the non-threaded runtime is known to have
+-- correctness issues. It was for that reason that a proposal to make -threaded
+-- the default was accepted:
+--
+--     https://github.com/ghc-proposals/ghc-proposals/pull/240
+--
+-- It appears this has not been implemented, however:
+--
+--     https://gitlab.haskell.org/ghc/ghc/-/merge_requests/538
+--
+-- Therefore we enable -threaded, as it might fix an issue here, and it should
+-- probably be enabled regardless.

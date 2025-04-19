@@ -7,6 +7,8 @@ trap cleanup EXIT
 
 export LANG="C.UTF-8"
 
-cabal build --enable-tests --write-ghc-environment-files=always
+cabal build gitrev --write-ghc-environment-files=always
 
-RUN_DOCTEST=1 cabal test doctest
+# Run rather than test as 'cabal test' can have problems with doctest,
+# apparently.
+RUN_DOCTEST=1 cabal run gitrev-doctest:test:doctest
