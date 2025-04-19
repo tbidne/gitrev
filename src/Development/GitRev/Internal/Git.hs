@@ -3,7 +3,7 @@
 -- | Provides utilities for querying git.
 --
 -- @since 2.0
-module Development.GitRev.Utils.Git
+module Development.GitRev.Internal.Git
   ( GitError (..),
     gitBranchQ,
     gitCommitCountQ,

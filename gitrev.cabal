@@ -63,10 +63,10 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Development.GitRev
+    Development.GitRev.Internal
+    Development.GitRev.Internal.Environment
+    Development.GitRev.Internal.Git
     Development.GitRev.Typed
-    Development.GitRev.Utils
-    Development.GitRev.Utils.Environment
-    Development.GitRev.Utils.Git
 
 test-suite unit
   import:         common-lang

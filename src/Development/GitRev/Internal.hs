@@ -4,7 +4,7 @@
 -- | Utils module.
 --
 -- @since 2.0
-module Development.GitRev.Utils
+module Development.GitRev.Internal
   ( -- * Combining Q actions lazily
     QFirst (..),
     mkQFirst,
@@ -46,17 +46,17 @@ import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Text.Lazy.Builder.Int qualified as TLBI
-import Development.GitRev.Utils.Environment (LookupEnvError)
-import Development.GitRev.Utils.Environment qualified as Env
-import Development.GitRev.Utils.Git (GitError)
+import Development.GitRev.Internal.Environment (LookupEnvError)
+import Development.GitRev.Internal.Environment qualified as Env
+import Development.GitRev.Internal.Git (GitError)
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
 
 -- $setup
 -- >>> :set -XTemplateHaskell
 -- >>> import Development.GitRev.Typed (qToCode)
--- >>> import Development.GitRev.Utils.Git (GitError (..), gitDirtyQ, gitHashQ)
--- >>> import Development.GitRev.Utils.Environment (LookupEnvError (..))
+-- >>> import Development.GitRev.Internal.Git (GitError (..), gitDirtyQ, gitHashQ)
+-- >>> import Development.GitRev.Internal.Environment (LookupEnvError (..))
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
 

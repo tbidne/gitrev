@@ -69,7 +69,7 @@ module Development.GitRev.Typed
   )
 where
 
-import Development.GitRev.Utils
+import Development.GitRev.Internal
   ( Exceptions (MkExceptions),
     GitOrLookupEnvError
       ( GitOrLookupEnvGit,
@@ -77,11 +77,11 @@ import Development.GitRev.Utils
       ),
     QFirst (MkQFirst),
   )
-import Development.GitRev.Utils qualified as Utils
-import Development.GitRev.Utils.Environment (LookupEnvError (MkLookupEnvError))
-import Development.GitRev.Utils.Environment qualified as Env
-import Development.GitRev.Utils.Git (GitError (GitNotFound, GitRunError))
-import Development.GitRev.Utils.Git qualified as Git
+import Development.GitRev.Internal qualified as Utils
+import Development.GitRev.Internal.Environment (LookupEnvError (MkLookupEnvError))
+import Development.GitRev.Internal.Environment qualified as Env
+import Development.GitRev.Internal.Git (GitError (GitNotFound, GitRunError))
+import Development.GitRev.Internal.Git qualified as Git
 import Language.Haskell.TH (Code, Q)
 import Language.Haskell.TH qualified as TH
 import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))

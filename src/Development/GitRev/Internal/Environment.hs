@@ -1,7 +1,7 @@
 -- | Provides utilities for querying environment variables.
 --
 -- @since 2.0
-module Development.GitRev.Utils.Environment
+module Development.GitRev.Internal.Environment
   ( LookupEnvError (..),
     envValQ,
     runInEnvDirQ,
