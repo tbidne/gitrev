@@ -11,7 +11,7 @@ description:
   with --enable-tests because GHC requires exact dependencies.
 
 common common-lang
-  default-language:   GHC2021
+  default-language: GHC2021
 
 test-suite doctest
   import:         common-lang
