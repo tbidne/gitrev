@@ -72,7 +72,11 @@ test-suite unit
   import:         common-lang
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
-  other-modules:  Utils
+  other-modules:
+    Unit.Development.GitRev
+    Unit.Development.GitRev.Typed
+    Utils
+
   build-depends:
     , base
     , gitrev

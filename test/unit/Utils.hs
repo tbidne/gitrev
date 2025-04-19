@@ -1,10 +1,17 @@
 module Utils
-  ( E (..),
+  ( -- * TH
+    E (..),
     qSemigroup,
     qFirstSemigroup,
     qFirstSuccess,
     qFirstSuccess2,
     qFirstSuccessAllLefts,
+
+    -- * Assertions
+    assertBoolean,
+    assertEither,
+    assertJust,
+    assertNonEmpty,
   )
 where
 
@@ -15,6 +22,7 @@ import Development.GitRev.Typed (Exceptions, QFirst (unQFirst))
 import Development.GitRev.Typed qualified as GRT
 import Language.Haskell.TH (Q, runIO)
 import Language.Haskell.TH.Syntax (Lift)
+import Test.Tasty.HUnit (assertFailure)
 
 type Counter = (Int, Int, Int)
 
@@ -97,3 +105,19 @@ inc2 (x, y, z) = (x, y + 1, z)
 
 inc3 :: Counter -> Counter
 inc3 (x, y, z) = (x, y, z + 1)
+
+assertNonEmpty :: String -> IO ()
+assertNonEmpty "" = assertFailure "Received empty"
+assertNonEmpty _ = pure ()
+
+assertJust :: Maybe String -> IO ()
+assertJust Nothing = assertFailure "Received nothing"
+assertJust _ = pure ()
+
+assertBoolean :: Bool -> IO ()
+assertBoolean True = pure ()
+assertBoolean False = pure ()
+
+assertEither :: Either e a -> IO ()
+assertEither (Right _) = pure ()
+assertEither (Left _) = pure ()
