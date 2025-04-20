@@ -23,7 +23,7 @@ import Control.Exception
     throwIO,
     toException,
   )
-import Control.Monad (when, (<=<))
+import Control.Monad (when, (<=<), (>=>))
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -97,10 +97,9 @@ runGitPostprocess gitProcessArgs postProcess args useIdx = do
       let hd = pwd </> [osp|HEAD|]
           index = pwd </> [osp|index|]
           packedRefs = pwd </> [osp|packed-refs|]
-      hdFp <- OsStringI.decodeThrowM hd
       hdExists <- runIO $ doesFileExist hd
       when hdExists $ do
-        addDependentFile hdFp
+        addDependentOsPath hd
         -- the HEAD file either contains the hash of a detached head
         -- or a pointer to the file that contains the hash of the head
         T.splitAt 5 <$> runIO (readFileUtf8 hd) >>= \case
@@ -109,22 +108,18 @@ runGitPostprocess gitProcessArgs postProcess args useIdx = do
             relRefOs <- OsStringI.encodeThrowM $ T.unpack relRef
             let ref = pwd </> tillNewLineOsPath relRefOs
             refExists <- runIO $ doesFileExist ref
-            refFp <- OsStringI.decodeThrowM ref
-            when refExists $ addDependentFile refFp
+            when refExists $ addDependentOsPath ref
           -- detached head
           _hash -> pure ()
       -- add the index if it exists to set the dirty flag
       indexExists <- runIO $ doesFileExist index
       when (indexExists && useIdx == IdxUsed) $ do
-        indexFp <- OsStringI.decodeThrowM index
-        addDependentFile indexFp
+        addDependentOsPath index
       -- if the refs have been packed, the info we're looking for
       -- might be in that file rather than the one-file-per-ref case
       -- handled above
       packedExists <- runIO $ doesFileExist packedRefs
-      when packedExists $ do
-        packedRefsFp <- OsStringI.decodeThrowM packedRefs
-        addDependentFile packedRefsFp
+      when packedExists $ addDependentOsPath packedRefs
       runIO $ do
         (code, out, err) <-
           gpaRunProcessFn gpaGitExeName args gpaEmptyPath `catchSync` oops
@@ -212,3 +207,6 @@ isSyncException :: (Exception e) => e -> Bool
 isSyncException e = case fromException (toException e) of
   Just SomeAsyncException {} -> False
   Nothing -> True
+
+addDependentOsPath :: OsPath -> Q ()
+addDependentOsPath = OsStringI.decodeThrowM >=> addDependentFile
