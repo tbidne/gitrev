@@ -32,10 +32,13 @@ common common-lang
 executable example
   import:         common-lang
   main-is:        Main.hs
-  other-modules:  TH
+  other-modules:
+    TH
+    TH.OsString
   build-depends:
     , base              >=4.15.0.0 && <4.22
     , gitrev            ^>=2.0
+    , os-string         ^>=2.0.0
     , template-haskell  >=2.17.0.0 && <2.24
 
   hs-source-dirs: .
