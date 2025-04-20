@@ -48,7 +48,7 @@ import System.Process qualified as Process
 -- >>> $$(qToCode gitHashQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitHashQ :: Q (Either GitError OsString)
 gitHashQ = runGit [[osstr|rev-parse|], [osstr|HEAD|]] IdxNotUsed
 
@@ -59,7 +59,7 @@ gitHashQ = runGit [[osstr|rev-parse|], [osstr|HEAD|]] IdxNotUsed
 -- >>> $$(qToCode gitShortHashQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitShortHashQ :: Q (Either GitError OsString)
 gitShortHashQ =
   runGit [[osstr|rev-parse|], [osstr|--short|], [osstr|HEAD|]] IdxNotUsed
@@ -71,7 +71,7 @@ gitShortHashQ =
 -- >>> $$(qToCode gitBranchQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitBranchQ :: Q (Either GitError OsString)
 gitBranchQ =
   runGit [[osstr|rev-parse|], [osstr|--abbrev-ref|], [osstr|HEAD|]] IdxNotUsed
@@ -83,7 +83,7 @@ gitBranchQ =
 -- >>> $$(qToCode gitDescribeQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDescribeQ :: Q (Either GitError OsString)
 gitDescribeQ =
   runGit [[osstr|describe|], [osstr|--long|], [osstr|--always|]] IdxNotUsed
@@ -95,7 +95,7 @@ gitDescribeQ =
 -- >>> $$(qToCode gitDirtyQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDirtyQ :: Q (Either GitError Bool)
 gitDirtyQ =
   fmap Common.nonEmpty
@@ -108,7 +108,7 @@ gitDirtyQ =
 -- >>> $$(qToCode gitDirtyTrackedQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDirtyTrackedQ :: Q (Either GitError Bool)
 gitDirtyTrackedQ =
   fmap Common.nonEmpty
@@ -123,7 +123,7 @@ gitDirtyTrackedQ =
 -- >>> $$(qToCode gitCommitCountQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitCommitCountQ :: Q (Either GitError OsString)
 gitCommitCountQ =
   runGit [[osstr|rev-list|], [osstr|HEAD|], [osstr|--count|]] IdxNotUsed
@@ -135,7 +135,7 @@ gitCommitCountQ =
 -- >>> $$(qToCode gitCommitDateQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitCommitDateQ :: Q (Either GitError OsString)
 gitCommitDateQ =
   runGit
@@ -153,7 +153,7 @@ gitCommitDateQ =
 -- >>> $$(qToCode gitDiffQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitDiffQ :: Q (Either GitError OsString)
 gitDiffQ =
   first mapGitError
@@ -170,7 +170,7 @@ gitDiffQ =
 -- >>> $$(qToCode gitTreeQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 gitTreeQ :: Q (Either GitError OsString)
 gitTreeQ =
   runGit
@@ -183,22 +183,22 @@ gitTreeQ =
 
 -- | Errors that can be encountered with git.
 --
--- @since 2.0
+-- @since 0.1
 data GitError
-  = -- | @since 2.0
+  = -- | @since 0.1
     GitNotFound
-  | -- | @since 2.0
+  | -- | @since 0.1
     GitRunError OsString
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 2.0
+      -- | @since 0.1
       Lift,
-      -- | @since 2.0
+      -- | @since 0.1
       Show
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance Exception GitError where
   displayException GitNotFound = "Git executable not found"
   displayException (GitRunError s) = "Git error: " ++ OsStringI.decodeLenient s
