@@ -9,6 +9,6 @@ mkdir -p docs/
 # shellcheck disable=SC2038
 fd -t f . docs | xargs -I % sh -c "rm -r %"
 
-dir=$(fd -t d html dist-newstyle/build)
+dir=$(fd -t d html dist-newstyle/build | head -n 1)
 
 cp -r $dir/gitrev/* docs/

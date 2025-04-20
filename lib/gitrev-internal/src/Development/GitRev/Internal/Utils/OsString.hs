@@ -1,18 +1,11 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE QuasiQuotes #-}
 
--- | Utils module.
+-- | Development.GitRev.Internal.Utils for 'OsString'.
 --
--- @since 2.0
-module Development.GitRev.Internal
-  ( -- * Combining Q actions lazily
-    QFirst (..),
-    mkQFirst,
-    firstSuccessQ,
-    Exceptions (..),
-    mkExceptions,
-
-    -- * Either projections
+-- @since 0.1
+module Development.GitRev.Internal.Utils.OsString
+  ( -- * Either projections
     projectStringUnknown,
     projectString,
     projectFalse,
@@ -35,148 +28,30 @@ where
 
 import Control.Exception (Exception (displayException))
 import Control.Monad (join)
-import Data.Bifunctor (Bifunctor (bimap, first))
-import Data.Foldable (Foldable (fold))
-#if MIN_VERSION_base(4, 18, 0)
-import Data.Foldable1 (Foldable1 (foldMap1))
-#endif
-import Data.List.NonEmpty (NonEmpty ((:|)))
-import Data.List.NonEmpty qualified as NE
-import Data.Text qualified as T
-import Data.Text.Lazy qualified as TL
-import Data.Text.Lazy.Builder qualified as TLB
-import Data.Text.Lazy.Builder.Int qualified as TLBI
-import Development.GitRev.Internal.Environment (LookupEnvError)
-import Development.GitRev.Internal.Environment qualified as Env
-import Development.GitRev.Internal.Git (GitError)
+import Data.Bifunctor (Bifunctor (first))
+import Development.GitRev.Internal.Environment.OsString (LookupEnvError)
+import Development.GitRev.Internal.Environment.OsString qualified as Env
+import Development.GitRev.Internal.Git.OsString (GitError)
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
+import System.OsString (OsString, osstr)
 
 -- $setup
+-- >>> :set -XQuasiQuotes
 -- >>> :set -XTemplateHaskell
--- >>> import Development.GitRev.Typed (qToCode)
--- >>> import Development.GitRev.Internal.Git (GitError (..), gitDirtyQ, gitHashQ)
--- >>> import Development.GitRev.Internal.Environment (LookupEnvError (..))
+-- >>> import Development.GitRev.Typed.OsString (qToCode)
+-- >>> import Development.GitRev.Internal.Git.OsString (GitError (..), gitDirtyQ, gitHashQ)
+-- >>> import Development.GitRev.Internal.Environment.OsString (LookupEnvError (..))
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
-
--- | Collects multiple exceptions.
---
--- @since 2.0
-newtype Exceptions e = MkExceptions {unExceptions :: (NonEmpty e)}
-  deriving stock
-    ( -- | @since 2.0
-      Eq,
-      -- | @since 2.0
-      Functor,
-      -- | @since 2.0
-      Lift,
-      -- | @since 2.0
-      Show
-    )
-  deriving newtype
-    ( -- | @since 2.0
-      Applicative,
-      -- | @since 2.0
-      Monad,
-      -- | @since 2.0
-      Semigroup
-    )
-
--- | @since 2.0
-instance (Exception e) => Exception (Exceptions e) where
-  displayException (MkExceptions errs) =
-    mconcat
-      [ "Exception(s):",
-        renderErrs errs
-      ]
-    where
-      renderErrs =
-        T.unpack
-          . TL.toStrict
-          . TLB.toLazyText
-          . fold
-          . fmap renderErr
-          . NE.zip @Int (1 :| [2 ..])
-
-      renderErr (idx, e) =
-        (\b -> "\n" <> TLBI.decimal idx <> ". " <> b)
-          . TLB.fromText
-          . T.strip
-          . T.pack
-          . displayException
-          $ e
-
--- | @since 2.0
-mkExceptions :: forall e. e -> Exceptions e
-mkExceptions = MkExceptions . NE.singleton
-
--- | Wrapper for 'Q' over 'Either' with a lazier 'Semigroup'. With this, we
--- can run:
---
--- @
---   MkQFirst q1 <> MkQFirst q2
--- @
---
--- This will only execute @q2@ if @q1@ returns 'Left', unlike 'Q'\'s normal
--- 'Semigroup' instance.
---
--- 'QFirst' also collects all errors in 'Exceptions'.
---
--- @since 2.0
-newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Exceptions e) a)}
-  deriving stock
-    ( -- | @since 2.0
-      Functor
-    )
-
--- | @since 2.0
-instance Bifunctor QFirst where
-  bimap f g (MkQFirst q) = MkQFirst $ fmap (bimap (fmap f) g) q
-
--- | @since 2.0
-instance Semigroup (QFirst e a) where
-  MkQFirst q1 <> q2 =
-    MkQFirst $
-      q1 >>= \case
-        Right x -> pure $ Right x
-        Left errs -> first (errs <>) <$> unQFirst q2
-
--- | @since 2.0
-mkQFirst :: forall e a. Q (Either e a) -> QFirst e a
-mkQFirst = MkQFirst . fmap (first mkExceptions)
-
--- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns
--- 'Right', without executing any @qj@ for @j > i@. If there are no
--- 'Right'\'s, returns the final result.
---
--- ==== __Examples__
---
--- >>> :{
---    $$( qToCode $
---          firstSuccessQ
---            (pure (Left GitNotFound))
---            [ gitHashQ,
---              error "oh no"
---            ]
---      )
--- :}
--- Right ...
---
--- @since 2.0
-firstSuccessQ ::
-  forall e a.
-  Q (Either e a) ->
-  [Q (Either e a)] ->
-  Q (Either (Exceptions e) a)
-firstSuccessQ q qs = unQFirst $ foldMap1 mkQFirst (q :| qs)
+-- >>> import System.OsString (OsString, osstr)
 
 -- | Projects 'Left' to the string @UNKNOWN@.
 --
 -- ==== __Examples__
 --
 -- >>> :{
---   let gitHashUnknownQ :: Q String
+--   let gitHashUnknownQ :: Q OsString
 --       gitHashUnknownQ = projectStringUnknown gitHashQ
 --   -- inling gitHashUnknownQ here due to stage restriction
 --   in $$(qToCode $ projectStringUnknown gitHashQ)
@@ -186,35 +61,35 @@ firstSuccessQ q qs = unQFirst $ foldMap1 mkQFirst (q :| qs)
 -- >>> $$(qToCode $ projectStringUnknown (pure $ Left ()))
 -- "UNKNOWN"
 --
--- @since 2.0
+-- @since 0.1
 projectStringUnknown ::
   forall f e.
   (Functor f) =>
-  f (Either e String) ->
-  f String
-projectStringUnknown = projectString "UNKNOWN"
+  f (Either e OsString) ->
+  f OsString
+projectStringUnknown = projectString [osstr|UNKNOWN|]
 
 -- | Projects 'Left' to the given string.
 --
 -- ==== __Examples__
 --
 -- >>> :{
---   let gitHashDefStringQ :: Q String
---       gitHashDefStringQ = projectString "FAILURE" gitHashQ
---   in $$(qToCode $ projectString "FAILURE" gitHashQ)
+--   let gitHashDefStringQ :: Q OsString
+--       gitHashDefStringQ = projectString [osstr|FAILURE|] gitHashQ
+--   in $$(qToCode $ projectString [osstr|FAILURE|] gitHashQ)
 -- :}
 -- ...
 --
--- >>> $$(qToCode $ projectString "FAILURE" (pure $ Left ()))
+-- >>> $$(qToCode $ projectString [osstr|FAILURE|] (pure $ Left ()))
 -- "FAILURE"
 --
--- @since 2.0
+-- @since 0.1
 projectString ::
   forall f e.
   (Functor f) =>
-  String ->
-  f (Either e String) ->
-  f String
+  OsString ->
+  f (Either e OsString) ->
+  f OsString
 projectString = projectLeft . const
 
 -- | Projects 'Left' to 'False'.
@@ -231,7 +106,7 @@ projectString = projectLeft . const
 -- >>> $$(qToCode $ projectFalse (pure $ Left ()))
 -- False
 --
--- @since 2.0
+-- @since 0.1
 projectFalse :: forall f e. (Functor f) => f (Either e Bool) -> f Bool
 projectFalse = projectLeft (const False)
 
@@ -241,13 +116,13 @@ projectFalse = projectLeft (const False)
 -- ==== __Examples__
 --
 -- >>> :{
---   let gitHashOrDieQ :: Q String
+--   let gitHashOrDieQ :: Q OsString
 --       gitHashOrDieQ = projectError gitHashQ
 --   in $$(qToCode $ projectError gitHashQ)
 -- :}
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 projectError :: forall f e a. (Exception e, Functor f) => f (Either e a) -> f a
 projectError = projectErrorMap displayException
 
@@ -257,13 +132,13 @@ projectError = projectErrorMap displayException
 -- ==== __Examples__
 --
 -- >>> :{
---   let gitHashOrDieQ :: Q String
+--   let gitHashOrDieQ :: Q OsString
 --       gitHashOrDieQ = (projectErrorMap show) gitHashQ
 --   in $$(qToCode $ (projectErrorMap show) gitHashQ)
 -- :}
 -- ...
 --
--- @since 2.0
+-- @since 0.1
 projectErrorMap ::
   forall f e a.
   (Functor f) =>
@@ -277,22 +152,22 @@ projectLeft f = fmap (either f id)
 
 -- | Git or env lookup error.
 --
--- @since 2.0
+-- @since 0.1
 data GitOrLookupEnvError
-  = -- | @since 2.0
+  = -- | @since 0.1
     GitOrLookupEnvGit GitError
-  | -- | @since 2.0
+  | -- | @since 0.1
     GitOrLookupEnvLookupEnv LookupEnvError
   deriving stock
-    ( -- | @since 2.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 2.0
+      -- | @since 0.1
       Lift,
-      -- | @since 2.0
+      -- | @since 0.1
       Show
     )
 
--- | @since 2.0
+-- | @since 0.1
 instance Exception GitOrLookupEnvError where
   displayException (GitOrLookupEnvGit ge) = displayException ge
   displayException (GitOrLookupEnvLookupEnv x) = displayException x
@@ -303,15 +178,15 @@ instance Exception GitOrLookupEnvError where
 -- ==== __Examples__
 --
 -- >>> setEnv "SOME_DIR" "./"
--- >>> $$(qToCode $ runGitInEnvDirQ "SOME_DIR" gitHashQ)
+-- >>> $$(qToCode $ runGitInEnvDirQ [osstr|SOME_DIR|] gitHashQ)
 -- Right ...
 --
--- @since 2.0
+-- @since 0.1
 runGitInEnvDirQ ::
   forall a.
   -- | Environment variable pointing to a directory path, in which we run
   -- the git process.
-  String ->
+  OsString ->
   -- | Git process to run.
   Q (Either GitError a) ->
   -- | The result.
@@ -331,7 +206,7 @@ runGitInEnvDirQ var = joinErrors . Env.runInEnvDirQ var
 -- :}
 -- Left (GitOrLookupEnvGit GitNotFound)
 --
--- @since 2.0
+-- @since 0.1
 joinLookupEnvGitErrors ::
   forall p a.
   ( Bifunctor p,
@@ -351,12 +226,12 @@ joinLookupEnvGitErrors =
 --
 -- >>> :{
 --   let e :: Either GitError (Either LookupEnvError ())
---       e = Right (Left $ MkLookupEnvError "VAR")
+--       e = Right (Left $ MkLookupEnvError [osstr|VAR|])
 --   in joinGitLookupEnvErrors e
 -- :}
 -- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
--- @since 2.0
+-- @since 0.1
 joinGitLookupEnvErrors ::
   forall p a.
   ( Bifunctor p,
@@ -381,7 +256,7 @@ joinGitLookupEnvErrors =
 -- :}
 -- Left (GitOrLookupEnvGit GitNotFound)
 --
--- @since 2.0
+-- @since 0.1
 embedGitError ::
   forall f p a.
   ( Bifunctor p,
@@ -398,12 +273,12 @@ embedGitError = fmap (first GitOrLookupEnvGit)
 --
 -- >>> :{
 --   let q :: Q (Either LookupEnvError ())
---       q = pure (Left $ MkLookupEnvError "VAR")
+--       q = pure (Left $ MkLookupEnvError [osstr|VAR|])
 --   in runQ $ embedLookupEnvError q
 -- :}
 -- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
 --
--- @since 2.0
+-- @since 0.1
 embedLookupEnvError ::
   forall f p a.
   ( Bifunctor p,
@@ -413,14 +288,3 @@ embedLookupEnvError ::
   f (p LookupEnvError a) ->
   f (p GitOrLookupEnvError a)
 embedLookupEnvError = fmap (first GitOrLookupEnvLookupEnv)
-
-#if !MIN_VERSION_base(4, 18, 0)
--- Copied from base. Technically not the same as the import above since
--- that one works for all Foldable1, not just NonEmpty, but we only use it
--- here for NonEmpty, so whatever.
-foldMap1 :: (Semigroup m) => (a -> m) -> NonEmpty a -> m
-foldMap1 f (x :| xs) = go (f x) xs
-  where
-    go y [] = y
-    go y (z : zs) = y <> go (f z) zs
-#endif

@@ -1,7 +1,7 @@
--- | Typed version of "Development.GitRev".
+-- | "Development.GitRev.Typed" for 'OsString'.
 --
 -- @since 2.0
-module Development.GitRev.Typed
+module Development.GitRev.Typed.OsString
   ( -- * Basic functions
     -- $basic
     gitBranch,
@@ -69,30 +69,37 @@ module Development.GitRev.Typed
   )
 where
 
-import Development.GitRev.Internal.Environment (LookupEnvError (MkLookupEnvError))
-import Development.GitRev.Internal.Environment qualified as Env
-import Development.GitRev.Internal.Git (GitError (GitNotFound, GitRunError))
-import Development.GitRev.Internal.Git qualified as Git
+import Development.GitRev.Internal.Environment.OsString
+  ( LookupEnvError (MkLookupEnvError),
+  )
+import Development.GitRev.Internal.Environment.OsString qualified as Env
+import Development.GitRev.Internal.Git.OsString
+  ( GitError (GitNotFound, GitRunError),
+  )
+import Development.GitRev.Internal.Git.OsString qualified as Git
 import Development.GitRev.Internal.QFirst
   ( Exceptions (MkExceptions),
     QFirst (MkQFirst),
   )
 import Development.GitRev.Internal.QFirst qualified as QFirst
-import Development.GitRev.Internal.Utils
+import Development.GitRev.Internal.Utils.OsString
   ( GitOrLookupEnvError
       ( GitOrLookupEnvGit,
         GitOrLookupEnvLookupEnv
       ),
   )
-import Development.GitRev.Internal.Utils qualified as Utils
+import Development.GitRev.Internal.Utils.OsString qualified as Utils
 import Language.Haskell.TH (Code, Q)
 import Language.Haskell.TH qualified as TH
 import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
+import System.OsString (OsString)
 
 -- $setup
+-- >>> :set -XQuasiQuotes
 -- >>> :set -XTemplateHaskell
 -- >>> import Data.Functor (($>))
 -- >>> import Language.Haskell.TH (Code, Q, runIO)
+-- >>> import System.OsString (OsString, osstr)
 
 -- $basic
 --
@@ -110,7 +117,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- any problems with git:
 --
 -- >>> :{
---   let gitHashOrDie :: Code Q String
+--   let gitHashOrDie :: Code Q OsString
 --       gitHashOrDie = qToCode $ projectError gitHashQ
 -- :}
 --
@@ -119,7 +126,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- that returns 'Right'.
 --
 -- >>> :{
---   let gitHashEnv :: String -> Code Q (Either (Exceptions GitOrLookupEnvError) String)
+--   let gitHashEnv :: OsString -> Code Q (Either (Exceptions GitOrLookupEnvError) OsString)
 --       gitHashEnv var =
 --         qToCode $
 --           firstSuccessQ
@@ -130,7 +137,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- Naturally, these can be combined:
 --
 -- >>> :{
---   let gitHashEnvOrDie :: String -> Code Q String
+--   let gitHashEnvOrDie :: OsString -> Code Q OsString
 --       gitHashEnvOrDie var =
 --         qToCode
 --           . projectError
@@ -161,7 +168,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --     We can define
 --
 --     >>> :{
---       let gitHashSrcDir :: Code Q String
+--       let gitHashSrcDir :: Code Q OsString
 --           gitHashSrcDir =
 --             qToCode
 --             . projectStringUnknown
@@ -170,7 +177,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --               (embedGitError gitHashQ)
 --               -- 2. If that fails, we try again in the directory pointed
 --               --    to by "EXAMPLE_HOME".
---               [runGitInEnvDirQ "EXAMPLE_HOME" gitHashQ]
+--               [runGitInEnvDirQ [osstr|EXAMPLE_HOME|] gitHashQ]
 --     :}
 --
 --     If the initial call to 'Utils.gitHashQ' fails, then we will try again,
@@ -195,7 +202,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --     Then we can define
 --
 --     >>> :{
---       let gitHashVal :: Code Q String
+--       let gitHashVal :: Code Q OsString
 --           gitHashVal =
 --             qToCode
 --             . projectStringUnknown
@@ -204,7 +211,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --               (embedGitError gitHashQ)
 --               -- 2. If that fails, get the value directly from
 --               --    "EXAMPLE_HASH".
---               [embedLookupEnvError $ envValQ "EXAMPLE_HASH"]
+--               [embedLookupEnvError $ envValQ [osstr|EXAMPLE_HASH|]]
 --     :}
 --
 --     Once again, if the first attempt fails, we will run the second action,
@@ -214,14 +221,14 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- three cases:
 --
 -- >>> :{
---   let gitHashValSrc :: Code Q String
+--   let gitHashValSrc :: Code Q OsString
 --       gitHashValSrc =
 --         qToCode
 --           . projectStringUnknown
 --           $ firstSuccessQ
 --             (embedGitError gitHashQ)
---             [ embedLookupEnvError $ envValQ "EXAMPLE_HASH",
---               runGitInEnvDirQ "EXAMPLE_HOME" gitHashQ
+--             [ embedLookupEnvError $ envValQ [osstr|EXAMPLE_HASH|],
+--               runGitInEnvDirQ [osstr|EXAMPLE_HOME|] gitHashQ
 --             ]
 -- :}
 --
@@ -270,7 +277,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- ...
 --
 -- @since 2.0
-gitHash :: Code Q String
+gitHash :: Code Q OsString
 gitHash = qToCode $ Utils.projectStringUnknown Git.gitHashQ
 
 -- | Return the short hash of the current git commit, or @UNKNOWN@ if not in
@@ -285,7 +292,7 @@ gitHash = qToCode $ Utils.projectStringUnknown Git.gitHashQ
 -- ...
 --
 -- @since 2.0
-gitShortHash :: Code Q String
+gitShortHash :: Code Q OsString
 gitShortHash = qToCode $ Utils.projectStringUnknown Git.gitShortHashQ
 
 -- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@
@@ -301,7 +308,7 @@ gitShortHash = qToCode $ Utils.projectStringUnknown Git.gitShortHashQ
 -- ...
 --
 -- @since 2.0
-gitBranch :: Code Q String
+gitBranch :: Code Q OsString
 gitBranch = qToCode $ Utils.projectStringUnknown Git.gitBranchQ
 
 -- | Return the long git description for the current git commit, or
@@ -316,7 +323,7 @@ gitBranch = qToCode $ Utils.projectStringUnknown Git.gitBranchQ
 -- ...
 --
 -- @since 2.0
-gitDescribe :: Code Q String
+gitDescribe :: Code Q OsString
 gitDescribe = qToCode $ Utils.projectStringUnknown Git.gitDescribeQ
 
 -- | Return @True@ if there are non-committed files present in the
@@ -360,7 +367,7 @@ gitDirtyTracked = qToCode $ Utils.projectFalse Git.gitDirtyTrackedQ
 -- ...
 --
 -- @since 2.0
-gitCommitCount :: Code Q String
+gitCommitCount :: Code Q OsString
 gitCommitCount = qToCode $ Utils.projectStringUnknown Git.gitCommitCountQ
 
 -- | Return the commit date of the current head.
@@ -374,7 +381,7 @@ gitCommitCount = qToCode $ Utils.projectStringUnknown Git.gitCommitCountQ
 -- ...
 --
 -- @since 2.0
-gitCommitDate :: Code Q String
+gitCommitDate :: Code Q OsString
 gitCommitDate = qToCode $ Utils.projectStringUnknown Git.gitCommitDateQ
 
 -- | Return the diff of the working copy with HEAD.
@@ -386,7 +393,7 @@ gitCommitDate = qToCode $ Utils.projectStringUnknown Git.gitCommitDateQ
 --
 -- >>> $$(gitDiff)
 -- ...
-gitDiff :: Code Q String
+gitDiff :: Code Q OsString
 gitDiff = qToCode $ Utils.projectStringUnknown Git.gitDiffQ
 
 -- | Return the hash of the current tree.
@@ -398,7 +405,7 @@ gitDiff = qToCode $ Utils.projectStringUnknown Git.gitDiffQ
 --
 -- >>> $$(gitTree)
 -- ...
-gitTree :: Code Q String
+gitTree :: Code Q OsString
 gitTree = qToCode $ Utils.projectStringUnknown Git.gitTreeQ
 
 -- | Lifts a 'Q' computation to 'Code', for usage with typed TH.

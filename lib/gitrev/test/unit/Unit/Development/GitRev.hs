@@ -24,19 +24,19 @@ tests =
 
 testGitBranch :: TestTree
 testGitBranch = testCase "gitBranch" $ do
-  Utils.assertNonEmpty $GR.gitBranch
+  Utils.assertNonEmpty @String $GR.gitBranch
 
 testGitCommitCount :: TestTree
 testGitCommitCount = testCase "gitCommitCount" $ do
-  Utils.assertNonEmpty $GR.gitCommitCount
+  Utils.assertNonEmpty @String $GR.gitCommitCount
 
 testGitCommitDate :: TestTree
 testGitCommitDate = testCase "gitCommitDate" $ do
-  Utils.assertNonEmpty $GR.gitCommitDate
+  Utils.assertNonEmpty @String $GR.gitCommitDate
 
 testGitDescribe :: TestTree
 testGitDescribe = testCase "gitDescribe" $ do
-  Utils.assertNonEmpty $GR.gitDescribe
+  Utils.assertNonEmpty @String $GR.gitDescribe
 
 testGitDirty :: TestTree
 testGitDirty = testCase "gitDirty" $ do
@@ -48,8 +48,8 @@ testGitDirtyTracked = testCase "gitDirtyTracked" $ do
 
 testGitHash :: TestTree
 testGitHash = testCase "gitHash" $ do
-  Utils.assertNonEmpty $GR.gitHash
+  Utils.assertNonEmpty @String $GR.gitHash
 
 testGitShortHash :: TestTree
 testGitShortHash = testCase "gitShortHash" $ do
-  Utils.assertNonEmpty $GR.gitShortHash
+  Utils.assertNonEmpty @String $GR.gitShortHash

@@ -3,7 +3,7 @@
 module Main (main) where
 
 import Development.GitRev qualified
-import Development.GitRev.Internal qualified
+import Development.GitRev.Internal.Utils qualified
 import System.Environment (getArgs)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.DocTest qualified as DT

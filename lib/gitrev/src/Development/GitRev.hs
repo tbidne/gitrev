@@ -24,8 +24,8 @@ module Development.GitRev
   )
 where
 
-import Development.GitRev.Internal qualified as Utils
 import Development.GitRev.Internal.Git qualified as Git
+import Development.GitRev.Internal.Utils qualified as Utils
 import Language.Haskell.TH (ExpQ, Q)
 import Language.Haskell.TH.Syntax (Lift (lift))
 
