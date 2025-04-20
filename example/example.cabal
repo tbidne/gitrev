@@ -35,6 +35,7 @@ executable example
   other-modules:
     TH
     TH.OsString
+
   build-depends:
     , base              >=4.15.0.0 && <4.22
     , gitrev            ^>=2.0
