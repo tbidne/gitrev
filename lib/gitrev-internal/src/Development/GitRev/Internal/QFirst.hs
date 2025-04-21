@@ -128,7 +128,7 @@ mkQFirst = MkQFirst . fmap (first mkExceptions)
 
 -- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns
 -- 'Right', without executing any @qj@ for @j > i@. If there are no
--- 'Right'\'s, returns the final result.
+-- 'Right'\'s, returns all errors.
 --
 -- ==== __Examples__
 --
