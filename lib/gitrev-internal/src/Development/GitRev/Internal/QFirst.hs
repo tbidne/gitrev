@@ -32,7 +32,7 @@ import Language.Haskell.TH.Syntax (Lift)
 -- >>> :set -XTemplateHaskell
 -- >>> import Development.GitRev.Typed (qToCode)
 -- >>> import Development.GitRev.Internal.Git (GitError (..), gitDirtyQ, gitHashQ)
--- >>> import Development.GitRev.Internal.Environment (LookupEnvError (..))
+-- >>> import Development.GitRev.Internal.Environment (EnvLookupError (..))
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
 

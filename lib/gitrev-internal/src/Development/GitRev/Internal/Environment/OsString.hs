@@ -4,7 +4,7 @@
 --
 -- @since 0.1
 module Development.GitRev.Internal.Environment.OsString
-  ( LookupEnvError (..),
+  ( EnvLookupError (..),
     envValQ,
     runInEnvDirQ,
     withEnvValQ,
@@ -45,7 +45,7 @@ envValQ ::
   -- | The environment variable @k@.
   OsString ->
   -- | The result @v@ or an error.
-  Q (Either LookupEnvError OsString)
+  Q (Either EnvLookupError OsString)
 envValQ var = withEnvValQ var pure
 
 -- | Runs the given 'Q'-action under the directory @d@ pointed to by the
@@ -67,7 +67,7 @@ runInEnvDirQ ::
   -- | The 'Q' action @q@.
   Q a ->
   -- | The result of running @q@ in directory @d@.
-  Q (Either LookupEnvError a)
+  Q (Either EnvLookupError a)
 runInEnvDirQ var m = withEnvValQ var $ \repoDir -> do
   currDir <- runIO Dir.getCurrentDirectory
   runIO $ Dir.setCurrentDirectory repoDir
@@ -79,7 +79,7 @@ runInEnvDirQ var m = withEnvValQ var $ \repoDir -> do
 -- attempted to look up.
 --
 -- @since 0.1
-newtype LookupEnvError = MkLookupEnvError OsString
+newtype EnvLookupError = MkEnvLookupError OsString
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -90,8 +90,8 @@ newtype LookupEnvError = MkLookupEnvError OsString
     )
 
 -- | @since 0.1
-instance Exception LookupEnvError where
-  displayException (MkLookupEnvError var) =
+instance Exception EnvLookupError where
+  displayException (MkEnvLookupError var) =
     "Failed to lookup environment variable: " ++ OsStringI.decodeLenient var
 
 -- | Runs a 'Q'-action on the result of an environment variable, if it exists.
@@ -110,10 +110,10 @@ withEnvValQ ::
   OsString ->
   -- | Function to run on @k@'s /value/ if @k@ exists.
   (OsString -> Q a) ->
-  Q (Either LookupEnvError a)
+  Q (Either EnvLookupError a)
 withEnvValQ var onEnv = do
   lookupEnvQ var >>= \case
-    Nothing -> pure $ Left $ MkLookupEnvError var
+    Nothing -> pure $ Left $ MkEnvLookupError var
     Just result -> Right <$> onEnv result
 
 lookupEnvQ :: OsString -> Q (Maybe OsString)

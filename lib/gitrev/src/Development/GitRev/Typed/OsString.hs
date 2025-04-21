@@ -57,20 +57,20 @@ module Development.GitRev.Typed.OsString
     Utils.projectErrorMap,
 
     -- ** Errors
-    GitOrLookupEnvError (..),
+    GitOrEnvLookupError (..),
     GitError (..),
-    LookupEnvError (..),
+    EnvLookupError (..),
 
     -- *** Utilities
     Utils.embedGitError,
-    Utils.embedLookupEnvError,
-    Utils.joinLookupEnvGitErrors,
-    Utils.joinGitLookupEnvErrors,
+    Utils.embedEnvLookupError,
+    Utils.joinEnvLookupGitErrors,
+    Utils.joinGitEnvLookupErrors,
   )
 where
 
 import Development.GitRev.Internal.Environment.OsString
-  ( LookupEnvError (MkLookupEnvError),
+  ( EnvLookupError (MkEnvLookupError),
   )
 import Development.GitRev.Internal.Environment.OsString qualified as Env
 import Development.GitRev.Internal.Git.OsString
@@ -83,9 +83,9 @@ import Development.GitRev.Internal.QFirst
   )
 import Development.GitRev.Internal.QFirst qualified as QFirst
 import Development.GitRev.Internal.Utils.OsString
-  ( GitOrLookupEnvError
-      ( GitOrLookupEnvGit,
-        GitOrLookupEnvLookupEnv
+  ( GitOrEnvLookupError
+      ( GitOrEnvLookupEnvLookup,
+        GitOrEnvLookupGit
       ),
   )
 import Development.GitRev.Internal.Utils.OsString qualified as Utils
@@ -126,12 +126,12 @@ import System.OsString (OsString)
 -- that returns 'Right'.
 --
 -- >>> :{
---   let gitHashEnv :: OsString -> Code Q (Either (Exceptions GitOrLookupEnvError) OsString)
+--   let gitHashEnv :: OsString -> Code Q (Either (Exceptions GitOrEnvLookupError) OsString)
 --       gitHashEnv var =
 --         qToCode $
 --           firstSuccessQ
 --             (embedGitError gitHashQ)
---             [embedLookupEnvError $ envValQ var]
+--             [embedEnvLookupError $ envValQ var]
 -- :}
 --
 -- Naturally, these can be combined:
@@ -143,7 +143,7 @@ import System.OsString (OsString)
 --           . projectError
 --           $ firstSuccessQ
 --             (embedGitError gitHashQ)
---             [embedLookupEnvError $ envValQ var]
+--             [embedEnvLookupError $ envValQ var]
 -- :}
 
 -- $out-of-tree
@@ -211,7 +211,7 @@ import System.OsString (OsString)
 --               (embedGitError gitHashQ)
 --               -- 2. If that fails, get the value directly from
 --               --    "EXAMPLE_HASH".
---               [embedLookupEnvError $ envValQ [osstr|EXAMPLE_HASH|]]
+--               [embedEnvLookupError $ envValQ [osstr|EXAMPLE_HASH|]]
 --     :}
 --
 --     Once again, if the first attempt fails, we will run the second action,
@@ -227,7 +227,7 @@ import System.OsString (OsString)
 --           . projectStringUnknown
 --           $ firstSuccessQ
 --             (embedGitError gitHashQ)
---             [ embedLookupEnvError $ envValQ [osstr|EXAMPLE_HASH|],
+--             [ embedEnvLookupError $ envValQ [osstr|EXAMPLE_HASH|],
 --               runGitInEnvDirQ [osstr|EXAMPLE_HOME|] gitHashQ
 --             ]
 -- :}

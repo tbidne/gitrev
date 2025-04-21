@@ -57,19 +57,19 @@ module Development.GitRev.Typed
     Utils.projectErrorMap,
 
     -- ** Errors
-    GitOrLookupEnvError (..),
+    GitOrEnvLookupError (..),
     GitError (..),
-    LookupEnvError (..),
+    EnvLookupError (..),
 
     -- *** Utilities
     Utils.embedGitError,
-    Utils.embedLookupEnvError,
-    Utils.joinLookupEnvGitErrors,
-    Utils.joinGitLookupEnvErrors,
+    Utils.embedEnvLookupError,
+    Utils.joinEnvLookupGitErrors,
+    Utils.joinGitEnvLookupErrors,
   )
 where
 
-import Development.GitRev.Internal.Environment (LookupEnvError (MkLookupEnvError))
+import Development.GitRev.Internal.Environment (EnvLookupError (MkEnvLookupError))
 import Development.GitRev.Internal.Environment qualified as Env
 import Development.GitRev.Internal.Git (GitError (GitNotFound, GitRunError))
 import Development.GitRev.Internal.Git qualified as Git
@@ -79,9 +79,9 @@ import Development.GitRev.Internal.QFirst
   )
 import Development.GitRev.Internal.QFirst qualified as QFirst
 import Development.GitRev.Internal.Utils
-  ( GitOrLookupEnvError
-      ( GitOrLookupEnvGit,
-        GitOrLookupEnvLookupEnv
+  ( GitOrEnvLookupError
+      ( GitOrEnvLookupEnvLookup,
+        GitOrEnvLookupGit
       ),
   )
 import Development.GitRev.Internal.Utils qualified as Utils
@@ -119,12 +119,12 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- that returns 'Right'.
 --
 -- >>> :{
---   let gitHashEnv :: String -> Code Q (Either (Exceptions GitOrLookupEnvError) String)
+--   let gitHashEnv :: String -> Code Q (Either (Exceptions GitOrEnvLookupError) String)
 --       gitHashEnv var =
 --         qToCode $
 --           firstSuccessQ
 --             (embedGitError gitHashQ)
---             [embedLookupEnvError $ envValQ var]
+--             [embedEnvLookupError $ envValQ var]
 -- :}
 --
 -- Naturally, these can be combined:
@@ -136,7 +136,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --           . projectError
 --           $ firstSuccessQ
 --             (embedGitError gitHashQ)
---             [embedLookupEnvError $ envValQ var]
+--             [embedEnvLookupError $ envValQ var]
 -- :}
 
 -- $out-of-tree
@@ -204,7 +204,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --               (embedGitError gitHashQ)
 --               -- 2. If that fails, get the value directly from
 --               --    "EXAMPLE_HASH".
---               [embedLookupEnvError $ envValQ "EXAMPLE_HASH"]
+--               [embedEnvLookupError $ envValQ "EXAMPLE_HASH"]
 --     :}
 --
 --     Once again, if the first attempt fails, we will run the second action,
@@ -220,7 +220,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 --           . projectStringUnknown
 --           $ firstSuccessQ
 --             (embedGitError gitHashQ)
---             [ embedLookupEnvError $ envValQ "EXAMPLE_HASH",
+--             [ embedEnvLookupError $ envValQ "EXAMPLE_HASH",
 --               runGitInEnvDirQ "EXAMPLE_HOME" gitHashQ
 --             ]
 -- :}

@@ -9,7 +9,7 @@ module TH.OsString
 where
 
 import Development.GitRev qualified as GR
-import Development.GitRev.Typed.OsString (Exceptions, GitOrLookupEnvError)
+import Development.GitRev.Typed.OsString (Exceptions, GitOrEnvLookupError)
 import Development.GitRev.Typed.OsString qualified as GRT
 import Language.Haskell.TH (Code, ExpQ, Q)
 import System.OsString (OsString, osstr)
@@ -26,7 +26,7 @@ hashEnvVal =
     . GRT.projectStringUnknown
     $ GRT.firstSuccessQ
       (GRT.embedGitError GRT.gitHashQ)
-      [GRT.embedLookupEnvError $ GRT.envValQ [osstr|EXAMPLE_HASH|]]
+      [GRT.embedEnvLookupError $ GRT.envValQ [osstr|EXAMPLE_HASH|]]
 
 -- | Returns the hash or @UNKNOWN@. If the first attempt fails, we run git
 -- again in the directory pointed to by environment variable @EXAMPLE_HOME@.
@@ -47,13 +47,13 @@ hashEnvDir =
 hashEnvValDir :: Code Q OsString
 hashEnvValDir = toCode gitHash
   where
-    toCode :: Q (Either (Exceptions GitOrLookupEnvError) OsString) -> Code Q OsString
+    toCode :: Q (Either (Exceptions GitOrEnvLookupError) OsString) -> Code Q OsString
     toCode = GRT.qToCode . GRT.projectError
 
-    gitHash :: Q (Either (Exceptions GitOrLookupEnvError) OsString)
+    gitHash :: Q (Either (Exceptions GitOrEnvLookupError) OsString)
     gitHash =
       GRT.firstSuccessQ
         (GRT.embedGitError GRT.gitHashQ)
-        [ GRT.embedLookupEnvError $ GRT.envValQ [osstr|EXAMPLE_HASH|],
+        [ GRT.embedEnvLookupError $ GRT.envValQ [osstr|EXAMPLE_HASH|],
           GRT.runGitInEnvDirQ [osstr|EXAMPLE_HOME|] GRT.gitHashQ
         ]

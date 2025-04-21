@@ -13,23 +13,23 @@ module Development.GitRev.Internal.Utils.OsString
     projectErrorMap,
 
     -- * Composing errors
-    GitOrLookupEnvError (..),
+    GitOrEnvLookupError (..),
 
     -- ** Functions
     runGitInEnvDirQ,
 
     -- ** Mapping utilities
     embedGitError,
-    embedLookupEnvError,
-    joinLookupEnvGitErrors,
-    joinGitLookupEnvErrors,
+    embedEnvLookupError,
+    joinEnvLookupGitErrors,
+    joinGitEnvLookupErrors,
   )
 where
 
 import Control.Exception (Exception (displayException))
 import Control.Monad (join)
 import Data.Bifunctor (Bifunctor (first))
-import Development.GitRev.Internal.Environment.OsString (LookupEnvError)
+import Development.GitRev.Internal.Environment.OsString (EnvLookupError)
 import Development.GitRev.Internal.Environment.OsString qualified as Env
 import Development.GitRev.Internal.Git.OsString (GitError)
 import Language.Haskell.TH (Q)
@@ -41,7 +41,7 @@ import System.OsString (OsString, osstr)
 -- >>> :set -XTemplateHaskell
 -- >>> import Development.GitRev.Typed.OsString (qToCode)
 -- >>> import Development.GitRev.Internal.Git.OsString (GitError (..), gitDirtyQ, gitHashQ)
--- >>> import Development.GitRev.Internal.Environment.OsString (LookupEnvError (..))
+-- >>> import Development.GitRev.Internal.Environment.OsString (EnvLookupError (..))
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
 -- >>> import System.OsString (OsString, osstr)
@@ -153,11 +153,11 @@ projectLeft f = fmap (either f id)
 -- | Git or env lookup error.
 --
 -- @since 0.1
-data GitOrLookupEnvError
+data GitOrEnvLookupError
   = -- | @since 0.1
-    GitOrLookupEnvGit GitError
+    GitOrEnvLookupGit GitError
   | -- | @since 0.1
-    GitOrLookupEnvLookupEnv LookupEnvError
+    GitOrEnvLookupEnvLookup EnvLookupError
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -168,9 +168,9 @@ data GitOrLookupEnvError
     )
 
 -- | @since 0.1
-instance Exception GitOrLookupEnvError where
-  displayException (GitOrLookupEnvGit ge) = displayException ge
-  displayException (GitOrLookupEnvLookupEnv x) = displayException x
+instance Exception GitOrEnvLookupError where
+  displayException (GitOrEnvLookupGit ge) = displayException ge
+  displayException (GitOrEnvLookupEnvLookup x) = displayException x
 
 -- | @runGitInEnvDirQ var q@ runs @q@ in the directory given by the
 -- environment variable.
@@ -190,62 +190,62 @@ runGitInEnvDirQ ::
   -- | Git process to run.
   Q (Either GitError a) ->
   -- | The result.
-  Q (Either GitOrLookupEnvError a)
+  Q (Either GitOrEnvLookupError a)
 runGitInEnvDirQ var = joinErrors . Env.runInEnvDirQ var
   where
-    joinErrors = fmap joinLookupEnvGitErrors
+    joinErrors = fmap joinEnvLookupGitErrors
 
 -- | Utility function for joining lookup and git errors.
 --
 -- ==== __Examples__
 --
 -- >>> :{
---   let e :: Either LookupEnvError (Either GitError ())
+--   let e :: Either EnvLookupError (Either GitError ())
 --       e = Right (Left GitNotFound)
---   in joinLookupEnvGitErrors e
+--   in joinEnvLookupGitErrors e
 -- :}
--- Left (GitOrLookupEnvGit GitNotFound)
+-- Left (GitOrEnvLookupGit GitNotFound)
 --
 -- @since 0.1
-joinLookupEnvGitErrors ::
+joinEnvLookupGitErrors ::
   forall p a.
   ( Bifunctor p,
     forall e. Monad (p e)
   ) =>
   -- | .
-  p LookupEnvError (p GitError a) ->
-  p GitOrLookupEnvError a
-joinLookupEnvGitErrors =
+  p EnvLookupError (p GitError a) ->
+  p GitOrEnvLookupError a
+joinEnvLookupGitErrors =
   join
     . embedGitError
-    . first GitOrLookupEnvLookupEnv
+    . first GitOrEnvLookupEnvLookup
 
 -- | Utility function for joining git and lookup errors.
 --
 -- ==== __Examples__
 --
 -- >>> :{
---   let e :: Either GitError (Either LookupEnvError ())
---       e = Right (Left $ MkLookupEnvError [osstr|VAR|])
---   in joinGitLookupEnvErrors e
+--   let e :: Either GitError (Either EnvLookupError ())
+--       e = Right (Left $ MkEnvLookupError [osstr|VAR|])
+--   in joinGitEnvLookupErrors e
 -- :}
--- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
+-- Left (GitOrEnvLookupEnvLookup (MkEnvLookupError "VAR"))
 --
 -- @since 0.1
-joinGitLookupEnvErrors ::
+joinGitEnvLookupErrors ::
   forall p a.
   ( Bifunctor p,
     forall e. Monad (p e)
   ) =>
   -- | .
-  p GitError (p LookupEnvError a) ->
-  p GitOrLookupEnvError a
-joinGitLookupEnvErrors =
+  p GitError (p EnvLookupError a) ->
+  p GitOrEnvLookupError a
+joinGitEnvLookupErrors =
   join
-    . embedLookupEnvError
-    . first GitOrLookupEnvGit
+    . embedEnvLookupError
+    . first GitOrEnvLookupGit
 
--- | Embeds a 'GitError' in the larger 'GitOrLookupEnvError'.
+-- | Embeds a 'GitError' in the larger 'GitOrEnvLookupError'.
 --
 -- ==== __Examples__
 --
@@ -254,7 +254,7 @@ joinGitLookupEnvErrors =
 --       q = pure (Left GitNotFound)
 --   in runQ $ embedGitError q
 -- :}
--- Left (GitOrLookupEnvGit GitNotFound)
+-- Left (GitOrEnvLookupGit GitNotFound)
 --
 -- @since 0.1
 embedGitError ::
@@ -264,27 +264,27 @@ embedGitError ::
   ) =>
   -- | .
   f (p GitError a) ->
-  f (p GitOrLookupEnvError a)
-embedGitError = fmap (first GitOrLookupEnvGit)
+  f (p GitOrEnvLookupError a)
+embedGitError = fmap (first GitOrEnvLookupGit)
 
--- | Embeds a 'LookupEnvError' in the larger 'GitOrLookupEnvError'.
+-- | Embeds a 'EnvLookupError' in the larger 'GitOrEnvLookupError'.
 --
 -- ==== __Examples__
 --
 -- >>> :{
---   let q :: Q (Either LookupEnvError ())
---       q = pure (Left $ MkLookupEnvError [osstr|VAR|])
---   in runQ $ embedLookupEnvError q
+--   let q :: Q (Either EnvLookupError ())
+--       q = pure (Left $ MkEnvLookupError [osstr|VAR|])
+--   in runQ $ embedEnvLookupError q
 -- :}
--- Left (GitOrLookupEnvLookupEnv (MkLookupEnvError "VAR"))
+-- Left (GitOrEnvLookupEnvLookup (MkEnvLookupError "VAR"))
 --
 -- @since 0.1
-embedLookupEnvError ::
+embedEnvLookupError ::
   forall f p a.
   ( Bifunctor p,
     Functor f
   ) =>
   -- | .
-  f (p LookupEnvError a) ->
-  f (p GitOrLookupEnvError a)
-embedLookupEnvError = fmap (first GitOrLookupEnvLookupEnv)
+  f (p EnvLookupError a) ->
+  f (p GitOrEnvLookupError a)
+embedEnvLookupError = fmap (first GitOrEnvLookupEnvLookup)

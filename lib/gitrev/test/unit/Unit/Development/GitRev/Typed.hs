@@ -71,7 +71,7 @@ testHashAndEnvVal = testCase "Composes hash and env val lookup" $ do
   Utils.assertEither
     $$( GRT.qToCode $
           GRT.embedGitError GRT.gitHashQ
-            <> GRT.embedLookupEnvError (GRT.envValQ "var")
+            <> GRT.embedEnvLookupError (GRT.envValQ "var")
       )
 
 testHashAndEnvDir :: TestTree
