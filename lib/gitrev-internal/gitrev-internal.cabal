@@ -33,8 +33,10 @@ source-repository head
 
 common common-lang
   default-extensions:
+    DeriveFoldable
     DeriveFunctor
     DeriveLift
+    DeriveTraversable
     DerivingStrategies
     ExplicitForAll
     GeneralizedNewtypeDeriving

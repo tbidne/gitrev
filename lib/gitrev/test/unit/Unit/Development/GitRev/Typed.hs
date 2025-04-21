@@ -5,7 +5,7 @@ module Unit.Development.GitRev.Typed (tests) where
 
 import Control.Exception (Exception (displayException))
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import Development.GitRev.Typed (Exceptions (MkExceptions))
+import Development.GitRev.Typed (Errors (MkErrors))
 import Development.GitRev.Typed qualified as GRT
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
@@ -136,7 +136,7 @@ testSemigroupQFirstSuccessAllLefts = testCase desc $ do
   where
     desc = "Utils.firstSuccessQ takes all Lefts"
 
-    expected = MkExceptions @Utils.E ("qFail1" :| ["qFail2", "qFail3"])
+    expected = MkErrors @Utils.E ("qFail1" :| ["qFail2", "qFail3"])
 
     expectedStr =
       mconcat

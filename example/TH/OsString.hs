@@ -9,7 +9,7 @@ module TH.OsString
 where
 
 import Development.GitRev qualified as GR
-import Development.GitRev.Typed.OsString (Exceptions, GitOrEnvLookupError)
+import Development.GitRev.Typed.OsString (Errors, GitOrEnvLookupError)
 import Development.GitRev.Typed.OsString qualified as GRT
 import Language.Haskell.TH (Code, ExpQ, Q)
 import System.OsString (OsString, osstr)
@@ -47,10 +47,10 @@ hashEnvDir =
 hashEnvValDir :: Code Q OsString
 hashEnvValDir = toCode gitHash
   where
-    toCode :: Q (Either (Exceptions GitOrEnvLookupError) OsString) -> Code Q OsString
+    toCode :: Q (Either (Errors GitOrEnvLookupError) OsString) -> Code Q OsString
     toCode = GRT.qToCode . GRT.projectError
 
-    gitHash :: Q (Either (Exceptions GitOrEnvLookupError) OsString)
+    gitHash :: Q (Either (Errors GitOrEnvLookupError) OsString)
     gitHash =
       GRT.firstSuccessQ
         (GRT.embedGitError GRT.gitHashQ)

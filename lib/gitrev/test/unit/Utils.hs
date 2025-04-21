@@ -29,7 +29,7 @@ where
 import Control.Exception (Exception (displayException))
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.String (IsString)
-import Development.GitRev.Typed (Exceptions, QFirst (unQFirst))
+import Development.GitRev.Typed (Errors, QFirst (unQFirst))
 import Development.GitRev.Typed qualified as GRT
 import Language.Haskell.TH (Q, runIO)
 import Language.Haskell.TH.Syntax (Lift)
@@ -94,13 +94,13 @@ qOsFirstSuccess2 = do
   _ <- GRT.firstSuccessQ (qFail1 ref) [qOs2 ref, qOs3 ref]
   runIO $ readIORef ref
 
-qFirstSuccessAllLefts :: Q (Counter, Either (Exceptions E) String)
+qFirstSuccessAllLefts :: Q (Counter, Either (Errors E) String)
 qFirstSuccessAllLefts = do
   ref <- runIO $ newIORef (0, 0, 0)
   result <- GRT.firstSuccessQ (qFail1 ref) [qFail2 ref, qFail3 ref]
   (,result) <$> runIO (readIORef ref)
 
-qOsFirstSuccessAllLefts :: Q (Counter, Either (Exceptions E) OsString)
+qOsFirstSuccessAllLefts :: Q (Counter, Either (Errors E) OsString)
 qOsFirstSuccessAllLefts = do
   ref <- runIO $ newIORef (0, 0, 0)
   result <- GRT.firstSuccessQ (qFail1 ref) [qFail2 ref, qFail3 ref]

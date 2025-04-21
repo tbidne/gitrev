@@ -8,8 +8,8 @@ module Development.GitRev.Internal.QFirst
     QFirst (..),
     mkQFirst,
     firstSuccessQ,
-    Exceptions (..),
-    mkExceptions,
+    Errors (..),
+    mkErrors,
   )
 where
 
@@ -37,19 +37,24 @@ import Language.Haskell.TH.Syntax (Lift)
 -- >>> import Language.Haskell.TH (Q, runIO, runQ)
 -- >>> import System.Environment (setEnv)
 
--- | Collects multiple exceptions.
+-- | Collects multiple errors. Intended for displaying multiple
+-- exceptions via 'displayException'.
 --
 -- @since 0.1
-newtype Exceptions e = MkExceptions {unExceptions :: (NonEmpty e)}
+newtype Errors e = MkErrors {unErrors :: (NonEmpty e)}
   deriving stock
     ( -- | @since 0.1
       Eq,
+      -- | @since 0.1
+      Foldable,
       -- | @since 0.1
       Functor,
       -- | @since 0.1
       Lift,
       -- | @since 0.1
-      Show
+      Show,
+      -- | @since 0.1
+      Traversable
     )
   deriving newtype
     ( -- | @since 0.1
@@ -61,8 +66,8 @@ newtype Exceptions e = MkExceptions {unExceptions :: (NonEmpty e)}
     )
 
 -- | @since 0.1
-instance (Exception e) => Exception (Exceptions e) where
-  displayException (MkExceptions errs) =
+instance (Exception e) => Exception (Errors e) where
+  displayException (MkErrors errs) =
     mconcat
       [ "Exception(s):",
         renderErrs errs
@@ -84,11 +89,11 @@ instance (Exception e) => Exception (Exceptions e) where
           . displayException
           $ e
 
--- | Wraps a type in 'Exceptions'.
+-- | Wraps a type in 'Errors'.
 --
 -- @since 0.1
-mkExceptions :: forall e. e -> Exceptions e
-mkExceptions = MkExceptions . NE.singleton
+mkErrors :: forall e. e -> Errors e
+mkErrors = MkErrors . NE.singleton
 
 -- | Wrapper for 'Q' over 'Either' with a lazier 'Semigroup'. With this, we
 -- can run:
@@ -100,10 +105,10 @@ mkExceptions = MkExceptions . NE.singleton
 -- This will only execute @q2@ if @q1@ returns 'Left', unlike 'Q'\'s normal
 -- 'Semigroup' instance.
 --
--- 'QFirst' also collects all errors in 'Exceptions'.
+-- 'QFirst' also collects all errors in 'Errors'.
 --
 -- @since 0.1
-newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Exceptions e) a)}
+newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Errors e) a)}
   deriving stock
     ( -- | @since 0.1
       Functor
@@ -147,7 +152,7 @@ instance Bifunctor QFirst where
 --
 -- @since 0.1
 mkQFirst :: forall e a. Q (Either e a) -> QFirst e a
-mkQFirst = MkQFirst . fmap (first mkExceptions)
+mkQFirst = MkQFirst . fmap (first mkErrors)
 
 -- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns
 -- 'Right', without executing any @qj@ for @j > i@. If there are no
@@ -171,7 +176,7 @@ firstSuccessQ ::
   forall e a.
   Q (Either e a) ->
   [Q (Either e a)] ->
-  Q (Either (Exceptions e) a)
+  Q (Either (Errors e) a)
 firstSuccessQ q qs = unQFirst $ foldMap1 mkQFirst (q :| qs)
 
 #if !MIN_VERSION_base(4, 18, 0)

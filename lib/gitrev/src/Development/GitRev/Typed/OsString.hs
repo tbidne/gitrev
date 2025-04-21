@@ -50,8 +50,8 @@ module Development.GitRev.Typed.OsString
     QFirst (..),
     QFirst.mkQFirst,
     QFirst.firstSuccessQ,
-    Exceptions (MkExceptions),
-    QFirst.mkExceptions,
+    Errors (MkErrors),
+    QFirst.mkErrors,
 
     -- *** Eliminating Either
     Utils.projectStringUnknown,
@@ -83,7 +83,7 @@ import Development.GitRev.Internal.Git.OsString
   )
 import Development.GitRev.Internal.Git.OsString qualified as Git
 import Development.GitRev.Internal.QFirst
-  ( Exceptions (MkExceptions),
+  ( Errors (MkErrors),
     QFirst (MkQFirst),
   )
 import Development.GitRev.Internal.QFirst qualified as QFirst
@@ -131,7 +131,7 @@ import System.OsString (OsString)
 -- that returns 'Right'.
 --
 -- >>> :{
---   let gitHashEnv :: OsString -> Code Q (Either (Exceptions GitOrEnvLookupError) OsString)
+--   let gitHashEnv :: OsString -> Code Q (Either (Errors GitOrEnvLookupError) OsString)
 --       gitHashEnv var =
 --         qToCode $
 --           firstSuccessQ
@@ -264,7 +264,7 @@ import System.OsString (OsString)
 -- The convenience function
 --
 -- @
---   firstSuccessQ :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Exceptions e) a)
+--   firstSuccessQ :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Errors e) a)
 -- @
 --
 -- utilizes 'QFirst' for sequencing a series of Q actions, stopping after the

@@ -7,7 +7,7 @@ module TH
 where
 
 import Development.GitRev qualified as GR
-import Development.GitRev.Typed (Exceptions, GitOrEnvLookupError)
+import Development.GitRev.Typed (Errors, GitOrEnvLookupError)
 import Development.GitRev.Typed qualified as GRT
 import Language.Haskell.TH (Code, ExpQ, Q)
 
@@ -44,10 +44,10 @@ hashEnvDir =
 hashEnvValDir :: Code Q String
 hashEnvValDir = toCode gitHash
   where
-    toCode :: Q (Either (Exceptions GitOrEnvLookupError) String) -> Code Q String
+    toCode :: Q (Either (Errors GitOrEnvLookupError) String) -> Code Q String
     toCode = GRT.qToCode . GRT.projectError
 
-    gitHash :: Q (Either (Exceptions GitOrEnvLookupError) String)
+    gitHash :: Q (Either (Errors GitOrEnvLookupError) String)
     gitHash =
       GRT.firstSuccessQ
         (GRT.embedGitError GRT.gitHashQ)
