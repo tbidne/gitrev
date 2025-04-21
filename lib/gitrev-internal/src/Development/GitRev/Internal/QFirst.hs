@@ -14,7 +14,8 @@ module Development.GitRev.Internal.QFirst
 where
 
 import Control.Exception (Exception (displayException))
-import Data.Bifunctor (Bifunctor (bimap, first))
+import Control.Monad.IO.Class (MonadIO (liftIO))
+import Data.Bifunctor (Bifunctor (bimap, first, second))
 import Data.Foldable (Foldable (fold))
 #if MIN_VERSION_base(4, 18, 0)
 import Data.Foldable1 (Foldable1 (foldMap1))
@@ -109,16 +110,38 @@ newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Exceptions e) a)}
     )
 
 -- | @since 0.1
-instance Bifunctor QFirst where
-  bimap f g (MkQFirst q) = MkQFirst $ fmap (bimap (fmap f) g) q
-
--- | @since 0.1
 instance Semigroup (QFirst e a) where
   MkQFirst q1 <> q2 =
     MkQFirst $
       q1 >>= \case
         Right x -> pure $ Right x
         Left errs -> first (errs <>) <$> unQFirst q2
+
+-- | @since 0.1
+instance Applicative (QFirst e) where
+  pure = mkQFirst . pure . Right
+
+  MkQFirst q1 <*> q2 =
+    MkQFirst $
+      q1 >>= \case
+        Left errs -> pure $ Left errs
+        Right f -> second f <$> unQFirst q2
+
+-- | @since 0.1
+instance Monad (QFirst e) where
+  MkQFirst q1 >>= k =
+    MkQFirst $
+      q1 >>= \case
+        Left errs -> pure $ Left errs
+        Right x -> unQFirst $ k x
+
+-- | @since 0.1
+instance MonadIO (QFirst e) where
+  liftIO = MkQFirst . fmap Right . liftIO
+
+-- | @since 0.1
+instance Bifunctor QFirst where
+  bimap f g (MkQFirst q) = MkQFirst $ fmap (bimap (fmap f) g) q
 
 -- | Wraps a 'Q' computation in 'QFirst'.
 --
