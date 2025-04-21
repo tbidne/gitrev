@@ -59,6 +59,7 @@ module Development.GitRev.Typed.OsString
     Utils.projectFalse,
     Utils.projectError,
     Utils.projectErrorMap,
+    Utils.projectLeft,
 
     -- ** Errors
     GitOrEnvLookupError (..),

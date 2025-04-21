@@ -11,6 +11,7 @@ module Development.GitRev.Internal.Utils.OsString
     projectFalse,
     projectError,
     projectErrorMap,
+    projectLeft,
 
     -- * Composing errors
     GitOrEnvLookupError (..),
@@ -147,6 +148,9 @@ projectErrorMap ::
   f a
 projectErrorMap onErr = projectLeft (error . onErr)
 
+-- | Projects 'Left' via the given function.
+--
+-- @since 0.1
 projectLeft :: forall f e a. (Functor f) => (e -> a) -> f (Either e a) -> f a
 projectLeft f = fmap (either f id)
 
