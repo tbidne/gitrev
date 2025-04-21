@@ -33,6 +33,10 @@ module Development.GitRev.Typed
     Git.gitShortHashQ,
     Git.gitTreeQ,
 
+    -- *** Running your own git actions
+    Git.runGit,
+    IndexUsed (..),
+
     -- ** Environment lookup
     Env.envValQ,
     Utils.runGitInEnvDirQ,
@@ -71,7 +75,10 @@ where
 
 import Development.GitRev.Internal.Environment (EnvLookupError (MkEnvLookupError))
 import Development.GitRev.Internal.Environment qualified as Env
-import Development.GitRev.Internal.Git (GitError (GitNotFound, GitRunError))
+import Development.GitRev.Internal.Git
+  ( GitError (GitNotFound, GitRunError),
+    IndexUsed (IdxNotUsed, IdxUsed),
+  )
 import Development.GitRev.Internal.Git qualified as Git
 import Development.GitRev.Internal.QFirst
   ( Exceptions (MkExceptions),
@@ -252,7 +259,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- The convenience function
 --
 -- @
---   'firstSuccessQ' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Exceptions e) a)
+--   firstSuccessQ :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Exceptions e) a)
 -- @
 --
 -- utilizes 'QFirst' for sequencing a series of Q actions, stopping after the

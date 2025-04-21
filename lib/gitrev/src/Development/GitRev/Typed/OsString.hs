@@ -33,6 +33,10 @@ module Development.GitRev.Typed.OsString
     Git.gitShortHashQ,
     Git.gitTreeQ,
 
+    -- *** Running your own git actions
+    Git.runGit,
+    IndexUsed (..),
+
     -- ** Environment lookup
     Env.envValQ,
     Utils.runGitInEnvDirQ,
@@ -75,6 +79,7 @@ import Development.GitRev.Internal.Environment.OsString
 import Development.GitRev.Internal.Environment.OsString qualified as Env
 import Development.GitRev.Internal.Git.OsString
   ( GitError (GitNotFound, GitRunError),
+    IndexUsed (IdxNotUsed, IdxUsed),
   )
 import Development.GitRev.Internal.Git.OsString qualified as Git
 import Development.GitRev.Internal.QFirst
@@ -259,7 +264,7 @@ import System.OsString (OsString)
 -- The convenience function
 --
 -- @
---   'firstSuccessQ' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Exceptions e) a)
+--   firstSuccessQ :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Exceptions e) a)
 -- @
 --
 -- utilizes 'QFirst' for sequencing a series of Q actions, stopping after the

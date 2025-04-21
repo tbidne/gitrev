@@ -4,7 +4,8 @@
 --
 -- @since 0.1
 module Development.GitRev.Internal.Git
-  ( GitError (..),
+  ( -- * Built-in
+    GitError (..),
     gitBranchQ,
     gitCommitCountQ,
     gitCommitDateQ,
@@ -15,6 +16,10 @@ module Development.GitRev.Internal.Git
     gitHashQ,
     gitShortHashQ,
     gitTreeQ,
+
+    -- * Git primitives
+    runGit,
+    IndexUsed (..),
   )
 where
 
@@ -178,7 +183,16 @@ instance Exception GitError where
   displayException GitNotFound = "Git executable not found"
   displayException (GitRunError s) = "Git error: " ++ s
 
-runGit :: [String] -> IndexUsed -> Q (Either GitError String)
+-- | Runs git with the arguments. If 'IdxUsed' is passed, it is tracked for
+-- recompliation purposes.
+--
+-- @since 0.1
+runGit ::
+  -- | Arguments to git.
+  [String] ->
+  -- | Whether the index is used.
+  IndexUsed ->
+  Q (Either GitError String)
 runGit args idxUsed =
   first mapGitError
     <$> Common.runGitPostprocess

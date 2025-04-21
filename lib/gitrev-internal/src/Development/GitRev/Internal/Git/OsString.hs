@@ -4,7 +4,8 @@
 --
 -- @since 0.1
 module Development.GitRev.Internal.Git.OsString
-  ( GitError (..),
+  ( -- * Built-in
+    GitError (..),
     gitBranchQ,
     gitCommitCountQ,
     gitCommitDateQ,
@@ -15,6 +16,10 @@ module Development.GitRev.Internal.Git.OsString
     gitHashQ,
     gitShortHashQ,
     gitTreeQ,
+
+    -- * Git primitives
+    runGit,
+    IndexUsed (..),
   )
 where
 
@@ -203,7 +208,16 @@ instance Exception GitError where
   displayException GitNotFound = "Git executable not found"
   displayException (GitRunError s) = "Git error: " ++ OsStringI.decodeLenient s
 
-runGit :: [OsString] -> IndexUsed -> Q (Either GitError OsString)
+-- | Runs git with the arguments. If 'IdxUsed' is passed, it is tracked for
+-- recompliation purposes.
+--
+-- @since 0.1
+runGit ::
+  -- | Arguments to git.
+  [OsString] ->
+  -- | Whether the index is used.
+  IndexUsed ->
+  Q (Either GitError OsString)
 runGit args idxUsed =
   first mapGitError
     <$> Common.runGitPostprocess

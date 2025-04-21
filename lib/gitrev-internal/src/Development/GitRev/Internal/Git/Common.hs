@@ -1,6 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
--- | Provides utilities for querying git for String' and 'OsString'.
+-- | Provides utilities for querying git for String' and
+-- 'System.OsString.OsString'.
 --
 -- @since 0.1
 module Development.GitRev.Internal.Git.Common
@@ -143,6 +144,7 @@ runGitPostprocess gitProcessArgs postProcess args useIdx = do
     gpaRunProcessFn = runProcessGit gitProcessArgs
     gpaStrToP = strToP gitProcessArgs
 
+-- | @since 0.1
 tillNewLineOsPath :: OsPath -> OsPath
 tillNewLineOsPath = OsString.takeWhile (\c -> c /= nl && c /= cr)
   where
@@ -193,16 +195,28 @@ getGitRoot gitProcessArgs = do
     gpaRunProcessFn = runProcessGit gitProcessArgs
     gpaPToOsPath = pToOsPath gitProcessArgs
 
+-- | @since 0.1
 nonEmpty :: (Eq a, Monoid a) => a -> Bool
 nonEmpty = not . (== mempty)
 
--- | Type to flag if the git index is used or not in a call to runGit
+-- | Type to flag if the git index is used or not in a call to runGit.
+--
+-- @since 0.1
 data IndexUsed
-  = -- | The git index is used
+  = -- | The git index is used.
+    --
+    -- @since 0.1
     IdxUsed
-  | -- | The git index is /not/ used
+  | -- | The git index is /not/ used.
+    --
+    -- @since 0.1
     IdxNotUsed
-  deriving stock (Eq)
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )
 
 catchSync :: IO a -> (SomeException -> IO a) -> IO a
 catchSync = catchIf isSyncException
