@@ -72,4 +72,5 @@ library
     Development.GitRev.Internal.OsString
     Development.GitRev.Internal.QFirst
     Development.GitRev.Internal.Utils
+    Development.GitRev.Internal.Utils.Common
     Development.GitRev.Internal.Utils.OsString

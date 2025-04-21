@@ -55,7 +55,7 @@ module Development.GitRev.Typed
 
     -- *** Eliminating Either
     Utils.projectStringUnknown,
-    Utils.projectString,
+    Utils.projectConst,
     Utils.projectFalse,
     Utils.projectError,
     Utils.projectErrorMap,

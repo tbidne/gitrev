@@ -7,11 +7,11 @@
 module Development.GitRev.Internal.Utils.OsString
   ( -- * Either projections
     projectStringUnknown,
-    projectString,
-    projectFalse,
-    projectError,
-    projectErrorMap,
-    projectLeft,
+    Common.projectConst,
+    Common.projectFalse,
+    Common.projectError,
+    Common.projectErrorMap,
+    Common.projectLeft,
 
     -- * Composing errors
     GitOrEnvLookupError (..),
@@ -33,6 +33,7 @@ import Data.Bifunctor (Bifunctor (first))
 import Development.GitRev.Internal.Environment.OsString (EnvLookupError)
 import Development.GitRev.Internal.Environment.OsString qualified as Env
 import Development.GitRev.Internal.Git.OsString (GitError)
+import Development.GitRev.Internal.Utils.Common qualified as Common
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
 import System.OsString (OsString, osstr)
@@ -68,91 +69,7 @@ projectStringUnknown ::
   (Functor f) =>
   f (Either e OsString) ->
   f OsString
-projectStringUnknown = projectString [osstr|UNKNOWN|]
-
--- | Projects 'Left' to the given string.
---
--- ==== __Examples__
---
--- >>> :{
---   let gitHashDefStringQ :: Q OsString
---       gitHashDefStringQ = projectString [osstr|FAILURE|] gitHashQ
---   in $$(qToCode $ projectString [osstr|FAILURE|] gitHashQ)
--- :}
--- ...
---
--- >>> $$(qToCode $ projectString [osstr|FAILURE|] (pure $ Left ()))
--- "FAILURE"
---
--- @since 0.1
-projectString ::
-  forall f e.
-  (Functor f) =>
-  OsString ->
-  f (Either e OsString) ->
-  f OsString
-projectString = projectLeft . const
-
--- | Projects 'Left' to 'False'.
---
--- ==== __Examples__
---
--- >>> :{
---   let gitDirtyDefFalseQ :: Q Bool
---       gitDirtyDefFalseQ = projectFalse gitDirtyQ
---   in $$(qToCode $ projectFalse gitDirtyQ)
--- :}
--- ...
---
--- >>> $$(qToCode $ projectFalse (pure $ Left ()))
--- False
---
--- @since 0.1
-projectFalse :: forall f e. (Functor f) => f (Either e Bool) -> f Bool
-projectFalse = projectLeft (const False)
-
--- | Projects 'Left' via 'error', rendering via 'displayException'. Hence
--- an error will cause a compilation failure.
---
--- ==== __Examples__
---
--- >>> :{
---   let gitHashOrDieQ :: Q OsString
---       gitHashOrDieQ = projectError gitHashQ
---   in $$(qToCode $ projectError gitHashQ)
--- :}
--- ...
---
--- @since 0.1
-projectError :: forall f e a. (Exception e, Functor f) => f (Either e a) -> f a
-projectError = projectErrorMap displayException
-
--- | Projects 'Left' via 'error', rendering via the given function. Hence
--- an error will cause a compilation failure.
---
--- ==== __Examples__
---
--- >>> :{
---   let gitHashOrDieQ :: Q OsString
---       gitHashOrDieQ = (projectErrorMap show) gitHashQ
---   in $$(qToCode $ (projectErrorMap show) gitHashQ)
--- :}
--- ...
---
--- @since 0.1
-projectErrorMap ::
-  forall f e a.
-  (Functor f) =>
-  (e -> String) ->
-  f (Either e a) ->
-  f a
-projectErrorMap onErr = projectLeft (error . onErr)
-
--- | Projects 'Left' via the given function.
---
--- @since 0.1
-projectLeft :: forall f e a. (Functor f) => (e -> a) -> f (Either e a) -> f a
-projectLeft f = fmap (either f id)
+projectStringUnknown = Common.projectConst [osstr|UNKNOWN|]
 
 -- | Git or env lookup error.
 --
