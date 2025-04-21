@@ -220,6 +220,7 @@ gitProcessArgs :: GitProcessArgs OsString
 gitProcessArgs =
   MkGitProcessArgs
     { gitRootArgs = [[osstr|rev-parse|], [osstr|--show-toplevel|]],
+      pToOsPath = pure . id,
       -- TODO: Once process gets OsString support, replace
       -- readProcessWithExitCode below. Should make all of this encoding
       -- unnecessary.
@@ -227,6 +228,5 @@ gitProcessArgs =
         args' <- traverse OsStringI.decodeThrowM args
         (ec, out, err) <- Process.readProcessWithExitCode "git" args' ""
         (ec,,OsStringI.encodeLenient err) <$> OsStringI.encodeThrowM out,
-      pToOsPath = pure . id,
       strToP = OsStringI.encodeLenient
     }

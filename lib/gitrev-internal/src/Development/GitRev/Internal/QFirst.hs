@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 
--- | Utils module.
+-- | Provides 'QFirst' type.
 --
 -- @since 0.1
 module Development.GitRev.Internal.QFirst
@@ -83,7 +83,9 @@ instance (Exception e) => Exception (Exceptions e) where
           . displayException
           $ e
 
--- | @since 0.1
+-- | Wraps a type in 'Exceptions'.
+--
+-- @since 0.1
 mkExceptions :: forall e. e -> Exceptions e
 mkExceptions = MkExceptions . NE.singleton
 
@@ -91,7 +93,7 @@ mkExceptions = MkExceptions . NE.singleton
 -- can run:
 --
 -- @
---   MkQFirst q1 <> MkQFirst q2
+--   mkQFirst q1 <> mkQFirst q2
 -- @
 --
 -- This will only execute @q2@ if @q1@ returns 'Left', unlike 'Q'\'s normal
@@ -118,7 +120,9 @@ instance Semigroup (QFirst e a) where
         Right x -> pure $ Right x
         Left errs -> first (errs <>) <$> unQFirst q2
 
--- | @since 0.1
+-- | Wraps a 'Q' computation in 'QFirst'.
+--
+-- @since 0.1
 mkQFirst :: forall e a. Q (Either e a) -> QFirst e a
 mkQFirst = MkQFirst . fmap (first mkExceptions)
 

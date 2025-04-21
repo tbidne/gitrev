@@ -141,8 +141,8 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 
 -- $out-of-tree
 --
--- An example where custom definitions are useful is \"out-of-tree\"
--- builds, where the build takes place outside of the normal git tree.
+-- Custom definitions are particularly useful for \"out-of-tree\" builds,
+-- where the build takes place outside of the normal git tree.
 --
 -- These builds present a problem, as we normally rely on building in the
 -- project directory where the @.git@ directory is easy to locate. For
@@ -252,7 +252,7 @@ import Language.Haskell.TH.Syntax (Lift (lift), TExp (TExp))
 -- The convenience function
 --
 -- @
---   'firstSuccessQ' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either e a)
+--   'firstSuccessQ' :: Q (Either e a) -> [Q (Either e a)] -> Q (Either (Exceptions e) a)
 -- @
 --
 -- utilizes 'QFirst' for sequencing a series of Q actions, stopping after the

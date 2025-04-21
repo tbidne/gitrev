@@ -1,5 +1,7 @@
 -- | Internal OsString utilities. Exists primarily to provide lenient
 -- encodings (for error reporting).
+--
+-- @since 0.1
 module Development.GitRev.Internal.OsString
   ( -- * Encoding
 
@@ -31,6 +33,8 @@ import System.OsString (OsString)
 import System.OsString qualified as OsString
 
 -- | Partial decoding. Throws 'EncodingException'.
+--
+-- @since 0.1
 decodeThrowM :: (MonadThrow m) => OsString -> m FilePath
 decodeThrowM =
   decode >>> \case
@@ -38,6 +42,8 @@ decodeThrowM =
     Left ex -> throwM ex
 
 -- | Partial encoding. Throws 'EncodingException'.
+--
+-- @since 0.1
 encodeThrowM :: (MonadThrow m) => FilePath -> m OsString
 encodeThrowM =
   encode >>> \case
@@ -55,12 +61,16 @@ encode = OsString.encodeWith utf8Encoder utf16Encoder
     (utf8Encoder, utf16Encoder) = utfEncodings
 
 -- | Total decoding, replacing errors with the closest visual match.
+--
+-- @since 0.1
 decodeLenient :: OsString -> FilePath
 decodeLenient = elimEx . OsString.decodeWith uft8Encoding utf16Encoding
   where
     (uft8Encoding, utf16Encoding, elimEx) = utfEncodingsLenient
 
 -- | Total encoding, replacing errors with the closest visual match.
+--
+-- @since 0.1
 encodeLenient :: FilePath -> OsString
 encodeLenient = elimEx . OsString.encodeWith uft8Encoding utf16Encoding
   where

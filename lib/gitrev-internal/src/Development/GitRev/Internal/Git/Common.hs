@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
--- | Provides utilities for querying git.
+-- | Provides utilities for querying git for String' and 'OsString'.
 --
 -- @since 0.1
 module Development.GitRev.Internal.Git.Common
@@ -61,21 +61,33 @@ data GitError p
 
 -- | Parameters for running our git process below. Allows us to parameterize
 -- over String and OsString.
+--
+-- @since 0.1
 data GitProcessArgs p = MkGitProcessArgs
   { -- | Args for acquiring git root i.e. ["rev-parse", "--show-toplevel"]
+    --
+    -- @since 0.1
     gitRootArgs :: [p],
     -- | Encode p to OsPath. IO due to possibility of failure i.e. we want
     -- errors to throw.
+    --
+    -- @since 0.1
     pToOsPath :: p -> IO OsPath,
     -- | Runs git with parameter args.
+    --
+    -- @since 0.1
     runProcessGit :: [p] -> IO (ExitCode, p, p),
     -- | Conversion from String. Used in error reporting hence should be
     -- total i.e. lenient encodes, if necessary.
+    --
+    -- @since 0.1
     strToP :: String -> p
   }
 
 -- | Run git with the given arguments and no stdin, returning the
 -- stdout output.
+--
+-- @since 0.1
 runGitPostprocess ::
   forall p.
   (Monoid p) =>

@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
--- | Provides utilities for querying git.
+-- | 'Q' primitives for git actions.
 --
 -- @since 0.1
 module Development.GitRev.Internal.Git
@@ -195,8 +195,8 @@ gitProcessArgs :: GitProcessArgs String
 gitProcessArgs =
   MkGitProcessArgs
     { gitRootArgs = ["rev-parse", "--show-toplevel"],
-      runProcessGit = \args -> Process.readProcessWithExitCode "git" args "",
       pToOsPath = OsStringI.encodeThrowM,
+      runProcessGit = \args -> Process.readProcessWithExitCode "git" args "",
       strToP = id
     }
 
