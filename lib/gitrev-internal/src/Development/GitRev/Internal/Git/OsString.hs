@@ -23,9 +23,9 @@ import Data.Bifunctor (Bifunctor (first))
 import Development.GitRev.Internal.Git.Common
   ( GitProcessArgs
       ( MkGitProcessArgs,
-        emptyPath,
-        gitExeName,
-        runProcessFn,
+        gitRootArgs,
+        pToOsPath,
+        runProcessGit,
         strToP
       ),
     IndexUsed (IdxNotUsed, IdxUsed),
@@ -219,16 +219,14 @@ mapGitError (Common.GitRunError s) = GitRunError s
 gitProcessArgs :: GitProcessArgs OsString
 gitProcessArgs =
   MkGitProcessArgs
-    { emptyPath = mempty,
-      gitExeName = [osstr|git|],
+    { gitRootArgs = [[osstr|rev-parse|], [osstr|--show-toplevel|]],
       -- TODO: Once process gets OsString support, replace
       -- readProcessWithExitCode below. Should make all of this encoding
       -- unnecessary.
-      runProcessFn = \gitName args p -> do
-        gitName' <- OsStringI.decodeThrowM gitName
+      runProcessGit = \args -> do
         args' <- traverse OsStringI.decodeThrowM args
-        p' <- OsStringI.decodeThrowM p
-        (ec, out, err) <- Process.readProcessWithExitCode gitName' args' p'
+        (ec, out, err) <- Process.readProcessWithExitCode "git" args' ""
         (ec,,OsStringI.encodeLenient err) <$> OsStringI.encodeThrowM out,
+      pToOsPath = pure . id,
       strToP = OsStringI.encodeLenient
     }

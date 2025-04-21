@@ -25,14 +25,15 @@ import Data.Bifunctor (Bifunctor (first))
 import Development.GitRev.Internal.Git.Common
   ( GitProcessArgs
       ( MkGitProcessArgs,
-        emptyPath,
-        gitExeName,
-        runProcessFn,
+        gitRootArgs,
+        pToOsPath,
+        runProcessGit,
         strToP
       ),
     IndexUsed (IdxNotUsed, IdxUsed),
   )
 import Development.GitRev.Internal.Git.Common qualified as Common
+import Development.GitRev.Internal.OsString qualified as OsStringI
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
 import System.Process qualified as Process
@@ -193,9 +194,9 @@ mapGitError (Common.GitRunError s) = GitRunError s
 gitProcessArgs :: GitProcessArgs String
 gitProcessArgs =
   MkGitProcessArgs
-    { emptyPath = "",
-      gitExeName = "git",
-      runProcessFn = Process.readProcessWithExitCode,
+    { gitRootArgs = ["rev-parse", "--show-toplevel"],
+      runProcessGit = \args -> Process.readProcessWithExitCode "git" args "",
+      pToOsPath = OsStringI.encodeThrowM,
       strToP = id
     }
 

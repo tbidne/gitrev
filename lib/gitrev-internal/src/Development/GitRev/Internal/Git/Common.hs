@@ -41,7 +41,6 @@ import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import System.File.OsPath qualified as FileIO
 import System.OsPath (OsPath, osp, (</>))
 import System.OsString qualified as OsString
-import System.Process (readProcessWithExitCode)
 
 -- | Errors that can be encountered with git.
 --
@@ -63,12 +62,13 @@ data GitError p
 -- | Parameters for running our git process below. Allows us to parameterize
 -- over String and OsString.
 data GitProcessArgs p = MkGitProcessArgs
-  { -- | Empty path i.e. "".
-    emptyPath :: p,
-    -- | Git name i.e. "git".
-    gitExeName :: p,
-    -- | Process function.
-    runProcessFn :: p -> [p] -> p -> IO (ExitCode, p, p),
+  { -- | Args for acquiring git root i.e. ["rev-parse", "--show-toplevel"]
+    gitRootArgs :: [p],
+    -- | Encode p to OsPath. IO due to possibility of failure i.e. we want
+    -- errors to throw.
+    pToOsPath :: p -> IO OsPath,
+    -- | Runs git with parameter args.
+    runProcessGit :: [p] -> IO (ExitCode, p, p),
     -- | Conversion from String. Used in error reporting hence should be
     -- total i.e. lenient encodes, if necessary.
     strToP :: String -> p
@@ -78,6 +78,7 @@ data GitProcessArgs p = MkGitProcessArgs
 -- stdout output.
 runGitPostprocess ::
   forall p.
+  (Monoid p) =>
   GitProcessArgs p ->
   -- | Post-processing on the result.
   (p -> p) ->
@@ -88,12 +89,12 @@ runGitPostprocess ::
   Q (Either (GitError p) p)
 runGitPostprocess gitProcessArgs postProcess args useIdx = do
   let oops :: SomeException -> IO (ExitCode, p, p)
-      oops ex = pure (ExitFailure 1, gpaEmptyPath, gpaStrToP $ displayException ex)
+      oops ex = pure (ExitFailure 1, mempty, gpaStrToP $ displayException ex)
   gitFound <- runIO $ isJust <$> findExecutable [osp|git|]
   if gitFound
     then do
       -- a lot of bookkeeping to record the right dependencies
-      pwd <- runIO getDotGit
+      pwd <- runIO $ getDotGit gitProcessArgs
       let hd = pwd </> [osp|HEAD|]
           index = pwd </> [osp|index|]
           packedRefs = pwd </> [osp|packed-refs|]
@@ -121,16 +122,13 @@ runGitPostprocess gitProcessArgs postProcess args useIdx = do
       packedExists <- runIO $ doesFileExist packedRefs
       when packedExists $ addDependentOsPath packedRefs
       runIO $ do
-        (code, out, err) <-
-          gpaRunProcessFn gpaGitExeName args gpaEmptyPath `catchSync` oops
+        (code, out, err) <- gpaRunProcessFn args `catchSync` oops
         case code of
           ExitSuccess -> pure $ Right (postProcess out)
           ExitFailure _ -> pure $ Left $ GitRunError err
     else pure $ Left GitNotFound
   where
-    gpaEmptyPath = emptyPath gitProcessArgs
-    gpaGitExeName = gitExeName gitProcessArgs
-    gpaRunProcessFn = runProcessFn gitProcessArgs
+    gpaRunProcessFn = runProcessGit gitProcessArgs
     gpaStrToP = strToP gitProcessArgs
 
 tillNewLineOsPath :: OsPath -> OsPath
@@ -141,9 +139,9 @@ tillNewLineOsPath = OsString.takeWhile (\c -> c /= nl && c /= cr)
 
 -- | Determine where our @.git@ directory is, in case we're in a
 -- submodule.
-getDotGit :: IO OsPath
-getDotGit = do
-  pwd <- getGitRoot
+getDotGit :: GitProcessArgs p -> IO OsPath
+getDotGit gitProcessArgs = do
+  pwd <- getGitRoot gitProcessArgs
   let dotGit = pwd </> [osp|.git|]
       oops = pure dotGit -- it's gonna fail, that's fine
   isDir <- doesDirectoryExist dotGit
@@ -171,15 +169,17 @@ readFileUtf8 =
     <=< FileIO.readFile'
 
 -- | Get the root directory of the Git repo.
-getGitRoot :: IO OsPath
-getGitRoot = do
-  pwd <- getCurrentDirectory
+getGitRoot :: GitProcessArgs p -> IO OsPath
+getGitRoot gitProcessArgs = do
   (code, out, _) <-
-    readProcessWithExitCode "git" ["rev-parse", "--show-toplevel"] ""
-  out' <- OsStringI.encodeThrowM out
+    gpaRunProcessFn gpaGitRootArgs
   case code of
-    ExitSuccess -> pure $ tillNewLineOsPath out'
-    ExitFailure _ -> pure pwd -- later steps will fail, that's fine
+    ExitSuccess -> tillNewLineOsPath <$> gpaPToOsPath out
+    ExitFailure _ -> getCurrentDirectory -- later steps will fail, that's fine
+  where
+    gpaGitRootArgs = gitRootArgs gitProcessArgs
+    gpaRunProcessFn = runProcessGit gitProcessArgs
+    gpaPToOsPath = pToOsPath gitProcessArgs
 
 nonEmpty :: (Eq a, Monoid a) => a -> Bool
 nonEmpty = not . (== mempty)
