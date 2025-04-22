@@ -47,11 +47,13 @@ module Development.GitRev.Typed.OsString
     -- ** Q Combinators
 
     -- *** First success
-    QFirst (..),
+    QFirst,
     QFirst.mkQFirst,
+    QFirst.unQFirst,
     QFirst.firstSuccessQ,
-    Errors (MkErrors),
+    Errors,
     QFirst.mkErrors,
+    QFirst.unErrors,
 
     -- *** Eliminating Either
     Utils.projectStringUnknown,
@@ -83,10 +85,7 @@ import Development.GitRev.Internal.Git.OsString
     IndexUsed (IdxNotUsed, IdxUsed),
   )
 import Development.GitRev.Internal.Git.OsString qualified as Git
-import Development.GitRev.Internal.QFirst
-  ( Errors (MkErrors),
-    QFirst (MkQFirst),
-  )
+import Development.GitRev.Internal.QFirst (Errors, QFirst)
 import Development.GitRev.Internal.QFirst qualified as QFirst
 import Development.GitRev.Internal.Utils.OsString
   ( GitOrEnvLookupError

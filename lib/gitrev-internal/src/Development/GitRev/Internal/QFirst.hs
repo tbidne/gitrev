@@ -7,9 +7,11 @@ module Development.GitRev.Internal.QFirst
   ( -- * Combining Q actions lazily
     QFirst (..),
     mkQFirst,
+    unQFirst,
     firstSuccessQ,
     Errors (..),
     mkErrors,
+    unErrors,
   )
 where
 
@@ -26,6 +28,7 @@ import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Text.Lazy.Builder.Int qualified as TLBI
+import GHC.Records (HasField (getField))
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Syntax (Lift)
 
@@ -41,7 +44,7 @@ import Language.Haskell.TH.Syntax (Lift)
 -- exceptions via 'displayException'.
 --
 -- @since 0.1
-newtype Errors e = MkErrors {unErrors :: (NonEmpty e)}
+newtype Errors e = MkErrors (NonEmpty e)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -64,6 +67,10 @@ newtype Errors e = MkErrors {unErrors :: (NonEmpty e)}
       -- | @since 0.1
       Semigroup
     )
+
+-- | @since 0.1
+instance HasField "unErrors" (Errors e) (NonEmpty e) where
+  getField = unErrors
 
 -- | @since 0.1
 instance (Exception e) => Exception (Errors e) where
@@ -89,11 +96,17 @@ instance (Exception e) => Exception (Errors e) where
           . displayException
           $ e
 
+-- | Unwraps 'Errors'.
+--
+-- @since 0.1
+unErrors :: forall e. Errors e -> NonEmpty e
+unErrors (MkErrors e) = e
+
 -- | Wraps a type in 'Errors'.
 --
 -- @since 0.1
-mkErrors :: forall e. e -> Errors e
-mkErrors = MkErrors . NE.singleton
+mkErrors :: forall e. NonEmpty e -> Errors e
+mkErrors = MkErrors
 
 -- | Wrapper for 'Q' over 'Either' with a lazier 'Semigroup'. With this, we
 -- can run:
@@ -108,11 +121,15 @@ mkErrors = MkErrors . NE.singleton
 -- 'QFirst' also collects all errors in 'Errors'.
 --
 -- @since 0.1
-newtype QFirst e a = MkQFirst {unQFirst :: Q (Either (Errors e) a)}
+newtype QFirst e a = MkQFirst (Q (Either (Errors e) a))
   deriving stock
     ( -- | @since 0.1
       Functor
     )
+
+-- | @since 0.1
+instance HasField "unQFirst" (QFirst e a) (Q (Either (Errors e) a)) where
+  getField = unQFirst
 
 -- | @since 0.1
 instance Semigroup (QFirst e a) where
@@ -148,11 +165,17 @@ instance MonadIO (QFirst e) where
 instance Bifunctor QFirst where
   bimap f g (MkQFirst q) = MkQFirst $ fmap (bimap (fmap f) g) q
 
+-- | Unwraps 'QFirst'.
+--
+-- @since 0.1
+unQFirst :: QFirst e a -> Q (Either (Errors e) a)
+unQFirst (MkQFirst q) = q
+
 -- | Wraps a 'Q' computation in 'QFirst'.
 --
 -- @since 0.1
 mkQFirst :: forall e a. Q (Either e a) -> QFirst e a
-mkQFirst = MkQFirst . fmap (first mkErrors)
+mkQFirst = MkQFirst . fmap (first (mkErrors . NE.singleton))
 
 -- | @firstSuccessQ q qs@ takes the first @qi@ in @q : qs@ that returns
 -- 'Right', without executing any @qj@ for @j > i@. If there are no

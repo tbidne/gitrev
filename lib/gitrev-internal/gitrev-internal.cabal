@@ -33,6 +33,7 @@ source-repository head
 
 common common-lang
   default-extensions:
+    DataKinds
     DeriveFoldable
     DeriveFunctor
     DeriveLift

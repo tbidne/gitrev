@@ -29,7 +29,7 @@ where
 import Control.Exception (Exception (displayException))
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.String (IsString)
-import Development.GitRev.Typed (Errors, QFirst (unQFirst))
+import Development.GitRev.Typed (Errors, unQFirst)
 import Development.GitRev.Typed qualified as GRT
 import Language.Haskell.TH (Q, runIO)
 import Language.Haskell.TH.Syntax (Lift)
