@@ -48,7 +48,7 @@ hashEnvValDir :: Code Q OsString
 hashEnvValDir = toCode gitHash
   where
     toCode :: Q (Either (Errors GitOrEnvLookupError) OsString) -> Code Q OsString
-    toCode = GRT.qToCode . GRT.projectError
+    toCode = GRT.qToCode . GRT.projectStringUnknown
 
     gitHash :: Q (Either (Errors GitOrEnvLookupError) OsString)
     gitHash =
