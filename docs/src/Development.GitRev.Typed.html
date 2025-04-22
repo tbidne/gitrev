@@ -1,0 +1,530 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Typed version of &quot;Development.GitRev&quot;.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Development.GitRev.Typed.html"><span class="hs-identifier">Development.GitRev.Typed</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Basic functions</span></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><span class="hs-comment">-- $basic</span></span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitBranch"><span class="hs-identifier">gitBranch</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitCommitCount"><span class="hs-identifier">gitCommitCount</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitCommitDate"><span class="hs-identifier">gitCommitDate</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitDescribe"><span class="hs-identifier">gitDescribe</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitDiff"><span class="hs-identifier">gitDiff</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitDirty"><span class="hs-identifier">gitDirty</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitDirtyTracked"><span class="hs-identifier">gitDirtyTracked</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitHash"><span class="hs-identifier">gitHash</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitShortHash"><span class="hs-identifier">gitShortHash</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#gitTree"><span class="hs-identifier">gitTree</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Custom behavior</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><span class="hs-comment">-- $custom</span></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** &quot;Out-of-tree&quot; builds</span></span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><span class="hs-comment">-- $out-of-tree</span></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Git Primitives</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitBranchQ"><span class="hs-identifier">Git.gitBranchQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitCommitCountQ"><span class="hs-identifier">Git.gitCommitCountQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitCommitDateQ"><span class="hs-identifier">Git.gitCommitDateQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDescribeQ"><span class="hs-identifier">Git.gitDescribeQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDiffQ"><span class="hs-identifier">Git.gitDiffQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDirtyQ"><span class="hs-identifier">Git.gitDirtyQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDirtyTrackedQ"><span class="hs-identifier">Git.gitDirtyTrackedQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitHashQ"><span class="hs-identifier">Git.gitHashQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitShortHashQ"><span class="hs-identifier">Git.gitShortHashQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitTreeQ"><span class="hs-identifier">Git.gitTreeQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="hs-comment">-- *** Running your own git actions</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#runGit"><span class="hs-identifier">Git.runGit</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.Common.html/Development.GitRev.Internal.Git.Common.html#IndexUsed"><span class="hs-identifier">IndexUsed</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Environment lookup</span></span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Environment.html/Development.GitRev.Internal.Environment.html#envValQ"><span class="hs-identifier">Env.envValQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#runGitInEnvDirQ"><span class="hs-identifier">Utils.runGitInEnvDirQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Q to Code</span></span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier">qToCode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Q Combinators</span></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="hs-comment">-- *** First success</span></span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#QFirst"><span class="hs-identifier">QFirst</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#mkQFirst"><span class="hs-identifier">QFirst.mkQFirst</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#unQFirst"><span class="hs-identifier">QFirst.unQFirst</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#firstSuccessQ"><span class="hs-identifier">QFirst.firstSuccessQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#Errors"><span class="hs-identifier">Errors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#mkErrors"><span class="hs-identifier">QFirst.mkErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#unErrors"><span class="hs-identifier">QFirst.unErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="hs-comment">-- *** Eliminating Either</span></span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier">Utils.projectStringUnknown</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectConst"><span class="hs-identifier">Utils.projectConst</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectFalse"><span class="hs-identifier">Utils.projectFalse</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectError"><span class="hs-identifier">Utils.projectError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectErrorMap"><span class="hs-identifier">Utils.projectErrorMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectLeft"><span class="hs-identifier">Utils.projectLeft</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Errors</span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#GitOrEnvLookupError"><span class="hs-identifier">GitOrEnvLookupError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#GitError"><span class="hs-identifier">GitError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Environment.html/Development.GitRev.Internal.Environment.html#EnvLookupError"><span class="hs-identifier">EnvLookupError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="hs-comment">-- *** Utilities</span></span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#embedGitError"><span class="hs-identifier">Utils.embedGitError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#embedEnvLookupError"><span class="hs-identifier">Utils.embedEnvLookupError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#joinEnvLookupGitErrors"><span class="hs-identifier">Utils.joinEnvLookupGitErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-75"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#joinGitEnvLookupErrors"><span class="hs-identifier">Utils.joinGitEnvLookupErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Environment.html/Development.GitRev.Internal.Environment.html"><span class="hs-identifier">Development.GitRev.Internal.Environment</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Environment.html/Development.GitRev.Internal.Environment.html#EnvLookupError"><span class="hs-identifier">EnvLookupError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Environment.html/Development.GitRev.Internal.Environment.html#MkEnvLookupError"><span class="hs-identifier">MkEnvLookupError</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Environment.html/Development.GitRev.Internal.Environment.html"><span class="hs-identifier">Development.GitRev.Internal.Environment</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Env</span></span><span>
+</span><span id="line-81"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html"><span class="hs-identifier">Development.GitRev.Internal.Git</span></a></span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#GitError"><span class="hs-identifier">GitError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#GitNotFound"><span class="hs-identifier">GitNotFound</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#GitRunError"><span class="hs-identifier">GitRunError</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-83"></span><span>    </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.Common.html/Development.GitRev.Internal.Git.Common.html#IndexUsed"><span class="hs-identifier">IndexUsed</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.Common.html/Development.GitRev.Internal.Git.Common.html#IdxNotUsed"><span class="hs-identifier">IdxNotUsed</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.Common.html/Development.GitRev.Internal.Git.Common.html#IdxUsed"><span class="hs-identifier">IdxUsed</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html"><span class="hs-identifier">Development.GitRev.Internal.Git</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Git</span></span><span>
+</span><span id="line-86"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html"><span class="hs-identifier">Development.GitRev.Internal.QFirst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#Errors"><span class="hs-identifier">Errors</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html#QFirst"><span class="hs-identifier">QFirst</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.QFirst.html/Development.GitRev.Internal.QFirst.html"><span class="hs-identifier">Development.GitRev.Internal.QFirst</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">QFirst</span></span><span>
+</span><span id="line-88"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html"><span class="hs-identifier">Development.GitRev.Internal.Utils</span></a></span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#GitOrEnvLookupError"><span class="hs-identifier">GitOrEnvLookupError</span></a></span><span>
+</span><span id="line-90"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#GitOrEnvLookupEnvLookup"><span class="hs-identifier">GitOrEnvLookupEnvLookup</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-91"></span><span>        </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#GitOrEnvLookupGit"><span class="hs-identifier">GitOrEnvLookupGit</span></a></span><span>
+</span><span id="line-92"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html"><span class="hs-identifier">Development.GitRev.Internal.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Utils</span></span><span>
+</span><span id="line-95"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Code</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Q</span></span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TH</span></span><span>
+</span><span id="line-97"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH.Syntax</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Lift</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">lift</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">TExp</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">TExp</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XTemplateHaskell</span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.Functor (($&gt;))</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- &gt;&gt;&gt; import Language.Haskell.TH (Code, Q, runIO)</span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- $basic</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- These functions are simple, merely a typed version of &quot;Development.GitRev&quot;'s</span><span>
+</span><span id="line-107"></span><span class="hs-comment">-- API.</span><span>
+</span><span id="line-108"></span><span class="hs-comment">--</span><span>
+</span><span id="line-109"></span><span class="hs-comment">-- __NOTE:__ These functions do /not/ error if git fails to run, opting</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- instead to return some default value (e.g. string @UNKNOWN@, boolean @False@).</span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- $custom</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- These functions allow defining custom behavior. For instance, using</span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- the primitive 'Git.getHashQ' and combinator 'Utils.projectError', we can</span><span>
+</span><span id="line-116"></span><span class="hs-comment">-- define a variant of 'gitHash' that instead fails to compile if there are</span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- any problems with git:</span><span>
+</span><span id="line-118"></span><span class="hs-comment">--</span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-120"></span><span class="hs-comment">--   let gitHashOrDie :: Code Q String</span><span>
+</span><span id="line-121"></span><span class="hs-comment">--       gitHashOrDie = qToCode $ projectError gitHashQ</span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-123"></span><span class="hs-comment">--</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- We can also define a function that falls back to an environment variable,</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- in case the git command fails. 'Utils.firstSuccessQ' takes the first action</span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- that returns 'Right'.</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-129"></span><span class="hs-comment">--   let gitHashEnv :: String -&gt; Code Q (Either (Errors GitOrEnvLookupError) String)</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--       gitHashEnv var =</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--         qToCode $</span><span>
+</span><span id="line-132"></span><span class="hs-comment">--           firstSuccessQ</span><span>
+</span><span id="line-133"></span><span class="hs-comment">--             (embedGitError gitHashQ)</span><span>
+</span><span id="line-134"></span><span class="hs-comment">--             [embedEnvLookupError $ envValQ var]</span><span>
+</span><span id="line-135"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-136"></span><span class="hs-comment">--</span><span>
+</span><span id="line-137"></span><span class="hs-comment">-- Naturally, these can be combined:</span><span>
+</span><span id="line-138"></span><span class="hs-comment">--</span><span>
+</span><span id="line-139"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-140"></span><span class="hs-comment">--   let gitHashEnvOrDie :: String -&gt; Code Q String</span><span>
+</span><span id="line-141"></span><span class="hs-comment">--       gitHashEnvOrDie var =</span><span>
+</span><span id="line-142"></span><span class="hs-comment">--         qToCode</span><span>
+</span><span id="line-143"></span><span class="hs-comment">--           . projectError</span><span>
+</span><span id="line-144"></span><span class="hs-comment">--           $ firstSuccessQ</span><span>
+</span><span id="line-145"></span><span class="hs-comment">--             (embedGitError gitHashQ)</span><span>
+</span><span id="line-146"></span><span class="hs-comment">--             [embedEnvLookupError $ envValQ var]</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-148"></span><span>
+</span><span id="line-149"></span><span class="hs-comment">-- $out-of-tree</span><span>
+</span><span id="line-150"></span><span class="hs-comment">--</span><span>
+</span><span id="line-151"></span><span class="hs-comment">-- Custom definitions are particularly useful for \&quot;out-of-tree\&quot; builds,</span><span>
+</span><span id="line-152"></span><span class="hs-comment">-- where the build takes place outside of the normal git tree.</span><span>
+</span><span id="line-153"></span><span class="hs-comment">--</span><span>
+</span><span id="line-154"></span><span class="hs-comment">-- These builds present a problem, as we normally rely on building in the</span><span>
+</span><span id="line-155"></span><span class="hs-comment">-- project directory where the @.git@ directory is easy to locate. For</span><span>
+</span><span id="line-156"></span><span class="hs-comment">-- example, while 'gitHash' will work for @\'cabal build\'@, it will not work</span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- for @\'nix build\'@ or @\'cabal install\'@. Fortunately, there are</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- workarounds, both relying on passing the right data via environment</span><span>
+</span><span id="line-159"></span><span class="hs-comment">-- variables.</span><span>
+</span><span id="line-160"></span><span class="hs-comment">--</span><span>
+</span><span id="line-161"></span><span class="hs-comment">-- 1. Passing the git directory.</span><span>
+</span><span id="line-162"></span><span class="hs-comment">--</span><span>
+</span><span id="line-163"></span><span class="hs-comment">--     For situations where we can pass the current directory during</span><span>
+</span><span id="line-164"></span><span class="hs-comment">--     installation e.g.</span><span>
+</span><span id="line-165"></span><span class="hs-comment">--</span><span>
+</span><span id="line-166"></span><span class="hs-comment">--     &gt; $ export EXAMPLE_HOME=$(pwd); cabal install example</span><span>
+</span><span id="line-167"></span><span class="hs-comment">--</span><span>
+</span><span id="line-168"></span><span class="hs-comment">--     We can define</span><span>
+</span><span id="line-169"></span><span class="hs-comment">--</span><span>
+</span><span id="line-170"></span><span class="hs-comment">--     &gt;&gt;&gt; :{</span><span>
+</span><span id="line-171"></span><span class="hs-comment">--       let gitHashSrcDir :: Code Q String</span><span>
+</span><span id="line-172"></span><span class="hs-comment">--           gitHashSrcDir =</span><span>
+</span><span id="line-173"></span><span class="hs-comment">--             qToCode</span><span>
+</span><span id="line-174"></span><span class="hs-comment">--             . projectStringUnknown</span><span>
+</span><span id="line-175"></span><span class="hs-comment">--             $ firstSuccessQ</span><span>
+</span><span id="line-176"></span><span class="hs-comment">--               -- 1. We first try normal gitHashQ.</span><span>
+</span><span id="line-177"></span><span class="hs-comment">--               (embedGitError gitHashQ)</span><span>
+</span><span id="line-178"></span><span class="hs-comment">--               -- 2. If that fails, we try again in the directory pointed</span><span>
+</span><span id="line-179"></span><span class="hs-comment">--               --    to by &quot;EXAMPLE_HOME&quot;.</span><span>
+</span><span id="line-180"></span><span class="hs-comment">--               [runGitInEnvDirQ &quot;EXAMPLE_HOME&quot; gitHashQ]</span><span>
+</span><span id="line-181"></span><span class="hs-comment">--     :}</span><span>
+</span><span id="line-182"></span><span class="hs-comment">--</span><span>
+</span><span id="line-183"></span><span class="hs-comment">--     If the initial call to 'Utils.gitHashQ' fails, then we will try again,</span><span>
+</span><span id="line-184"></span><span class="hs-comment">--     running the command from the directory pointed to by @EXAMPLE_HOME@.</span><span>
+</span><span id="line-185"></span><span class="hs-comment">--     'Utils.firstSuccessQ' ensures we do not run the second action unless the</span><span>
+</span><span id="line-186"></span><span class="hs-comment">--     first fails.</span><span>
+</span><span id="line-187"></span><span class="hs-comment">--</span><span>
+</span><span id="line-188"></span><span class="hs-comment">-- 2. Passing the value itself.</span><span>
+</span><span id="line-189"></span><span class="hs-comment">--</span><span>
+</span><span id="line-190"></span><span class="hs-comment">--     This approach can work well with nix, as nix flakes provides</span><span>
+</span><span id="line-191"></span><span class="hs-comment">--     a variety of revisions via its @self@ interface. For example:</span><span>
+</span><span id="line-192"></span><span class="hs-comment">--</span><span>
+</span><span id="line-193"></span><span class="hs-comment">--     @</span><span>
+</span><span id="line-194"></span><span class="hs-comment">--       # Injecting the git hash via EXAMPLE_HASH where drv is the normal</span><span>
+</span><span id="line-195"></span><span class="hs-comment">--       # derivation.</span><span>
+</span><span id="line-196"></span><span class="hs-comment">--       drv.overrideAttrs (oldAttrs: {</span><span>
+</span><span id="line-197"></span><span class="hs-comment">--         # Also: self.shortRev, self.dirtyShortRev</span><span>
+</span><span id="line-198"></span><span class="hs-comment">--         EXAMPLE_HASH = \&quot;${self.rev or self.dirtyRev}\&quot;;</span><span>
+</span><span id="line-199"></span><span class="hs-comment">--       });</span><span>
+</span><span id="line-200"></span><span class="hs-comment">--     @</span><span>
+</span><span id="line-201"></span><span class="hs-comment">--</span><span>
+</span><span id="line-202"></span><span class="hs-comment">--     Then we can define</span><span>
+</span><span id="line-203"></span><span class="hs-comment">--</span><span>
+</span><span id="line-204"></span><span class="hs-comment">--     &gt;&gt;&gt; :{</span><span>
+</span><span id="line-205"></span><span class="hs-comment">--       let gitHashVal :: Code Q String</span><span>
+</span><span id="line-206"></span><span class="hs-comment">--           gitHashVal =</span><span>
+</span><span id="line-207"></span><span class="hs-comment">--             qToCode</span><span>
+</span><span id="line-208"></span><span class="hs-comment">--             . projectStringUnknown</span><span>
+</span><span id="line-209"></span><span class="hs-comment">--             $ firstSuccessQ</span><span>
+</span><span id="line-210"></span><span class="hs-comment">--               -- 1. We first try normal gitHashQ.</span><span>
+</span><span id="line-211"></span><span class="hs-comment">--               (embedGitError gitHashQ)</span><span>
+</span><span id="line-212"></span><span class="hs-comment">--               -- 2. If that fails, get the value directly from</span><span>
+</span><span id="line-213"></span><span class="hs-comment">--               --    &quot;EXAMPLE_HASH&quot;.</span><span>
+</span><span id="line-214"></span><span class="hs-comment">--               [embedEnvLookupError $ envValQ &quot;EXAMPLE_HASH&quot;]</span><span>
+</span><span id="line-215"></span><span class="hs-comment">--     :}</span><span>
+</span><span id="line-216"></span><span class="hs-comment">--</span><span>
+</span><span id="line-217"></span><span class="hs-comment">--     Once again, if the first attempt fails, we will run the second action,</span><span>
+</span><span id="line-218"></span><span class="hs-comment">--     looking for the value of @EXAMPLE_HASH@.</span><span>
+</span><span id="line-219"></span><span class="hs-comment">--</span><span>
+</span><span id="line-220"></span><span class="hs-comment">-- Finally, we can compose these together to make a function that works for all</span><span>
+</span><span id="line-221"></span><span class="hs-comment">-- three cases:</span><span>
+</span><span id="line-222"></span><span class="hs-comment">--</span><span>
+</span><span id="line-223"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-224"></span><span class="hs-comment">--   let gitHashValSrc :: Code Q String</span><span>
+</span><span id="line-225"></span><span class="hs-comment">--       gitHashValSrc =</span><span>
+</span><span id="line-226"></span><span class="hs-comment">--         qToCode</span><span>
+</span><span id="line-227"></span><span class="hs-comment">--           . projectStringUnknown</span><span>
+</span><span id="line-228"></span><span class="hs-comment">--           $ firstSuccessQ</span><span>
+</span><span id="line-229"></span><span class="hs-comment">--             (embedGitError gitHashQ)</span><span>
+</span><span id="line-230"></span><span class="hs-comment">--             [ embedEnvLookupError $ envValQ &quot;EXAMPLE_HASH&quot;,</span><span>
+</span><span id="line-231"></span><span class="hs-comment">--               runGitInEnvDirQ &quot;EXAMPLE_HOME&quot; gitHashQ</span><span>
+</span><span id="line-232"></span><span class="hs-comment">--             ]</span><span>
+</span><span id="line-233"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-234"></span><span class="hs-comment">--</span><span>
+</span><span id="line-235"></span><span class="hs-comment">-- A final note on laziness: As alluded to above, Q's default semigroup</span><span>
+</span><span id="line-236"></span><span class="hs-comment">-- instance is not lazy enough:</span><span>
+</span><span id="line-237"></span><span class="hs-comment">--</span><span>
+</span><span id="line-238"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-239"></span><span class="hs-comment">--   $$( qToCode $</span><span>
+</span><span id="line-240"></span><span class="hs-comment">--       (runIO (putStrLn &quot;in q1&quot;) $&gt; (Right &quot;q1&quot;) :: Q (Either () String))</span><span>
+</span><span id="line-241"></span><span class="hs-comment">--         &lt;&gt; (runIO (putStrLn &quot;in q2&quot;) $&gt; Left ())</span><span>
+</span><span id="line-242"></span><span class="hs-comment">--     )</span><span>
+</span><span id="line-243"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-244"></span><span class="hs-comment">-- in q1</span><span>
+</span><span id="line-245"></span><span class="hs-comment">-- in q2</span><span>
+</span><span id="line-246"></span><span class="hs-comment">-- Right &quot;q1&quot;</span><span>
+</span><span id="line-247"></span><span class="hs-comment">--</span><span>
+</span><span id="line-248"></span><span class="hs-comment">-- For this reason, we introduce the 'QFirst' newtype:</span><span>
+</span><span id="line-249"></span><span class="hs-comment">--</span><span>
+</span><span id="line-250"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-251"></span><span class="hs-comment">--   $$( qToCode $ unQFirst $</span><span>
+</span><span id="line-252"></span><span class="hs-comment">--       (mkQFirst $ runIO (putStrLn &quot;in q1&quot;) $&gt; (Right &quot;q1&quot;) :: QFirst () String)</span><span>
+</span><span id="line-253"></span><span class="hs-comment">--         &lt;&gt; (mkQFirst $ runIO (putStrLn &quot;in q2&quot;) $&gt; Left ())</span><span>
+</span><span id="line-254"></span><span class="hs-comment">--     )</span><span>
+</span><span id="line-255"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-256"></span><span class="hs-comment">-- in q1</span><span>
+</span><span id="line-257"></span><span class="hs-comment">-- Right &quot;q1&quot;</span><span>
+</span><span id="line-258"></span><span class="hs-comment">--</span><span>
+</span><span id="line-259"></span><span class="hs-comment">-- The convenience function</span><span>
+</span><span id="line-260"></span><span class="hs-comment">--</span><span>
+</span><span id="line-261"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-262"></span><span class="hs-comment">--   firstSuccessQ :: Q (Either e a) -&gt; [Q (Either e a)] -&gt; Q (Either (Errors e) a)</span><span>
+</span><span id="line-263"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-264"></span><span class="hs-comment">--</span><span>
+</span><span id="line-265"></span><span class="hs-comment">-- utilizes 'QFirst' for sequencing a series of Q actions, stopping after the</span><span>
+</span><span id="line-266"></span><span class="hs-comment">-- first success.</span><span>
+</span><span id="line-267"></span><span>
+</span><span id="line-268"></span><span class="hs-comment">-- | Return the hash of the current git commit, or @UNKNOWN@ if not in</span><span>
+</span><span id="line-269"></span><span class="hs-comment">-- a git repository.</span><span>
+</span><span id="line-270"></span><span class="hs-comment">--</span><span>
+</span><span id="line-271"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-272"></span><span class="hs-comment">--</span><span>
+</span><span id="line-273"></span><span class="hs-comment">-- &gt; &#955;. $$(gitHash)</span><span>
+</span><span id="line-274"></span><span class="hs-comment">-- &gt; &quot;e67e943dd03744d3f93c21f84e127744e6a04543&quot;</span><span>
+</span><span id="line-275"></span><span class="hs-comment">--</span><span>
+</span><span id="line-276"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitHash)</span><span>
+</span><span id="line-277"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-278"></span><span class="hs-comment">--</span><span>
+</span><span id="line-279"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-280"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitHash"><span class="hs-identifier hs-type">gitHash</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-281"></span><span id="gitHash"><span class="annot"><span class="annottext">gitHash :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitHash"><span class="hs-identifier hs-var hs-var">gitHash</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitHashQ"><span class="hs-identifier hs-var">Git.gitHashQ</span></a></span><span>
+</span><span id="line-282"></span><span>
+</span><span id="line-283"></span><span class="hs-comment">-- | Return the short hash of the current git commit, or @UNKNOWN@ if not in</span><span>
+</span><span id="line-284"></span><span class="hs-comment">-- a git repository.</span><span>
+</span><span id="line-285"></span><span class="hs-comment">--</span><span>
+</span><span id="line-286"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-287"></span><span class="hs-comment">--</span><span>
+</span><span id="line-288"></span><span class="hs-comment">-- &gt; &#955;. $$(gitShortHash)</span><span>
+</span><span id="line-289"></span><span class="hs-comment">-- &gt; &quot;e67e943&quot;</span><span>
+</span><span id="line-290"></span><span class="hs-comment">--</span><span>
+</span><span id="line-291"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitShortHash)</span><span>
+</span><span id="line-292"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-293"></span><span class="hs-comment">--</span><span>
+</span><span id="line-294"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-295"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitShortHash"><span class="hs-identifier hs-type">gitShortHash</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-296"></span><span id="gitShortHash"><span class="annot"><span class="annottext">gitShortHash :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitShortHash"><span class="hs-identifier hs-var hs-var">gitShortHash</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitShortHashQ"><span class="hs-identifier hs-var">Git.gitShortHashQ</span></a></span><span>
+</span><span id="line-297"></span><span>
+</span><span id="line-298"></span><span class="hs-comment">-- | Return the branch (or tag) name of the current git commit, or @UNKNOWN@</span><span>
+</span><span id="line-299"></span><span class="hs-comment">-- if not in a git repository. For detached heads, this will just be</span><span>
+</span><span id="line-300"></span><span class="hs-comment">-- &quot;HEAD&quot;.</span><span>
+</span><span id="line-301"></span><span class="hs-comment">--</span><span>
+</span><span id="line-302"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-303"></span><span class="hs-comment">--</span><span>
+</span><span id="line-304"></span><span class="hs-comment">-- &gt; &#955;. $$(gitBranch)</span><span>
+</span><span id="line-305"></span><span class="hs-comment">-- &gt; &quot;main&quot;</span><span>
+</span><span id="line-306"></span><span class="hs-comment">--</span><span>
+</span><span id="line-307"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitBranch)</span><span>
+</span><span id="line-308"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-309"></span><span class="hs-comment">--</span><span>
+</span><span id="line-310"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-311"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitBranch"><span class="hs-identifier hs-type">gitBranch</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-312"></span><span id="gitBranch"><span class="annot"><span class="annottext">gitBranch :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitBranch"><span class="hs-identifier hs-var hs-var">gitBranch</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitBranchQ"><span class="hs-identifier hs-var">Git.gitBranchQ</span></a></span><span>
+</span><span id="line-313"></span><span>
+</span><span id="line-314"></span><span class="hs-comment">-- | Return the long git description for the current git commit, or</span><span>
+</span><span id="line-315"></span><span class="hs-comment">-- @UNKNOWN@ if not in a git repository.</span><span>
+</span><span id="line-316"></span><span class="hs-comment">--</span><span>
+</span><span id="line-317"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-318"></span><span class="hs-comment">--</span><span>
+</span><span id="line-319"></span><span class="hs-comment">-- &gt; &#955;. $$(gitDescribe)</span><span>
+</span><span id="line-320"></span><span class="hs-comment">-- &gt; &quot;e67e943&quot;</span><span>
+</span><span id="line-321"></span><span class="hs-comment">--</span><span>
+</span><span id="line-322"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitDescribe)</span><span>
+</span><span id="line-323"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-324"></span><span class="hs-comment">--</span><span>
+</span><span id="line-325"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-326"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitDescribe"><span class="hs-identifier hs-type">gitDescribe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-327"></span><span id="gitDescribe"><span class="annot"><span class="annottext">gitDescribe :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitDescribe"><span class="hs-identifier hs-var hs-var">gitDescribe</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDescribeQ"><span class="hs-identifier hs-var">Git.gitDescribeQ</span></a></span><span>
+</span><span id="line-328"></span><span>
+</span><span id="line-329"></span><span class="hs-comment">-- | Return @True@ if there are non-committed files present in the</span><span>
+</span><span id="line-330"></span><span class="hs-comment">-- repository.</span><span>
+</span><span id="line-331"></span><span class="hs-comment">--</span><span>
+</span><span id="line-332"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-333"></span><span class="hs-comment">--</span><span>
+</span><span id="line-334"></span><span class="hs-comment">-- &gt; &#955;. $$(gitDirty)</span><span>
+</span><span id="line-335"></span><span class="hs-comment">-- &gt; False</span><span>
+</span><span id="line-336"></span><span class="hs-comment">--</span><span>
+</span><span id="line-337"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitDirty)</span><span>
+</span><span id="line-338"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-339"></span><span class="hs-comment">--</span><span>
+</span><span id="line-340"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-341"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitDirty"><span class="hs-identifier hs-type">gitDirty</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-342"></span><span id="gitDirty"><span class="annot"><span class="annottext">gitDirty :: Code Q Bool
+</span><a href="Development.GitRev.Typed.html#gitDirty"><span class="hs-identifier hs-var hs-var">gitDirty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q Bool -&gt; Code Q Bool
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q Bool -&gt; Code Q Bool) -&gt; Q Bool -&gt; Code Q Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError Bool) -&gt; Q Bool
+forall (f :: * -&gt; *) e. Functor f =&gt; f (Either e Bool) -&gt; f Bool
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectFalse"><span class="hs-identifier hs-var">Utils.projectFalse</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError Bool)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDirtyQ"><span class="hs-identifier hs-var">Git.gitDirtyQ</span></a></span><span>
+</span><span id="line-343"></span><span>
+</span><span id="line-344"></span><span class="hs-comment">-- | Return @True@ if there are non-commited changes to tracked files</span><span>
+</span><span id="line-345"></span><span class="hs-comment">-- present in the repository.</span><span>
+</span><span id="line-346"></span><span class="hs-comment">--</span><span>
+</span><span id="line-347"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-348"></span><span class="hs-comment">--</span><span>
+</span><span id="line-349"></span><span class="hs-comment">-- &gt; &#955;. $$(gitDirtyTracked)</span><span>
+</span><span id="line-350"></span><span class="hs-comment">-- &gt; False</span><span>
+</span><span id="line-351"></span><span class="hs-comment">--</span><span>
+</span><span id="line-352"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitDirtyTracked)</span><span>
+</span><span id="line-353"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-354"></span><span class="hs-comment">--</span><span>
+</span><span id="line-355"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-356"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitDirtyTracked"><span class="hs-identifier hs-type">gitDirtyTracked</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-357"></span><span id="gitDirtyTracked"><span class="annot"><span class="annottext">gitDirtyTracked :: Code Q Bool
+</span><a href="Development.GitRev.Typed.html#gitDirtyTracked"><span class="hs-identifier hs-var hs-var">gitDirtyTracked</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q Bool -&gt; Code Q Bool
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q Bool -&gt; Code Q Bool) -&gt; Q Bool -&gt; Code Q Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError Bool) -&gt; Q Bool
+forall (f :: * -&gt; *) e. Functor f =&gt; f (Either e Bool) -&gt; f Bool
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.Common.html/Development.GitRev.Internal.Utils.Common.html#projectFalse"><span class="hs-identifier hs-var">Utils.projectFalse</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError Bool)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDirtyTrackedQ"><span class="hs-identifier hs-var">Git.gitDirtyTrackedQ</span></a></span><span>
+</span><span id="line-358"></span><span>
+</span><span id="line-359"></span><span class="hs-comment">-- | Return the number of commits in the current head.</span><span>
+</span><span id="line-360"></span><span class="hs-comment">--</span><span>
+</span><span id="line-361"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-362"></span><span class="hs-comment">--</span><span>
+</span><span id="line-363"></span><span class="hs-comment">-- &gt; &#955;. $$(gitCommitCount)</span><span>
+</span><span id="line-364"></span><span class="hs-comment">-- &gt; &quot;47&quot;</span><span>
+</span><span id="line-365"></span><span class="hs-comment">--</span><span>
+</span><span id="line-366"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitCommitCount)</span><span>
+</span><span id="line-367"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-368"></span><span class="hs-comment">--</span><span>
+</span><span id="line-369"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-370"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitCommitCount"><span class="hs-identifier hs-type">gitCommitCount</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-371"></span><span id="gitCommitCount"><span class="annot"><span class="annottext">gitCommitCount :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitCommitCount"><span class="hs-identifier hs-var hs-var">gitCommitCount</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitCommitCountQ"><span class="hs-identifier hs-var">Git.gitCommitCountQ</span></a></span><span>
+</span><span id="line-372"></span><span>
+</span><span id="line-373"></span><span class="hs-comment">-- | Return the commit date of the current head.</span><span>
+</span><span id="line-374"></span><span class="hs-comment">--</span><span>
+</span><span id="line-375"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-376"></span><span class="hs-comment">--</span><span>
+</span><span id="line-377"></span><span class="hs-comment">-- &gt; &#955;. $$(gitCommitDate)</span><span>
+</span><span id="line-378"></span><span class="hs-comment">-- &gt; &quot;Mon Apr 14 22:14:44 2025 +1200&quot;</span><span>
+</span><span id="line-379"></span><span class="hs-comment">--</span><span>
+</span><span id="line-380"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitCommitDate)</span><span>
+</span><span id="line-381"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-382"></span><span class="hs-comment">--</span><span>
+</span><span id="line-383"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-384"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitCommitDate"><span class="hs-identifier hs-type">gitCommitDate</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-385"></span><span id="gitCommitDate"><span class="annot"><span class="annottext">gitCommitDate :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitCommitDate"><span class="hs-identifier hs-var hs-var">gitCommitDate</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitCommitDateQ"><span class="hs-identifier hs-var">Git.gitCommitDateQ</span></a></span><span>
+</span><span id="line-386"></span><span>
+</span><span id="line-387"></span><span class="hs-comment">-- | Return the diff of the working copy with HEAD.</span><span>
+</span><span id="line-388"></span><span class="hs-comment">--</span><span>
+</span><span id="line-389"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-390"></span><span class="hs-comment">--</span><span>
+</span><span id="line-391"></span><span class="hs-comment">-- &gt; &#955;. $$(gitDiff)</span><span>
+</span><span id="line-392"></span><span class="hs-comment">-- &gt; &quot;Mon Apr 14 22:14:44 2025 +1200&quot;</span><span>
+</span><span id="line-393"></span><span class="hs-comment">--</span><span>
+</span><span id="line-394"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitDiff)</span><span>
+</span><span id="line-395"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-396"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitDiff"><span class="hs-identifier hs-type">gitDiff</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-397"></span><span id="gitDiff"><span class="annot"><span class="annottext">gitDiff :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitDiff"><span class="hs-identifier hs-var hs-var">gitDiff</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitDiffQ"><span class="hs-identifier hs-var">Git.gitDiffQ</span></a></span><span>
+</span><span id="line-398"></span><span>
+</span><span id="line-399"></span><span class="hs-comment">-- | Return the hash of the current tree.</span><span>
+</span><span id="line-400"></span><span class="hs-comment">--</span><span>
+</span><span id="line-401"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-402"></span><span class="hs-comment">--</span><span>
+</span><span id="line-403"></span><span class="hs-comment">-- &gt; &#955;. $$(gitTree)</span><span>
+</span><span id="line-404"></span><span class="hs-comment">-- &gt; &quot;Mon Apr 14 22:14:44 2025 +1200&quot;</span><span>
+</span><span id="line-405"></span><span class="hs-comment">--</span><span>
+</span><span id="line-406"></span><span class="hs-comment">-- &gt;&gt;&gt; $$(gitTree)</span><span>
+</span><span id="line-407"></span><span class="hs-comment">-- ...</span><span>
+</span><span id="line-408"></span><span class="annot"><a href="Development.GitRev.Typed.html#gitTree"><span class="hs-identifier hs-type">gitTree</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-409"></span><span id="gitTree"><span class="annot"><span class="annottext">gitTree :: Code Q String
+</span><a href="Development.GitRev.Typed.html#gitTree"><span class="hs-identifier hs-var hs-var">gitTree</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q String -&gt; Code Q String
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var">qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q String -&gt; Code Q String) -&gt; Q String -&gt; Code Q String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String) -&gt; Q String
+forall (f :: * -&gt; *) e.
+Functor f =&gt;
+f (Either e String) -&gt; f String
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Utils.html/Development.GitRev.Internal.Utils.html#projectStringUnknown"><span class="hs-identifier hs-var">Utils.projectStringUnknown</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError String)
+</span><a href="file:///home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal/src/Development.GitRev.Internal.Git.html/Development.GitRev.Internal.Git.html#gitTreeQ"><span class="hs-identifier hs-var">Git.gitTreeQ</span></a></span><span>
+</span><span id="line-410"></span><span>
+</span><span id="line-411"></span><span class="hs-comment">-- | Lifts a 'Q' computation to 'Code', for usage with typed TH.</span><span>
+</span><span id="line-412"></span><span class="hs-comment">--</span><span>
+</span><span id="line-413"></span><span class="hs-comment">-- @since 2.0</span><span>
+</span><span id="line-414"></span><span class="annot"><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-type">qToCode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679055012"><span class="annot"><a href="#local-6989586621679055012"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Lift</span></span><span> </span><span class="annot"><a href="#local-6989586621679055012"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><a href="#local-6989586621679055012"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><a href="#local-6989586621679055012"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-415"></span><span id="qToCode"><span class="annot"><span class="annottext">qToCode :: forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="Development.GitRev.Typed.html#qToCode"><span class="hs-identifier hs-var hs-var">qToCode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q (TExp a) -&gt; Code Q a
+forall a (m :: * -&gt; *). m (TExp a) -&gt; Code m a
+</span><span class="hs-identifier hs-var">TH.liftCode</span></span><span> </span><span class="annot"><span class="annottext">(Q (TExp a) -&gt; Code Q a) -&gt; (Q a -&gt; Q (TExp a)) -&gt; Q a -&gt; Code Q a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Exp -&gt; TExp a) -&gt; Q Exp -&gt; Q (TExp a)
+forall a b. (a -&gt; b) -&gt; Q a -&gt; Q b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Exp -&gt; TExp a
+forall a. Exp -&gt; TExp a
+</span><span class="hs-identifier hs-var">TExp</span></span><span> </span><span class="annot"><span class="annottext">(Q Exp -&gt; Q (TExp a)) -&gt; (Q a -&gt; Q Exp) -&gt; Q a -&gt; Q (TExp a)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Q a -&gt; (a -&gt; Q Exp) -&gt; Q Exp
+forall a b. Q a -&gt; (a -&gt; Q b) -&gt; Q b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; Q Exp
+forall t (m :: * -&gt; *). (Lift t, Quote m) =&gt; t -&gt; m Exp
+forall (m :: * -&gt; *). Quote m =&gt; a -&gt; m Exp
+</span><span class="hs-identifier hs-var">lift</span></span><span class="hs-special">)</span><span>
+</span><span id="line-416"></span></pre></body></html>

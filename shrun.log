@@ -1,0 +1,62 @@
+[2025-04-22 13:46:09][Command][haddock_push] Starting...
+[2025-04-22 13:46:09][Command][haddock_push] Your branch is up to date with 'origin/main'.
+[2025-04-22 13:46:09][Command][haddock_push] Already on 'main'
+[2025-04-22 13:46:09][Command][haddock_push] Deleted branch gh-pages (was 24c94e8).
+[2025-04-22 13:46:09][Command][haddock_push] Switched to a new branch 'gh-pages'
+[2025-04-22 13:46:09][Command][haddock_push] Configuration is affected by the following files:
+[2025-04-22 13:46:09][Command][haddock_push] - cabal.project
+[2025-04-22 13:46:09][Command][haddock_push] - cabal.project.local
+[2025-04-22 13:46:11][Command][haddock_push] Build profile: -w ghc-9.10.1 -O1
+[2025-04-22 13:46:11][Command][haddock_push] In order, the following will be built (use -v for more details):
+[2025-04-22 13:46:11][Command][haddock_push]  - gitrev-internal-0.1 (lib) (configuration changed)
+[2025-04-22 13:46:11][Command][haddock_push]  - gitrev-2.0 (lib) (configuration changed)
+[2025-04-22 13:46:11][Command][haddock_push] Configuring library for gitrev-internal-0.1...
+[2025-04-22 13:46:16][Command][haddock_push] Preprocessing library for gitrev-internal-0.1...
+[2025-04-22 13:46:16][Command][haddock_push] Building library for gitrev-internal-0.1...
+[2025-04-22 13:46:16][Command][haddock_push] [ 1 of 10] Compiling Development.GitRev.Internal.Environment ( src/Development/GitRev/Internal/Environment.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Environment.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Environment.dyn_o ) [Flags changed]
+[2025-04-22 13:46:17][Command][haddock_push] [ 2 of 10] Compiling Development.GitRev.Internal.OsString ( src/Development/GitRev/Internal/OsString.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/OsString.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/OsString.dyn_o ) [Flags changed]
+[2025-04-22 13:46:18][Command][haddock_push] [ 3 of 10] Compiling Development.GitRev.Internal.Git.Common ( src/Development/GitRev/Internal/Git/Common.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Git/Common.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Git/Common.dyn_o ) [Flags changed]
+[2025-04-22 13:46:20][Command][haddock_push] [ 4 of 10] Compiling Development.GitRev.Internal.Git.OsString ( src/Development/GitRev/Internal/Git/OsString.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Git/OsString.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Git/OsString.dyn_o ) [Flags changed]
+[2025-04-22 13:46:21][Command][haddock_push] [ 5 of 10] Compiling Development.GitRev.Internal.Git ( src/Development/GitRev/Internal/Git.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Git.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Git.dyn_o ) [Flags changed]
+[2025-04-22 13:46:21][Command][haddock_push] [ 6 of 10] Compiling Development.GitRev.Internal.Environment.OsString ( src/Development/GitRev/Internal/Environment/OsString.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Environment/OsString.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Environment/OsString.dyn_o ) [Flags changed]
+[2025-04-22 13:46:22][Command][haddock_push] [ 7 of 10] Compiling Development.GitRev.Internal.QFirst ( src/Development/GitRev/Internal/QFirst.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/QFirst.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/QFirst.dyn_o ) [Flags changed]
+[2025-04-22 13:46:24][Command][haddock_push] [ 8 of 10] Compiling Development.GitRev.Internal.Utils.Common ( src/Development/GitRev/Internal/Utils/Common.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Utils/Common.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Utils/Common.dyn_o ) [Flags changed]
+[2025-04-22 13:46:24][Command][haddock_push] [ 9 of 10] Compiling Development.GitRev.Internal.Utils ( src/Development/GitRev/Internal/Utils.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Utils.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Utils.dyn_o ) [Flags changed]
+[2025-04-22 13:46:24][Command][haddock_push] [10 of 10] Compiling Development.GitRev.Internal.Utils.OsString ( src/Development/GitRev/Internal/Utils/OsString.hs, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Utils/OsString.o, /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/build/Development/GitRev/Internal/Utils/OsString.dyn_o ) [Flags changed]
+[2025-04-22 13:46:26][Command][haddock_push] Preprocessing library for gitrev-internal-0.1...
+[2025-04-22 13:46:26][Command][haddock_push] Running Haddock on library for gitrev-internal-0.1...
+[2025-04-22 13:46:27][Command][haddock_push] [ 1 of 10] Compiling Development.GitRev.Internal.Environment ( src/Development/GitRev/Internal/Environment.hs, nothing ) [HIE file is missing]
+[2025-04-22 13:46:27][Command][haddock_push] [ 2 of 10] Compiling Development.GitRev.Internal.OsString ( src/Development/GitRev/Internal/OsString.hs, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_12.o, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_12.dyn_o )
+[2025-04-22 13:46:28][Command][haddock_push] [ 3 of 10] Compiling Development.GitRev.Internal.Git.Common ( src/Development/GitRev/Internal/Git/Common.hs, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_8.o, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_8.dyn_o )
+[2025-04-22 13:46:29][Command][haddock_push] [ 4 of 10] Compiling Development.GitRev.Internal.Git.OsString ( src/Development/GitRev/Internal/Git/OsString.hs, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_10.o, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_10.dyn_o )
+[2025-04-22 13:46:30][Command][haddock_push] [ 5 of 10] Compiling Development.GitRev.Internal.Git ( src/Development/GitRev/Internal/Git.hs, nothing ) [HIE file is missing]
+[2025-04-22 13:46:30][Command][haddock_push] [ 6 of 10] Compiling Development.GitRev.Internal.Environment.OsString ( src/Development/GitRev/Internal/Environment/OsString.hs, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_6.o, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_6.dyn_o )
+[2025-04-22 13:46:30][Command][haddock_push] [ 7 of 10] Compiling Development.GitRev.Internal.QFirst ( src/Development/GitRev/Internal/QFirst.hs, nothing ) [HIE file is missing]
+[2025-04-22 13:46:30][Command][haddock_push] [ 8 of 10] Compiling Development.GitRev.Internal.Utils.Common ( src/Development/GitRev/Internal/Utils/Common.hs, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_14.o, /tmp/nix-shell.vzH3kr/ghc1589831_0/ghc_14.dyn_o )
+[2025-04-22 13:46:31][Command][haddock_push] [ 9 of 10] Compiling Development.GitRev.Internal.Utils ( src/Development/GitRev/Internal/Utils.hs, nothing ) [HIE file is missing]
+[2025-04-22 13:46:31][Command][haddock_push] [10 of 10] Compiling Development.GitRev.Internal.Utils.OsString ( src/Development/GitRev/Internal/Utils/OsString.hs, nothing ) [HIE file is missing]
+[2025-04-22 13:46:55][Command][haddock_push] Haddock coverage:
+[2025-04-22 13:46:55][Command][haddock_push]  100% (  5 /  5) in 'Development.GitRev.Internal.Environment'
+[2025-04-22 13:46:55][Command][haddock_push]  100% ( 11 / 11) in 'Development.GitRev.Internal.OsString'
+[2025-04-22 13:46:55][Command][haddock_push]  100% (  8 /  8) in 'Development.GitRev.Internal.Git.Common'
+[2025-04-22 13:46:55][Command][haddock_push]  100% ( 16 / 16) in 'Development.GitRev.Internal.Git.OsString'
+[2025-04-22 13:46:55][Command][haddock_push]  100% ( 16 / 16) in 'Development.GitRev.Internal.Git'
+[2025-04-22 13:46:55][Command][haddock_push]  100% (  5 /  5) in 'Development.GitRev.Internal.Environment.OsString'
+[2025-04-22 13:46:55][Command][haddock_push]  100% (  9 /  9) in 'Development.GitRev.Internal.QFirst'
+[2025-04-22 13:46:55][Command][haddock_push]  100% (  7 /  7) in 'Development.GitRev.Internal.Utils.Common'
+[2025-04-22 13:46:55][Command][haddock_push]  100% ( 17 / 17) in 'Development.GitRev.Internal.Utils'
+[2025-04-22 13:46:55][Command][haddock_push]  100% ( 17 / 17) in 'Development.GitRev.Internal.Utils.OsString'
+[2025-04-22 13:46:55][Command][haddock_push] Documentation created:
+[2025-04-22 13:46:55][Command][haddock_push] /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-internal-0.1/doc/html/gitrev-internal
+[2025-04-22 13:46:57][Command][haddock_push] Configuring library for gitrev-2.0...
+[2025-04-22 13:47:01][Command][haddock_push] Preprocessing library for gitrev-2.0...
+[2025-04-22 13:47:01][Command][haddock_push] Running Haddock on library for gitrev-2.0...
+[2025-04-22 13:47:02][Command][haddock_push] [1 of 3] Compiling Development.GitRev ( src/Development/GitRev.hs, nothing ) [Flags changed]
+[2025-04-22 13:47:02][Command][haddock_push] [2 of 3] Compiling Development.GitRev.Typed ( src/Development/GitRev/Typed.hs, nothing ) [Flags changed]
+[2025-04-22 13:47:02][Command][haddock_push] [3 of 3] Compiling Development.GitRev.Typed.OsString ( src/Development/GitRev/Typed/OsString.hs, nothing ) [Flags changed]
+[2025-04-22 13:47:25][Command][haddock_push] Haddock coverage:
+[2025-04-22 13:47:25][Command][haddock_push]  100% ( 11 / 11) in 'Development.GitRev'
+[2025-04-22 13:47:25][Command][haddock_push]  100% ( 61 / 61) in 'Development.GitRev.Typed'
+[2025-04-22 13:47:25][Command][haddock_push]  100% ( 61 / 61) in 'Development.GitRev.Typed.OsString'
+[2025-04-22 13:47:25][Command][haddock_push] Documentation created:
+[2025-04-22 13:47:25][Command][haddock_push] /home/tommy/Dev/tommy/github/gitrev/dist-newstyle/build/x86_64-linux/ghc-9.10.1/gitrev-2.0/doc/html/gitrev
