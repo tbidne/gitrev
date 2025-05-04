@@ -1,11 +1,9 @@
-dist
-cabal-dev
-*.o
-*.hi
-*.chi
-*.chs.h
-.virtualenv
-.hsenv
-.cabal-sandbox/
-cabal.sandbox.config
-cabal.config
+# cabal
+dist-newstyle
+cabal.project.local*
+
+# stack
+.stack-work
+
+# nix
+result

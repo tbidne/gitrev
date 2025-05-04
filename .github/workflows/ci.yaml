@@ -1,0 +1,209 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  cabal:
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc:
+          - "9.0.2"
+          - "9.2.8"
+          - "9.4.8"
+          - "9.6.6"
+          - "9.8.4"
+          - "9.10.1"
+          - "9.12.1"
+        os:
+          - "macos-latest"
+          - "ubuntu-latest"
+          - "windows-latest"
+        # Evidently mac has trouble with these on CI now.
+        exclude:
+          - {ghc: "8.10.7", os: "macos-latest"}
+          - {ghc: "9.0.2", os: "macos-latest"}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+
+      - name: Configure
+        run: cabal configure --ghc-options -Werror
+
+      - name: Compile
+        run: cabal build gitrev-typed
+
+      - name: Unit tests
+        shell: bash
+        run: RUN_UNIT=1 cabal test gitrev-typed:test:unit
+
+      - name: Test build example
+        run: |
+          .github/scripts/run_example_cabal_build.sh
+
+      - name: Install exe
+        shell: bash
+        run: |
+          export EXAMPLE_HOME=$(pwd); cabal install example --installdir=./build
+
+      - name: Test installed example
+        run: |
+          .github/scripts/run_example_cabal_install.sh
+
+      - name: Doctests
+        # In general, doctests are flaky enough that I'm not too fussed about
+        # having them run on all GHCs. One is enough to verify that the docs
+        # are in pretty good shape.
+        #
+        # That said, we might as well support multiple versions when we do not
+        # have to do any extra work.
+        if: ${{ matrix.ghc == '9.8.4'
+             || matrix.ghc == '9.10.1'
+             || matrix.ghc == '9.12.1'
+            }}
+        run: |
+          echo "*** Installing doctest ***"
+          cabal install --ignore-project doctest --flag cabal-doctest
+
+          echo "*** Running doctest ***"
+          cabal doctest
+
+      - name: Cabal check
+        run: |
+          cabal check
+
+      - name: Cabal outdated
+        run: |
+          cabal outdated
+
+  # Testing the oldest bounds w/ the oldest compiler.
+  cabal_old:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          #- "macos-latest" uncomment once ghc > 9.0
+          - "ubuntu-latest"
+          - "windows-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.0.2"
+
+      - name: Configure
+        run: cabal configure --prefer-oldest --ghc-options -Werror
+
+      - name: Compile
+        run: cabal build gitrev-typed
+
+      - name: Unit tests
+        shell: bash
+        run: RUN_UNIT=1 cabal test gitrev-typed:test:unit
+
+      - name: Test build example
+        run: |
+          .github/scripts/run_example_cabal_build.sh
+
+      - name: Install exe
+        shell: bash
+        run: |
+          export EXAMPLE_HOME=$(pwd); cabal install example --installdir=./build
+
+      - name: Test installed example
+        run: |
+          .github/scripts/run_example_cabal_install.sh
+
+  stack:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - "macos-latest"
+          - "ubuntu-latest"
+          - "windows-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+
+      - name: Compile
+        run: stack build gitrev-typed --ghc-options -Werror
+
+      - name: Unit tests
+        shell: bash
+        run: RUN_UNIT=1 stack test gitrev-typed:test:unit --ghc-options -Werror
+
+      - name: Test build example
+        run: |
+          .github/scripts/run_example_stack_build.sh
+
+      - name: Install exe
+        shell: bash
+        run: |
+          export EXAMPLE_HOME=$(pwd); stack install example --local-bin-path=build
+
+      - name: Test installed example
+        run: |
+          .github/scripts/run_example_stack_install.sh
+
+  nix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - "macos-latest"
+        - "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v30
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Compile & Test
+        run: nix build
+
+      - name: Build example
+        run: nix build .#example
+
+      - name: Test example
+        run: |
+          .github/scripts/run_example_nix.sh
+
+  lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v30
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Formatting
+        run: |
+          nix run .#format
+          git diff --exit-code --color=always
